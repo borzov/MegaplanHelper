@@ -1,0 +1,40 @@
+"menu.title" = "Megaplan";
+
+"notifications.title" = "Notifications";
+"notifications.refresh" = "Refresh";
+"notifications.loading" = "Loading notifications...";
+"notifications.empty" = "No new notifications";
+"notifications.open" = "Open";
+"notifications.markRead" = "Mark as read";
+"notifications.untitled" = "Notification";
+
+"auth.title" = "Sign in to Megaplan";
+"auth.domain" = "Domain";
+"auth.domain.placeholder" = "demo.megaplan.ru";
+"auth.login" = "Login";
+"auth.login.placeholder" = "user@example.com";
+"auth.password" = "Password";
+"auth.password.placeholder" = "••••••••";
+"auth.button" = "Sign In";
+"auth.authenticating" = "Authenticating...";
+
+"settings.account" = "Account";
+"settings.preferences" = "Preferences";
+"settings.intervalFormat" = "%d seconds";
+"settings.autoLaunch" = "Launch at login";
+"settings.logout" = "Sign Out";
+"settings.authenticated" = "Signed In";
+"settings.notAuthenticated" = "Not signed in";
+
+"error.title" = "Error";
+"general.ok" = "OK";
+"error.invalidURL" = "The server address looks incorrect.";
+"error.unauthorized" = "Your session has expired. Please sign in again.";
+"error.decoding" = "Failed to parse the server response.";
+"error.transport" = "Network error: %@";
+"error.server" = "Server error: %@";
+"error.missingToken" = "Authorization data is missing.";
+"error.validation" = "Please fill in all fields.";
+"error.autoLaunch" = "Failed to update login item.";
+"error.sessionExpired" = "Session expired. Please sign in.";
+"error.invalidResponse" = "Invalid server response.";

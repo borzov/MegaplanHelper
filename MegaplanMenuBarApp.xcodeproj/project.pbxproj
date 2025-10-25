@@ -1,0 +1,449 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AA000001 /* MegaplanMenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000010 /* MegaplanMenuBarApp.swift */; };
+		AA000002 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000011 /* AppState.swift */; };
+		AA000003 /* MegaplanCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000012 /* MegaplanCredentials.swift */; };
+		AA000004 /* MegaplanNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000013 /* MegaplanNotification.swift */; };
+		AA000005 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000014 /* KeychainManager.swift */; };
+		AA000006 /* MegaplanAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000015 /* MegaplanAPI.swift */; };
+		AA000007 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000016 /* Constants.swift */; };
+		AA000008 /* NetworkError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000017 /* NetworkError.swift */; };
+		AA000030 /* StringExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000029 /* StringExtensions.swift */; };
+		AA000009 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000018 /* AuthView.swift */; };
+		AA00000A /* NotificationListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000019 /* NotificationListView.swift */; };
+		AA00000B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00001A /* SettingsView.swift */; };
+		AA00000C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA00001B /* Assets.xcassets */; };
+		AA00000D /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AA00001C /* Localizable.strings */; };
+		AA00000E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AA00001D /* Localizable.strings */; };
+		C23E0D3C2EACCBE4007DD134 /* HTMLCleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23E0D3A2EACCBE4007DD134 /* HTMLCleaner.swift */; };
+		C23E0D3D2EACCBE4007DD135 /* APILogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23E0D3B2EACCBE4007DD135 /* APILogger.swift */; };
+		C281F0F42EACED2F00B88503 /* SettingsWindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C281F0F32EACED2F00B88503 /* SettingsWindowManager.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		AA00000F /* MegaplanMenuBarApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MegaplanMenuBarApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA000010 /* MegaplanMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanMenuBarApp.swift; sourceTree = "<group>"; };
+		AA000011 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		AA000012 /* MegaplanCredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanCredentials.swift; sourceTree = "<group>"; };
+		AA000013 /* MegaplanNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanNotification.swift; sourceTree = "<group>"; };
+		AA000014 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
+		AA000015 /* MegaplanAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanAPI.swift; sourceTree = "<group>"; };
+		AA000016 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		AA000017 /* NetworkError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkError.swift; sourceTree = "<group>"; };
+		AA000029 /* StringExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtensions.swift; sourceTree = "<group>"; };
+		AA000018 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		AA000019 /* NotificationListView.swift */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.swift; path = NotificationListView.swift; sourceTree = "<group>"; usesTabs = 0; };
+		AA00001A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		AA00001B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA00001C /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
+		AA00001D /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
+		C23E0D3A2EACCBE4007DD134 /* HTMLCleaner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLCleaner.swift; sourceTree = "<group>"; };
+		C23E0D3B2EACCBE4007DD135 /* APILogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APILogger.swift; sourceTree = "<group>"; };
+		C281F0F32EACED2F00B88503 /* SettingsWindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowManager.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AA00001E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AA00001F = {
+			isa = PBXGroup;
+			children = (
+				AA000020 /* . */,
+				AA000021 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AA000020 /* . */ = {
+			isa = PBXGroup;
+			children = (
+				AA000010 /* MegaplanMenuBarApp.swift */,
+				AA000011 /* AppState.swift */,
+				AA000022 /* Models */,
+				AA000023 /* Services */,
+				AA000024 /* Utils */,
+				AA000025 /* Views */,
+				AA000026 /* Resources */,
+			);
+			path = .;
+			sourceTree = "<group>";
+		};
+		AA000021 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AA00000F /* MegaplanMenuBarApp.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AA000022 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AA000012 /* MegaplanCredentials.swift */,
+				AA000013 /* MegaplanNotification.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AA000023 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				AA000014 /* KeychainManager.swift */,
+				AA000015 /* MegaplanAPI.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		AA000024 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				C281F0F32EACED2F00B88503 /* SettingsWindowManager.swift */,
+				C23E0D3A2EACCBE4007DD134 /* HTMLCleaner.swift */,
+				C23E0D3B2EACCBE4007DD135 /* APILogger.swift */,
+				AA000016 /* Constants.swift */,
+				AA000017 /* NetworkError.swift */,
+				AA000029 /* StringExtensions.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		AA000025 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AA000018 /* AuthView.swift */,
+				AA000019 /* NotificationListView.swift */,
+				AA00001A /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AA000026 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				AA00001B /* Assets.xcassets */,
+				AA000027 /* en.lproj */,
+				AA000028 /* ru.lproj */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		AA000027 /* en.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				AA00001C /* Localizable.strings */,
+			);
+			path = en.lproj;
+			sourceTree = "<group>";
+		};
+		AA000028 /* ru.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				AA00001D /* Localizable.strings */,
+			);
+			path = ru.lproj;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AA000029 /* MegaplanMenuBarApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA00002A /* Build configuration list for PBXNativeTarget "MegaplanMenuBarApp" */;
+			buildPhases = (
+				AA00002B /* Sources */,
+				AA00001E /* Frameworks */,
+				AA00002C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MegaplanMenuBarApp;
+			productName = MegaplanMenuBarApp;
+			productReference = AA00000F /* MegaplanMenuBarApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AA00002D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					AA000029 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = AA00002E /* Build configuration list for PBXProject "MegaplanMenuBarApp" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				ru,
+			);
+			mainGroup = AA00001F;
+			productRefGroup = AA000021 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AA000029 /* MegaplanMenuBarApp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AA00002C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA00000C /* Assets.xcassets in Resources */,
+				AA00000D /* Localizable.strings in Resources */,
+				AA00000E /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AA00002B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000001 /* MegaplanMenuBarApp.swift in Sources */,
+				AA000002 /* AppState.swift in Sources */,
+				AA000003 /* MegaplanCredentials.swift in Sources */,
+				C23E0D3C2EACCBE4007DD134 /* HTMLCleaner.swift in Sources */,
+				C23E0D3D2EACCBE4007DD135 /* APILogger.swift in Sources */,
+				AA000004 /* MegaplanNotification.swift in Sources */,
+				AA000005 /* KeychainManager.swift in Sources */,
+				AA000006 /* MegaplanAPI.swift in Sources */,
+				AA000007 /* Constants.swift in Sources */,
+				AA000008 /* NetworkError.swift in Sources */,
+				AA000030 /* StringExtensions.swift in Sources */,
+				AA000009 /* AuthView.swift in Sources */,
+				AA00000A /* NotificationListView.swift in Sources */,
+				C281F0F42EACED2F00B88503 /* SettingsWindowManager.swift in Sources */,
+				AA00000B /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AA00002F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = MegaplanMenuBarApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 9;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Megaplan Menu Bar";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ruvents.MegaplanMenuBarApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		AA000030 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = MegaplanMenuBarApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 9;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Megaplan Menu Bar";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ruvents.MegaplanMenuBarApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AA00002A /* Build configuration list for PBXNativeTarget "MegaplanMenuBarApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00002F /* Debug */,
+				AA000030 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA00002E /* Build configuration list for PBXProject "MegaplanMenuBarApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00002F /* Debug */,
+				AA000030 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AA00002D /* Project object */;
+}

@@ -1,0 +1,64 @@
+import Foundation
+
+enum NetworkError: LocalizedError, Identifiable {
+    case invalidURL
+    case unauthorized
+    case decodingFailed
+    case transport(message: String)
+    case server(message: String)
+    case missingToken
+    case validationFailed
+    case autoLaunchFailure
+    case sessionExpired
+
+    var id: String {
+        switch self {
+        case .invalidURL: return "invalidURL"
+        case .unauthorized: return "unauthorized"
+        case .decodingFailed: return "decodingFailed"
+        case .transport: return "transport"
+        case .server: return "server"
+        case .missingToken: return "missingToken"
+        case .validationFailed: return "validationFailed"
+        case .autoLaunchFailure: return "autoLaunchFailure"
+        case .sessionExpired: return "sessionExpired"
+        }
+    }
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return String(localized: "error.invalidURL")
+        case .unauthorized:
+            return String(localized: "error.unauthorized")
+        case .decodingFailed:
+            return String(localized: "error.decoding")
+        case .transport(let message):
+            return String(format: String(localized: "error.transport"), message)
+        case .server(let message):
+            return String(format: String(localized: "error.server"), message)
+        case .missingToken:
+            return String(localized: "error.missingToken")
+        case .validationFailed:
+            return String(localized: "error.validation")
+        case .autoLaunchFailure:
+            return String(localized: "error.autoLaunch")
+        case .sessionExpired:
+            return String(localized: "error.sessionExpired")
+        }
+    }
+
+    init(_ error: Error) {
+        if let networkError = error as? NetworkError {
+            self = networkError
+            return
+        }
+
+        if let urlError = error as? URLError {
+            self = .transport(message: urlError.localizedDescription)
+            return
+        }
+
+        self = .server(message: error.localizedDescription)
+    }
+}

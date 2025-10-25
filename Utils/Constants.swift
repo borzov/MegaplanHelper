@@ -1,0 +1,91 @@
+import Foundation
+import OSLog
+
+enum Constants {
+    static let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.ruvents.MegaplanMenuBarApp"
+    static let defaultRefreshInterval: TimeInterval = 60
+    static let logFileURL: URL = {
+        let logsDirectory = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)
+            .first?
+            .appendingPathComponent("Logs", isDirectory: true) ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        return logsDirectory.appendingPathComponent("MegaplanApp.log", isDirectory: false)
+    }()
+    static let sparkleFeedURL = URL(string: "https://example.com/megaplan/sparkle/appcast.xml")
+
+    enum UserDefaultsKeys {
+        static let domain = "megaplan.domain"
+        static let username = "megaplan.username"
+        static let refreshInterval = "megaplan.refreshInterval"
+        static let autoLaunch = "megaplan.autoLaunch"
+    }
+
+    enum Keychain {
+        static let service = "com.megaplan.credentials"
+        static let tokenAccount = "accessToken"
+
+        static func passwordAccount(for username: String, domain: String) -> String {
+            "\(username)@\(domain)"
+        }
+    }
+
+    static let loginItemIdentifier = "com.ruvents.MegaplanMenuBarApp.LoginItem"
+}
+
+enum AppLogger {
+    private static let logger = Logger(subsystem: Constants.bundleIdentifier, category: "Megaplan")
+    private static let logQueue = DispatchQueue(label: "com.ruvents.logger", qos: .utility)
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return formatter
+    }()
+
+    static func info(_ message: String) {
+        logger.log("\(message, privacy: .public)")
+        writeToFile(level: "INFO", message: message)
+    }
+
+    static func debug(_ message: String) {
+        logger.debug("\(message, privacy: .public)")
+        writeToFile(level: "DEBUG", message: message)
+    }
+
+    static func error(_ message: String) {
+        logger.error("\(message, privacy: .public)")
+        writeToFile(level: "ERROR", message: message)
+    }
+
+    private static func writeToFile(level: String, message: String) {
+        logQueue.async {
+            let logEntry = "[\(dateFormatter.string(from: Date()))] [\(level)] \(message)\n"
+            guard let data = logEntry.data(using: .utf8) else {
+                return
+            }
+
+            let logURL = Constants.logFileURL
+            let directory = logURL.deletingLastPathComponent()
+
+            if !FileManager.default.fileExists(atPath: directory.path) {
+                do {
+                    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+                } catch {
+                    logger.error("Failed to create log directory: \(error.localizedDescription, privacy: .public)")
+                    return
+                }
+            }
+
+            if !FileManager.default.fileExists(atPath: logURL.path) {
+                FileManager.default.createFile(atPath: logURL.path, contents: data)
+            } else {
+                do {
+                    let handle = try FileHandle(forWritingTo: logURL)
+                    try handle.seekToEnd()
+                    try handle.write(contentsOf: data)
+                    try handle.close()
+                } catch {
+                    logger.error("Failed to append to log file: \(error.localizedDescription, privacy: .public)")
+                }
+            }
+        }
+    }
+}
