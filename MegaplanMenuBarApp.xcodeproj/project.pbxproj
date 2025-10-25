@@ -339,7 +339,7 @@
 			};
 			name = Debug;
 		};
-		AA000030 /* Release */ = {
+		AA0000AA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -429,7 +429,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA00002F /* Debug */,
-				AA000030 /* Release */,
+				AA0000AA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -438,7 +438,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA00002F /* Debug */,
-				AA000030 /* Release */,
+				AA0000AA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
