@@ -21,6 +21,7 @@ final class AppState: ObservableObject {
     @Published var username: String
     @Published var refreshInterval: Double
     @Published var autoLaunchEnabled: Bool
+    @Published var tempCredentials: MegaplanCredentials
 
     private let api = MegaplanAPI()
     private let keychain = KeychainManager()
@@ -31,8 +32,10 @@ final class AppState: ObservableObject {
 
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
-        self.domain = userDefaults.string(forKey: Constants.UserDefaultsKeys.domain) ?? ""
-        self.username = userDefaults.string(forKey: Constants.UserDefaultsKeys.username) ?? ""
+        let domainValue = userDefaults.string(forKey: Constants.UserDefaultsKeys.domain) ?? ""
+        let usernameValue = userDefaults.string(forKey: Constants.UserDefaultsKeys.username) ?? ""
+        self.domain = domainValue
+        self.username = usernameValue
         let storedInterval = userDefaults.double(forKey: Constants.UserDefaultsKeys.refreshInterval)
         if storedInterval > 0 {
             self.refreshInterval = storedInterval
@@ -40,6 +43,13 @@ final class AppState: ObservableObject {
             self.refreshInterval = Constants.defaultRefreshInterval
         }
         self.autoLaunchEnabled = userDefaults.bool(forKey: Constants.UserDefaultsKeys.autoLaunch)
+        
+        // Initialize tempCredentials using local variables
+        self.tempCredentials = MegaplanCredentials(
+            domain: domainValue,
+            login: usernameValue,
+            password: ""
+        )
         
         // Set domain in API if available
         if !self.domain.isEmpty {
@@ -103,6 +113,8 @@ final class AppState: ObservableObject {
             AppLogger.error("Failed to clear keychain during logout: \(error.localizedDescription)")
         }
 
+        // Don't clear tempCredentials to allow copy-pasting data
+        // Clear only the persisted credentials
         domain = ""
         username = ""
 
@@ -124,35 +136,28 @@ final class AppState: ObservableObject {
         startRefreshTimer()
     }
 
+    func updateTempCredentials(_ credentials: MegaplanCredentials) {
+        tempCredentials = credentials
+    }
+    
     func updateAutoLaunch(enabled: Bool) {
         autoLaunchEnabled = enabled
         userDefaults.set(enabled, forKey: Constants.UserDefaultsKeys.autoLaunch)
 
-        if #available(macOS 13.0, *) {
-            let service = SMAppService.mainApp
-            do {
-                if enabled {
-                    try service.register()
-                } else {
-                    try service.unregister()
-                }
-                AppLogger.info("Auto launch updated: \(enabled)")
-            } catch {
-                AppLogger.error("Failed to update auto launch: \(error.localizedDescription)")
-                autoLaunchEnabled = !enabled
-                userDefaults.set(autoLaunchEnabled, forKey: Constants.UserDefaultsKeys.autoLaunch)
-                presentError(.autoLaunchFailure)
-            }
-        } else {
-            let success = SMLoginItemSetEnabled(Constants.loginItemIdentifier as CFString, enabled)
-            if success {
-                AppLogger.info("Auto launch updated: \(enabled)")
+        // Modern API for macOS 13.0+ (minimum deployment target)
+        let service = SMAppService.mainApp
+        do {
+            if enabled {
+                try service.register()
             } else {
-                AppLogger.error("Failed to update auto launch via ServiceManagement")
-                autoLaunchEnabled = !enabled
-                userDefaults.set(autoLaunchEnabled, forKey: Constants.UserDefaultsKeys.autoLaunch)
-                presentError(.autoLaunchFailure)
+                try service.unregister()
             }
+            AppLogger.info("Auto launch updated: \(enabled)")
+        } catch {
+            AppLogger.error("Failed to update auto launch: \(error.localizedDescription)")
+            autoLaunchEnabled = !enabled
+            userDefaults.set(autoLaunchEnabled, forKey: Constants.UserDefaultsKeys.autoLaunch)
+            presentError(.autoLaunchFailure)
         }
     }
 

@@ -35,18 +35,23 @@ private struct MenuBarIconView: View {
     let unreadCount: Int
     @EnvironmentObject var appState: AppState
     @Binding var showingSettings: Bool
+    @State private var menuBarImage: NSImage?
 
     var body: some View {
         Group {
-            if let _ = NSImage(named: "MenuBarIcon") {
-                Image("MenuBarIcon")
-                    .renderingMode(.template)
+            if let image = menuBarImage {
+                Image(nsImage: image)
+                    .renderingMode(.original)
             } else {
                 Image(systemName: "bell.fill")
                     .symbolRenderingMode(.hierarchical)
+                    .font(.system(size: 14))
             }
         }
         .onAppear {
+            if menuBarImage == nil {
+                resizeMenuBarIcon()
+            }
             AppLogger.info("MenuBarIconView appeared, unreadCount: \(unreadCount)")
         }
         .onChange(of: unreadCount) { newValue in
@@ -85,5 +90,24 @@ private struct MenuBarIconView: View {
                     }
                 }
             }
+    }
+    
+    private func resizeMenuBarIcon() {
+        guard let nsImage = NSImage(named: "MenuBarIcon") else {
+            return
+        }
+        
+        let resizedImage = NSImage(size: NSSize(width: 18, height: 18))
+        resizedImage.lockFocus()
+        defer { resizedImage.unlockFocus() }
+        
+        nsImage.draw(
+            in: NSRect(x: 0, y: 0, width: 18, height: 18),
+            from: NSRect(x: 0, y: 0, width: nsImage.size.width, height: nsImage.size.height),
+            operation: .sourceOver,
+            fraction: 1.0
+        )
+        
+        menuBarImage = resizedImage
     }
 }

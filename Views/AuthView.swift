@@ -2,7 +2,6 @@ import SwiftUI
 
 struct AuthView: View {
     @EnvironmentObject private var appState: AppState
-    @State private var credentials = MegaplanCredentials.empty
     @FocusState private var focusedField: Field?
 
     enum Field: Hashable {
@@ -12,58 +11,133 @@ struct AuthView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("auth.title")
-                .font(.title2)
-                .fontWeight(.semibold)
-
-            VStack(alignment: .leading, spacing: 12) {
-                Text("auth.domain")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                TextField("auth.domain.placeholder", text: $credentials.domain)
-                    .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
-                    .focused($focusedField, equals: .domain)
-
-                Text("auth.login")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 6)
-                TextField("auth.login.placeholder", text: $credentials.login)
-                    .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
-                    .focused($focusedField, equals: .login)
-
-                Text("auth.password")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 6)
-                SecureField("auth.password.placeholder", text: $credentials.password)
-                    .textFieldStyle(.roundedBorder)
-                    .focused($focusedField, equals: .password)
-            }
-
-            Button {
-                authenticate()
-            } label: {
-                HStack {
-                    if appState.isLoading {
-                        ProgressView()
-                            .controlSize(.small)
-                            .progressViewStyle(.circular)
-                            .scaleEffect(0.8)
+        VStack(spacing: 0) {
+            // Header with icon and description
+            VStack(spacing: 16) {
+                // App Icon
+                Group {
+                    if let image = NSImage(named: "MenuBarIcon") {
+                        Image(nsImage: image)
+                            .resizable()
+                            .interpolation(.high)
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 64, height: 64)
+                    } else {
+                        Image(systemName: "bell.fill")
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(.blue)
                     }
-                    Text(appState.isLoading ? "auth.authenticating" : "auth.button")
+                }
+                .frame(width: 64, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+                
+                // Description
+                Text("Для продолжения работы приложения необходимо авторизоваться, используя свою учетную запись в Мегаплане")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
+            .padding(.vertical, 24)
+            .frame(maxWidth: .infinity)
+            
+            Divider()
+            
+            // Form with credentials
+            Form {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextField("Ваш домен", text: Binding(
+                            get: { appState.tempCredentials.domain },
+                            set: { newValue in
+                                var creds = appState.tempCredentials
+                                creds.domain = newValue
+                                appState.updateTempCredentials(creds)
+                            }
+                        ))
+                        .focused($focusedField, equals: .domain)
+                        Text("Укажите актуальный адрес вашего сервера Мегаплана")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextField("Email", text: Binding(
+                            get: { appState.tempCredentials.login },
+                            set: { newValue in
+                                var creds = appState.tempCredentials
+                                creds.login = newValue
+                                appState.updateTempCredentials(creds)
+                            }
+                        ))
+                        .focused($focusedField, equals: .login)
+                        Text("Email вашего аккаунта для входа в систему")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        SecureField("Пароль", text: Binding(
+                            get: { appState.tempCredentials.password },
+                            set: { newValue in
+                                var creds = appState.tempCredentials
+                                creds.password = newValue
+                                appState.updateTempCredentials(creds)
+                            }
+                        ))
+                        .focused($focusedField, equals: .password)
+                        Text("Введите пароль от вашего аккаунта")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Button {
+                        authenticate()
+                    } label: {
+                        HStack {
+                            if appState.isLoading {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Image(systemName: "key.fill")
+                            }
+                            Text(appState.isLoading ? "Авторизация..." : "Войти")
+                        }
                         .frame(maxWidth: .infinity)
+                    }
+                    .disabled(appState.isLoading)
+                    .controlSize(.large)
                 }
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(appState.isLoading)
-
-            Spacer(minLength: 0)
+            .formStyle(.grouped)
+            .scrollContentBackground(.hidden)
+            
+            Spacer()
+            
+            Button {
+                NSApplication.shared.terminate(nil)
+            } label: {
+                Image(systemName: "power")
+                    .foregroundColor(.red)
+                    .font(.system(size: 14))
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel(Text("Quit Application"))
         }
-        .onAppear(perform: populateFromState)
+        .onAppear {
+            // Only initialize tempCredentials if it's truly empty (first time opening)
+            // This prevents overwriting user's entered data
+            if appState.tempCredentials.domain.isEmpty && 
+               appState.tempCredentials.login.isEmpty && 
+               appState.tempCredentials.password.isEmpty {
+                appState.updateTempCredentials(MegaplanCredentials(
+                    domain: appState.domain,
+                    login: appState.username,
+                    password: ""
+                ))
+            }
+        }
         .onSubmit {
             switch focusedField {
             case .domain:
@@ -76,17 +150,12 @@ struct AuthView: View {
         }
     }
 
-    private func populateFromState() {
-        credentials.domain = appState.domain
-        credentials.login = appState.username
-    }
-
     private func authenticate() {
         Task {
             await appState.signIn(
-                domain: credentials.domain,
-                login: credentials.login,
-                password: credentials.password
+                domain: appState.tempCredentials.domain,
+                login: appState.tempCredentials.login,
+                password: appState.tempCredentials.password
             )
         }
     }
