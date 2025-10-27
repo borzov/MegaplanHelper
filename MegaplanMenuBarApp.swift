@@ -52,10 +52,6 @@ private struct MenuBarIconView: View {
             if menuBarImage == nil {
                 resizeMenuBarIcon()
             }
-            AppLogger.info("MenuBarIconView appeared, unreadCount: \(unreadCount)")
-        }
-        .onChange(of: unreadCount) { newValue in
-            AppLogger.info("MenuBarIconView unreadCount changed to: \(newValue)")
         }
         .overlay(alignment: .topTrailing) {
                 if unreadCount > 0 {
@@ -97,17 +93,20 @@ private struct MenuBarIconView: View {
             return
         }
         
-        let resizedImage = NSImage(size: NSSize(width: 18, height: 18))
-        resizedImage.lockFocus()
-        defer { resizedImage.unlockFocus() }
-        
-        nsImage.draw(
-            in: NSRect(x: 0, y: 0, width: 18, height: 18),
-            from: NSRect(x: 0, y: 0, width: nsImage.size.width, height: nsImage.size.height),
-            operation: .sourceOver,
-            fraction: 1.0
-        )
-        
-        menuBarImage = resizedImage
+        // Resize on background thread to avoid blocking main thread
+        Task.detached(priority: .userInitiated) {
+            // Create resized image using bitmap representation
+            let targetSize = NSSize(width: 18, height: 18)
+            let resizedImage = NSImage(size: targetSize)
+            
+            resizedImage.lockFocus()
+            nsImage.size = targetSize
+            nsImage.draw(at: .zero, from: .zero, operation: .copy, fraction: 1.0)
+            resizedImage.unlockFocus()
+            
+            await MainActor.run { [self] in
+                menuBarImage = resizedImage
+            }
+        }
     }
 }

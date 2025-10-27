@@ -24,6 +24,8 @@
 	<string>Copyright © 2024</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
 	<key>LSUIElement</key>
 	<true/>
 </dict>

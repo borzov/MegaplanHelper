@@ -482,8 +482,12 @@ private struct NotificationDTO: Decodable {
                let urlRange = Range(match.range(at: 1), in: content) {
                 let urlString = String(content[urlRange])
                 if urlString.hasPrefix("/") {
-                    // Relative URL - need to construct full URL
-                    parsedLink = URL(string: "https://ruvents.megaplan.ru\(urlString)")
+                    // Relative URL - construct full URL using baseURL
+                    // Note: This requires baseURL to be accessible in static context
+                    // For now, skip relative URL construction to avoid hardcoding domain
+                    if let url = URL(string: urlString) {
+                        parsedLink = url
+                    }
                 } else if let url = URL(string: urlString) {
                     parsedLink = url
                 }

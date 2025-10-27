@@ -4,19 +4,55 @@ struct APILogger {
     private static var logEntries: [String] = []
     private static let logQueue = DispatchQueue(label: "com.ruvents.api-logger", qos: .utility)
     
+    #if DEBUG
+    private static var currentLevel: LogLevel = .debug
+    #else
+    private static var currentLevel: LogLevel = .error
+    #endif
+    
+    enum LogLevel: Int, Comparable {
+        case debug
+        case info
+        case error
+        
+        static func < (lhs: LogLevel, rhs: LogLevel) -> Bool {
+            lhs.rawValue < rhs.rawValue
+        }
+    }
+    
     static func logRequest(method: String, url: String, headers: [String: String]?, body: Data?) {
+        guard LogLevel.debug >= currentLevel else { return }
+        
         logQueue.async {
             let timestamp = DateFormatter.iso8601.string(from: Date())
             var logEntry = "===== REQUEST [\(timestamp)] =====\n"
             logEntry += "Method: \(method)\n"
             logEntry += "URL: \(url)\n"
             
+            // Sanitize headers to remove sensitive data
             if let headers = headers {
-                logEntry += "Headers: \(headers)\n"
+                var sanitizedHeaders = headers
+                // Mask authorization token
+                if let authValue = sanitizedHeaders["Authorization"] {
+                    if authValue.hasPrefix("Bearer ") {
+                        let token = String(authValue.dropFirst(7))
+                        sanitizedHeaders["Authorization"] = "Bearer ***\(String(token.suffix(4)))"
+                    } else {
+                        sanitizedHeaders["Authorization"] = "***REDACTED***"
+                    }
+                }
+                logEntry += "Headers: \(sanitizedHeaders)\n"
             }
             
+            // Check if this is an auth request
+            let isAuthRequest = url.contains("/auth/")
+            
             if let body = body {
-                logEntry += "Body: \(String(data: body, encoding: .utf8) ?? "Binary data")\n"
+                if isAuthRequest {
+                    logEntry += "Body: ***REDACTED (authentication data)***\n"
+                } else {
+                    logEntry += "Body: \(String(data: body, encoding: .utf8) ?? "Binary data")\n"
+                }
             } else {
                 logEntry += "Body: nil\n"
             }
@@ -26,7 +62,9 @@ struct APILogger {
         }
     }
     
-    static func logResponse(statusCode: Int, error: Error?, data: Data?) {
+    static func logResponse(statusCode: Int, error: Error?, data: Data?, level: LogLevel = .debug) {
+        guard level >= currentLevel else { return }
+        
         logQueue.async {
             let timestamp = DateFormatter.iso8601.string(from: Date())
             var logEntry = "===== RESPONSE [\(timestamp)] =====\n"

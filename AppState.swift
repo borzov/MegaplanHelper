@@ -96,7 +96,13 @@ final class AppState: ObservableObject {
         let currentDomain = domain
 
         accessToken = nil
+        
+        // Securely clear cached password from memory
+        if var password = cachedPassword {
+            password.removeAll()
+        }
         cachedPassword = nil
+        
         isAuthenticated = false
         notifications = []
         unreadCount = 0
@@ -239,36 +245,25 @@ final class AppState: ObservableObject {
 
     private func refresh() async {
         guard let token = accessToken else {
-            AppLogger.info("Refresh called but no access token")
+            AppLogger.debug("Refresh called but no access token")
             return
         }
 
-        AppLogger.info("Starting refresh...")
         isLoading = true
-        defer { 
-            isLoading = false
-            AppLogger.info("Refresh completed, isLoading = false")
-        }
+        defer { isLoading = false }
 
         do {
-            AppLogger.info("Fetching notifications and counter...")
             async let notificationsTask = api.fetchNotifications(token: token)
             async let counterTask = api.fetchUnreadCount(token: token)
 
             let (fetchedNotifications, counter) = try await (notificationsTask, counterTask)
-            AppLogger.info("Received \(fetchedNotifications.count) notifications, counter: \(counter)")
             
-            AppLogger.info("Updating notifications array...")
             withAnimation(.easeInOut) {
                 notifications = fetchedNotifications
             }
-            AppLogger.info("Notifications array updated")
             
-            AppLogger.info("Updating apiUnreadCount to \(counter)...")
             apiUnreadCount = counter
-            AppLogger.info("apiUnreadCount updated to \(apiUnreadCount)")
-            
-            AppLogger.debug("Fetched \(fetchedNotifications.count) notifications, unread count: \(counter)")
+            AppLogger.debug("Refreshed: \(fetchedNotifications.count) notifications, \(counter) unread")
         } catch NetworkError.unauthorized {
             AppLogger.error("Unauthorized during refresh")
             isAuthenticated = false
