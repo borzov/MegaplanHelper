@@ -1,0 +1,40 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Запускается при создании тега, начинающегося с 'v'
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+        
+    - name: Build universal binary
+      run: |
+        chmod +x ./build-universal.sh
+        ./build-universal.sh
+        
+    - name: Create release archive
+      run: |
+        cd build/export
+        zip -r MegaplanHelper-v${GITHUB_REF#refs/tags/v}.zip MegaplanHepler.app
+        cd ../..
+        
+    - name: Upload release asset
+      uses: softprops/action-gh-release@v1
+      with:
+        files: build/export/MegaplanHelper-v*.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
