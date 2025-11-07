@@ -269,7 +269,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/scripts/update-build-number.sh\"\n";
+			shellScript = "# Автоматическое обновление build number\nBUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo \"1\")\nif [ \"$BUILD_NUMBER\" = \"1\" ] && ! git rev-parse --git-dir > /dev/null 2>&1; then\n    BUILD_NUMBER=$(date +%s)\nfi\nPROJECT_FILE=\"${PROJECT_DIR}/${PROJECT_NAME}.xcodeproj/project.pbxproj\"\nif [ -f \"$PROJECT_FILE\" ]; then\n    if [[ \"$OSTYPE\" == \"darwin\"* ]]; then\n        sed -i '' \"s/CURRENT_PROJECT_VERSION = 6[0-9]*/CURRENT_PROJECT_VERSION = 6${BUILD_NUMBER}/g\" \"$PROJECT_FILE\" 2>/dev/null && echo \"✅ Build number updated to: ${BUILD_NUMBER}\" || echo \"⚠️  Warning: Could not update build number\"\n    else\n        sed -i \"s/CURRENT_PROJECT_VERSION = 6[0-9]*/CURRENT_PROJECT_VERSION = 6${BUILD_NUMBER}/g\" \"$PROJECT_FILE\" 2>/dev/null && echo \"✅ Build number updated to: ${BUILD_NUMBER}\" || echo \"⚠️  Warning: Could not update build number\"\n    fi\nfi\n";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -344,7 +345,7 @@
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 39;
+				CURRENT_PROJECT_VERSION = 6;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
@@ -440,7 +441,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 39;
+				CURRENT_PROJECT_VERSION = 6;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 4C524G83X7;

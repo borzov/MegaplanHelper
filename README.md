@@ -155,6 +155,45 @@ xcodebuild -exportArchive \
 - ✅ Убедитесь, что включен **BUILD_LIBRARY_FOR_DISTRIBUTION = YES**
 - ✅ Приложение должно быть подписано (Code Signing)
 
+### GitHub Releases
+
+Релизы автоматически публикуются в разделе [Releases](https://github.com/borzov/MegaplanHelper/releases) на GitHub при создании тега версии.
+
+#### Создание нового релиза
+
+1. **Обновите версию в проекте:**
+   - Обновите `MARKETING_VERSION` в Xcode (например, 1.3)
+   - Обновите Changelog в README.md
+
+2. **Создайте коммит и тег:**
+   ```bash
+   git add .
+   git commit -m "v1.3: Описание изменений"
+   git tag -a v1.3 -m "Версия 1.3: Описание изменений"
+   git push origin master
+   git push origin v1.3
+   ```
+
+3. **Создайте GitHub Release:**
+   ```bash
+   gh release create v1.3 --title "v1.3 - Название релиза" --notes "Описание изменений из Changelog"
+   ```
+
+4. **Автоматическая сборка:**
+   - GitHub Actions автоматически соберет универсальный бинарник
+   - ZIP-архив с приложением будет прикреплен к релизу
+
+#### Автоматизация через GitHub Actions
+
+В проекте настроены GitHub Actions workflows:
+- **`.github/workflows/build.yml`** — сборка при каждом push в master
+- **`.github/workflows/release.yml`** — автоматическая сборка и публикация при создании тега версии
+
+При создании тега `v*` (например, `v1.3`) автоматически:
+- Собирается универсальный бинарник (arm64 + x86_64)
+- Создается ZIP-архив с приложением
+- Архив прикрепляется к GitHub Release
+
 ## Установка
 
 1. Соберите приложение

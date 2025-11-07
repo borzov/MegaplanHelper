@@ -3,9 +3,11 @@
 # Скрипт для автоматического обновления номера билда
 # Использует количество коммитов в git как build number
 
-set -e
+# Не используем set -e, чтобы скрипт не падал при ошибках в sandbox
+set +e
 
 # Получаем количество коммитов в текущей ветке
+# В sandbox git может быть недоступен, поэтому используем fallback
 BUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo "1")
 
 # Если git недоступен, используем timestamp
@@ -19,12 +21,20 @@ PROJECT_FILE="${PROJECT_DIR}/${PROJECT_NAME}.xcodeproj/project.pbxproj"
 if [ -f "$PROJECT_FILE" ]; then
     # Обновляем CURRENT_PROJECT_VERSION для всех конфигураций
     # Используем sed с правильным синтаксисом для macOS
+    # В sandbox может быть ограничен доступ, поэтому проверяем права
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = ${BUILD_NUMBER}/g" "$PROJECT_FILE"
+        if sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = ${BUILD_NUMBER}/g" "$PROJECT_FILE" 2>/dev/null; then
+            echo "✅ Build number updated to: ${BUILD_NUMBER}"
+        else
+            echo "⚠️  Warning: Could not update build number (sandbox restriction?)"
+        fi
     else
-        sed -i "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = ${BUILD_NUMBER}/g" "$PROJECT_FILE"
+        if sed -i "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = ${BUILD_NUMBER}/g" "$PROJECT_FILE" 2>/dev/null; then
+            echo "✅ Build number updated to: ${BUILD_NUMBER}"
+        else
+            echo "⚠️  Warning: Could not update build number"
+        fi
     fi
-    echo "✅ Build number updated to: ${BUILD_NUMBER}"
 else
     echo "⚠️  Warning: Project file not found at $PROJECT_FILE"
 fi
