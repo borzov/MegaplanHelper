@@ -10,7 +10,7 @@ struct SettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Настройки")
+                Text(String(localized: "settings.title"))
                     .font(.title2)
                     .fontWeight(.semibold)
                 
@@ -23,23 +23,23 @@ struct SettingsView: View {
             Form {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
-                    TextField("Ваш домен *.megaplan.ru", text: $credentials.domain)
-                    Text("Укажите актуальный адрес вашего сервера Megaplan")
+                    TextField(String(localized: "auth.domain.placeholder"), text: $credentials.domain)
+                    Text(String(localized: "settings.domainDescription"))
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
                 
                 HStack(spacing: 16) {
                     VStack(alignment: .leading, spacing: 8) {
-                        TextField("Логин", text: $credentials.login)
-                        Text("Email адрес для входа в систему")
+                        TextField(String(localized: "auth.login"), text: $credentials.login)
+                        Text(String(localized: "settings.loginDescription"))
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        SecureField("Пароль", text: $credentials.password)
-                        Text("Пароль от вашего аккаунта")
+                        SecureField(String(localized: "auth.password"), text: $credentials.password)
+                        Text(String(localized: "settings.passwordDescription"))
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
@@ -56,7 +56,7 @@ struct SettingsView: View {
                             } else {
                                 Image(systemName: "checkmark.circle.fill")
                             }
-                            Text(appState.isLoading ? "Авторизация..." : "Войти")
+                            Text(appState.isLoading ? String(localized: "auth.authenticating") : String(localized: "auth.button"))
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -67,7 +67,7 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
-                            Text("Выйти")
+                            Text(String(localized: "settings.logout"))
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -76,26 +76,31 @@ struct SettingsView: View {
                 
                 HStack {
                     if appState.isAuthenticated {
-                        Label("Авторизован", systemImage: "checkmark.circle.fill")
+                        Label(String(localized: "settings.authenticated"), systemImage: "checkmark.circle.fill")
                             .foregroundColor(.green)
                     } else {
-                        Label("Не авторизован", systemImage: "xmark.circle.fill")
+                        Label(String(localized: "settings.notAuthenticated"), systemImage: "xmark.circle.fill")
                             .foregroundColor(.orange)
                     }
                     Spacer()
                 }
                 .font(.caption)
             } header: {
-                Text("Аккаунт")
+                Text(String(localized: "settings.account"))
             }
             
             Section {
-                Picker("Интервал обновления", selection: $refreshIntervalValue) {
-                    Text("30 секунд").tag(30.0)
-                    Text("1 минута").tag(60.0)
-                    Text("2 минуты").tag(120.0)
-                    Text("5 минут").tag(300.0)
-                    Text("10 минут").tag(600.0)
+                Picker(String(localized: "settings.refreshInterval"), selection: $refreshIntervalValue) {
+                    Text(String(localized: "settings.interval30"))
+                        .tag(30.0)
+                    Text(String(localized: "settings.interval60"))
+                        .tag(60.0)
+                    Text(String(localized: "settings.interval120"))
+                        .tag(120.0)
+                    Text(String(localized: "settings.interval300"))
+                        .tag(300.0)
+                    Text(String(localized: "settings.interval600"))
+                        .tag(600.0)
                 }
                 .pickerStyle(.menu)
                 .onChange(of: refreshIntervalValue) { newValue in
@@ -110,20 +115,20 @@ struct SettingsView: View {
                     }
                 )) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Автозапуск")
-                        Text("Запускать приложение при входе в систему")
+                        Text(String(localized: "settings.autoLaunch"))
+                        Text(String(localized: "settings.autoLaunchDescription"))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                 }
             } header: {
-                Text("Настройки")
+                Text(String(localized: "settings.preferences"))
             }
             
             Section {
                 HStack {
                     Spacer()
-                    Text("Версия \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0") (Build \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"))")
+                    Text(String(format: String(localized: "settings.version"), Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0", Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"))
                         .font(.caption2)
                         .foregroundColor(.secondary)
                     Spacer()
@@ -135,15 +140,15 @@ struct SettingsView: View {
         }
         .frame(width: 480, height: 500)
         .onAppear(perform: syncState)
-        .alert("Выйти из аккаунта?", isPresented: $showingLogoutAlert) {
-            Button("Отмена", role: .cancel) { }
-            Button("Выйти", role: .destructive) {
+        .alert(String(localized: "settings.logoutAlertTitle"), isPresented: $showingLogoutAlert) {
+            Button(String(localized: "general.cancel"), role: .cancel) { }
+            Button(String(localized: "settings.logout"), role: .destructive) {
                 Task {
                     await appState.logout()
                 }
             }
         } message: {
-            Text("Вы уверены, что хотите выйти из аккаунта?")
+            Text(String(localized: "settings.logoutAlertMessage"))
         }
     }
 

@@ -33,7 +33,7 @@ struct AuthView: View {
                 .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
                 
                 // Description
-                Text("Для продолжения работы приложения необходимо авторизоваться, используя свою учетную запись в Мегаплане")
+                Text(String(localized: "auth.description"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -48,7 +48,7 @@ struct AuthView: View {
             Form {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
-                        TextField("Ваш домен", text: Binding(
+                        TextField(String(localized: "auth.domain"), text: Binding(
                             get: { appState.tempCredentials.domain },
                             set: { newValue in
                                 var creds = appState.tempCredentials
@@ -57,13 +57,13 @@ struct AuthView: View {
                             }
                         ))
                         .focused($focusedField, equals: .domain)
-                        Text("Укажите актуальный адрес вашего сервера Мегаплана")
+                        Text(String(localized: "settings.domainDescription"))
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        TextField("Email", text: Binding(
+                        TextField(String(localized: "auth.login.placeholder"), text: Binding(
                             get: { appState.tempCredentials.login },
                             set: { newValue in
                                 var creds = appState.tempCredentials
@@ -72,13 +72,13 @@ struct AuthView: View {
                             }
                         ))
                         .focused($focusedField, equals: .login)
-                        Text("Email вашего аккаунта для входа в систему")
+                        Text(String(localized: "settings.loginDescription"))
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        SecureField("Пароль", text: Binding(
+                        SecureField(String(localized: "auth.password"), text: Binding(
                             get: { appState.tempCredentials.password },
                             set: { newValue in
                                 var creds = appState.tempCredentials
@@ -87,7 +87,7 @@ struct AuthView: View {
                             }
                         ))
                         .focused($focusedField, equals: .password)
-                        Text("Введите пароль от вашего аккаунта")
+                        Text(String(localized: "settings.passwordDescription"))
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
@@ -102,7 +102,7 @@ struct AuthView: View {
                             } else {
                                 Image(systemName: "key.fill")
                             }
-                            Text(appState.isLoading ? "Авторизация..." : "Войти")
+                            Text(appState.isLoading ? String(localized: "auth.authenticating") : String(localized: "auth.button"))
                         }
                         .frame(maxWidth: .infinity)
                     }

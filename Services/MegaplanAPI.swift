@@ -1,17 +1,33 @@
 import Foundation
 
-final class MegaplanAPI {
+protocol AuthenticationService {
+    func authenticate(login: String, password: String) async throws -> String
+    func validateToken(token: String) async throws -> (isValid: Bool, firstName: String?, unreadCount: Int?, possibleActions: [String]?)
+}
+
+protocol NotificationService {
+    func fetchNotifications(token: String) async throws -> [MegaplanNotification]
+    func fetchUnreadCount(token: String) async throws -> Int
+    func markAsRead(id: String, token: String) async throws
+}
+
+final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
     private var baseURL: URL?
-    private let session: URLSession
+    private lazy var session: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForResource = 60
+        return URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
+    }()
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
 
-    init(session: URLSession = .shared) {
-        self.session = session
+    override init() {
         self.decoder = JSONDecoder()
         self.decoder.keyDecodingStrategy = .convertFromSnakeCase
         self.encoder = JSONEncoder()
         self.encoder.keyEncodingStrategy = .convertToSnakeCase
+        super.init()
     }
 
     func updateDomain(_ domain: String) {
@@ -57,7 +73,7 @@ final class MegaplanAPI {
         return token
     }
 
-    func validateToken(token: String) async throws -> (isValid: Bool, firstName: String?, unreadCount: Int?) {
+    func validateToken(token: String) async throws -> (isValid: Bool, firstName: String?, unreadCount: Int?, possibleActions: [String]?) {
         let request = try makeRequest(
             path: "/api/v3/currentUser",
             method: "GET",
@@ -73,12 +89,22 @@ final class MegaplanAPI {
                let dataDict = json["data"] as? [String: Any] {
                 let firstName = dataDict["firstName"] as? String
                 let unreadCount = dataDict["notificationsUnreadCount"] as? Int
-                return (true, firstName, unreadCount)
+                
+                // Extract possibleActions array
+                var possibleActions: [String]? = nil
+                if let actions = dataDict["possibleActions"] as? [String] {
+                    possibleActions = actions
+                } else if let actions = dataDict["possibleActions"] as? [Any] {
+                    // Handle case where actions might be objects or other types
+                    possibleActions = actions.compactMap { $0 as? String }
+                }
+                
+                return (true, firstName, unreadCount, possibleActions)
             }
             
-            return (true, nil, nil)
+            return (true, nil, nil, nil)
         } catch NetworkError.unauthorized {
-            return (false, nil, nil)
+            return (false, nil, nil, nil)
         }
     }
 
@@ -96,10 +122,141 @@ final class MegaplanAPI {
             
             let envelope = try decoder.decode(NotificationsEnvelope.self, from: data)
             AppLogger.debug("Parsed \(envelope.items.count) notifications")
-            return envelope.items.map { $0.domainModel }
+            
+            let notifications = envelope.items.map { $0.domainModel }
+            
+            // Extract and cache user info from notifications
+            let userInfoMap = extractUserInfoFromNotifications(data: data)
+            await cacheUserInfoFromNotifications(userInfoMap: userInfoMap, notifications: notifications)
+            
+            return notifications
         } catch {
             AppLogger.error("Failed to fetch notifications: \(error.localizedDescription)")
             throw NetworkError(error)
+        }
+    }
+    
+    // MARK: - User Info Extraction and Caching
+    
+    private func extractUserInfoFromNotifications(data: Data) -> [String: (name: String?, avatarURL: URL?)] {
+        var userInfoMap: [String: (name: String?, avatarURL: URL?)] = [:]
+        
+        // Extract user info from all notifications (including from subject fields)
+        // We need to parse the raw JSON to extract user info from nested fields
+        guard let jsonData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let dataArray = jsonData["data"] as? [[String: Any]] else {
+            return userInfoMap
+        }
+        
+        for notificationDict in dataArray {
+            // Extract from sender
+            if let sender = notificationDict["sender"] as? [String: Any],
+               let senderId = sender["id"] as? String {
+                extractAndStoreUserInfo(from: sender, userId: senderId, into: &userInfoMap, source: "sender")
+            }
+            
+            // Extract from subject (can be Task, Deal, or Comment)
+            if let subject = notificationDict["subject"] as? [String: Any] {
+                extractUserInfoFromSubject(subject, into: &userInfoMap)
+            }
+        }
+        
+        return userInfoMap
+    }
+    
+    private func extractAndStoreUserInfo(from dict: [String: Any], userId: String, into userInfoMap: inout [String: (name: String?, avatarURL: URL?)], source: String) {
+        let name = NotificationParser.extractName(from: dict)
+        let avatarURL = NotificationParser.extractAvatarURL(from: dict)
+        
+        if let name = name, let avatarURL = avatarURL {
+            if userInfoMap[userId] == nil || userInfoMap[userId]?.avatarURL == nil {
+                userInfoMap[userId] = (name, avatarURL)
+                AppLogger.debug("Extracted user info from \(source) for \(userId) - Name: \(name), Avatar: \(avatarURL.absoluteString)")
+            }
+        }
+    }
+    
+    private func extractUserInfoFromSubject(_ subject: [String: Any], into userInfoMap: inout [String: (name: String?, avatarURL: URL?)]) {
+        let subjectType = subject["contentType"] as? String
+        
+        // Handle Task directly
+        if subjectType == "Task" {
+            if let owner = subject["owner"] as? [String: Any],
+               let ownerId = owner["id"] as? String {
+                extractAndStoreUserInfo(from: owner, userId: ownerId, into: &userInfoMap, source: "subject.task.owner")
+            }
+            
+            if let responsible = subject["responsible"] as? [String: Any],
+               let responsibleId = responsible["id"] as? String {
+                extractAndStoreUserInfo(from: responsible, userId: responsibleId, into: &userInfoMap, source: "subject.task.responsible")
+            }
+        }
+        
+        // Handle Deal directly
+        if subjectType == "Deal",
+           let manager = subject["manager"] as? [String: Any],
+           let managerId = manager["id"] as? String {
+            extractAndStoreUserInfo(from: manager, userId: managerId, into: &userInfoMap, source: "subject.deal.manager")
+        }
+        
+        // Handle Comment -> Task/Deal (nested structure)
+        if subjectType == "Comment",
+           let nestedSubject = subject["subject"] as? [String: Any] {
+            let nestedSubjectType = nestedSubject["contentType"] as? String
+            
+            // Comment -> Task -> owner/responsible
+            if nestedSubjectType == "Task" {
+                if let owner = nestedSubject["owner"] as? [String: Any],
+                   let ownerId = owner["id"] as? String {
+                    extractAndStoreUserInfo(from: owner, userId: ownerId, into: &userInfoMap, source: "subject.comment.task.owner")
+                }
+                
+                if let responsible = nestedSubject["responsible"] as? [String: Any],
+                   let responsibleId = responsible["id"] as? String {
+                    extractAndStoreUserInfo(from: responsible, userId: responsibleId, into: &userInfoMap, source: "subject.comment.task.responsible")
+                }
+            }
+            
+            // Comment -> Deal -> manager
+            if nestedSubjectType == "Deal",
+               let manager = nestedSubject["manager"] as? [String: Any],
+               let managerId = manager["id"] as? String {
+                extractAndStoreUserInfo(from: manager, userId: managerId, into: &userInfoMap, source: "subject.comment.deal.manager")
+            }
+        }
+    }
+    
+    private func cacheUserInfoFromNotifications(userInfoMap: [String: (name: String?, avatarURL: URL?)], notifications: [MegaplanNotification]) async {
+        // Cache all collected user info from JSON parsing
+        for (userId, info) in userInfoMap {
+            if let name = info.name, let avatarURL = info.avatarURL {
+                await UserInfoCache.shared.cacheUserInfo(
+                    userId: userId,
+                    name: name,
+                    avatarURL: avatarURL
+                )
+                AppLogger.debug("Cached user info for \(userId) from notification parsing (with avatar) - Name: \(name), Avatar: \(avatarURL.absoluteString)")
+            }
+        }
+        
+        // Also cache from parsed notifications (for backward compatibility)
+        for notification in notifications {
+            if let senderId = notification.senderId {
+                if let senderName = notification.senderName,
+                   let senderAvatarURL = notification.senderAvatarURL {
+                    // Only cache if not already cached
+                    if await UserInfoCache.shared.getUserInfo(for: senderId) == nil {
+                        await UserInfoCache.shared.cacheUserInfo(
+                            userId: senderId,
+                            name: senderName,
+                            avatarURL: senderAvatarURL
+                        )
+                        AppLogger.debug("Cached user info for \(senderId) from notification parsing (with avatar) - Name: \(senderName), Avatar: \(senderAvatarURL.absoluteString)")
+                    }
+                } else {
+                    AppLogger.debug("Skipping cache for \(senderId) - missing data: name=\(notification.senderName ?? "nil"), avatar=\(notification.senderAvatarURL?.absoluteString ?? "nil")")
+                }
+            }
         }
     }
 
@@ -188,24 +345,35 @@ final class MegaplanAPI {
             body: request.httpBody
         )
         
-        let (data, response) = try await session.data(for: request)
-        
-        // Log the response
-        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-        APILogger.logResponse(statusCode: statusCode, error: nil, data: data)
+        do {
+            let (data, response) = try await session.data(for: request)
+            
+            // Log the response
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+            APILogger.logResponse(statusCode: statusCode, error: nil, data: data)
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.server(message: String(localized: "error.invalidResponse"))
-        }
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw NetworkError.server(message: String(localized: "error.invalidResponse"))
+            }
 
-        switch httpResponse.statusCode {
-        case 200 ..< 300:
-            return data
-        case 401:
-            throw NetworkError.unauthorized
-        default:
-            let serverMessage = String(data: data, encoding: .utf8) ?? HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)
-            throw NetworkError.server(message: serverMessage)
+            switch httpResponse.statusCode {
+            case 200 ..< 300:
+                return data
+            case 401:
+                throw NetworkError.unauthorized
+            default:
+                let serverMessage = String(data: data, encoding: .utf8) ?? HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)
+                throw NetworkError.server(message: serverMessage)
+            }
+        } catch let urlError as URLError {
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost:
+                throw NetworkError.transport(message: String(localized: "error.noInternet"))
+            case .timedOut:
+                throw NetworkError.transport(message: String(localized: "error.timeout"))
+            default:
+                throw NetworkError.transport(message: urlError.localizedDescription)
+            }
         }
     }
 
@@ -234,6 +402,20 @@ final class MegaplanAPI {
         }
 
         return URL(string: "https://\(trimmed)")
+    }
+}
+
+// MARK: - URLSessionDelegate
+
+extension MegaplanAPI: URLSessionDelegate {
+    func urlSession(
+        _ session: URLSession,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        // TODO: Implement certificate pinning for production
+        // For now, use default handling
+        completionHandler(.performDefaultHandling, nil)
     }
 }
 
@@ -340,6 +522,9 @@ private struct NotificationDTO: Decodable {
     let unreadCommentsCount: Int
     let size: Int
     let type: String?
+    let senderName: String?
+    let senderAvatarURL: URL?
+    let senderId: String?
 
     var domainModel: MegaplanNotification {
         MegaplanNotification(
@@ -352,7 +537,10 @@ private struct NotificationDTO: Decodable {
             isMention: isMention,
             unreadCommentsCount: unreadCommentsCount,
             size: size,
-            type: type
+            type: type,
+            senderName: senderName,
+            senderAvatarURL: senderAvatarURL,
+            senderId: senderId
         )
     }
 
@@ -454,7 +642,7 @@ private struct NotificationDTO: Decodable {
             self.body = ""
         } else {
             // Normal notifications with subject - apply fallback for title
-            if parsedTitle == nil || parsedTitle!.isEmpty {
+            if parsedTitle?.isEmpty ?? true {
                 let fallbackTitle = try container.decodeFlexibleString(keys: ["type", "title", "name", "header"], defaultValue: String(localized: "notifications.untitled"))
                 parsedTitle = HTMLCleaner.fullClean(fallbackTitle)
             }
@@ -527,6 +715,32 @@ private struct NotificationDTO: Decodable {
         // Parse type
         self.type = try? container.decodeFlexibleString(keys: ["type"], defaultValue: nil)
         
+        // Parse sender name and avatar using NotificationParser
+        let senderInfo = NotificationParser.parseSenderInfo(from: container)
+        var parsedSenderName = senderInfo.name
+        var parsedAvatarURL = senderInfo.avatarURL
+        var parsedSenderId = senderInfo.id
+        
+        // Fallback: extract sender name from content if still missing
+        if parsedSenderName == nil,
+           let content = try? container.decodeFlexibleString(keys: ["content"], defaultValue: nil),
+           !content.isEmpty {
+            parsedSenderName = NotificationParser.extractSenderNameFromContent(content)
+            
+            if parsedSenderName != nil {
+                AppLogger.debug("Used content fallback for sender name")
+            }
+        }
+        
+        self.senderName = parsedSenderName
+        self.senderAvatarURL = parsedAvatarURL
+        self.senderId = parsedSenderId
+        
+        // Debug logging for sender info parsing
+        if parsedSenderName != nil || parsedAvatarURL != nil || parsedSenderId != nil {
+            AppLogger.debug("Final sender info - Name: \(parsedSenderName ?? "nil"), ID: \(parsedSenderId ?? "nil"), Avatar: \(parsedAvatarURL?.absoluteString ?? "nil")")
+        }
+        
         // Parse time from nested structure
         if let timeKey = DynamicCodingKey(stringValue: "time"),
            let timeContainer = try? container.nestedContainer(keyedBy: DynamicCodingKey.self, forKey: timeKey),
@@ -542,7 +756,7 @@ private struct NotificationDTO: Decodable {
 
 // MARK: - Dynamic decoding helpers
 
-private struct DynamicCodingKey: CodingKey {
+struct DynamicCodingKey: CodingKey {
     let stringValue: String
     let intValue: Int?
 
@@ -557,7 +771,7 @@ private struct DynamicCodingKey: CodingKey {
     }
 }
 
-private extension KeyedDecodingContainer where Key == DynamicCodingKey {
+extension KeyedDecodingContainer where Key == DynamicCodingKey {
     func decodeFlexibleString(keys: [String], defaultValue: String? = nil) throws -> String {
         for name in keys {
             guard let key = DynamicCodingKey(stringValue: name) else { continue }
@@ -676,6 +890,20 @@ private enum DateParser {
         formatter.formatOptions = [.withInternetDateTime]
         return formatter
     }()
+    
+    private static let noTimezoneFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        return formatter
+    }()
+    
+    private static let dateOnlyFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
 
     private static let standardFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -685,19 +913,34 @@ private enum DateParser {
     }()
 
     static func parse(_ value: String) -> Date? {
+        // Try ISO formatters first
         if let date = isoFormatter.date(from: value) {
             return date
         }
-
+        
         if let date = shortISOFormatter.date(from: value) {
             return date
         }
-
+        
+        // Try custom formatters
+        if let date = noTimezoneFormatter.date(from: value) {
+            return date
+        }
+        
+        if let date = dateOnlyFormatter.date(from: value) {
+            return date
+        }
+        
+        if let date = standardFormatter.date(from: value) {
+            return date
+        }
+        
+        // Try timestamp
         if let timeInterval = TimeInterval(value) {
             return Date(timeIntervalSince1970: timeInterval)
         }
-
-        return standardFormatter.date(from: value)
+        
+        return nil
     }
 }
 

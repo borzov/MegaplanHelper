@@ -4,6 +4,7 @@ import AppKit
 class SettingsWindowManager: ObservableObject {
     static let shared = SettingsWindowManager()
     private var settingsWindow: NSWindow?
+    private var windowObserver: NSObjectProtocol?
     
     private init() {}
     
@@ -22,7 +23,7 @@ class SettingsWindowManager: ObservableObject {
         let hostingController = NSHostingController(rootView: settingsView)
         
         let window = NSWindow(contentViewController: hostingController)
-        window.title = "Настройки"
+        window.title = String(localized: "settings.title")
         window.styleMask = [.titled, .closable]
         window.level = .normal
         window.isReleasedWhenClosed = false
@@ -40,12 +41,12 @@ class SettingsWindowManager: ObservableObject {
         }
         
         // Handle window close to clean up
-        NotificationCenter.default.addObserver(
+        windowObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
             object: window,
             queue: .main
         ) { [weak self] _ in
-            self?.settingsWindow = nil
+            self?.cleanup()
         }
         
         self.settingsWindow = window
@@ -61,6 +62,14 @@ class SettingsWindowManager: ObservableObject {
     
     func closeSettings() {
         settingsWindow?.close()
+        cleanup()
+    }
+    
+    private func cleanup() {
+        if let observer = windowObserver {
+            NotificationCenter.default.removeObserver(observer)
+            windowObserver = nil
+        }
         settingsWindow = nil
     }
 }

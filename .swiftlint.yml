@@ -1,0 +1,70 @@
+# SwiftLint Configuration for MegaplanMenuBarApp
+
+# Paths to exclude from linting
+excluded:
+  - Pods
+  - .build
+  - DerivedData
+  - MegaplanHepler.xcodeproj
+
+# Disabled rules
+disabled_rules:
+  - trailing_whitespace
+  - todo
+  - line_length
+
+# Opt-in rules
+opt_in_rules:
+  - empty_count
+  - closure_spacing
+  - explicit_init
+  - first_where
+  - sorted_imports
+  - vertical_whitespace_closing_braces
+  - vertical_whitespace_opening_braces
+
+# Rule configurations
+line_length:
+  warning: 120
+  error: 150
+  ignores_comments: true
+
+file_length:
+  warning: 500
+  error: 1000
+
+type_body_length:
+  warning: 300
+  error: 500
+
+function_body_length:
+  warning: 50
+  error: 100
+
+cyclomatic_complexity:
+  warning: 10
+  error: 20
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  max_length:
+    warning: 50
+    error: 60
+  excluded:
+    - id
+    - url
+    - URL
+
+# Custom rules
+custom_rules:
+  no_print:
+    name: "No Print Statements"
+    regex: "print\\("
+    message: "Use AppLogger instead of print()"
+    severity: warning
+
+
+
+

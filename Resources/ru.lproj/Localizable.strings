@@ -7,6 +7,7 @@
 "notifications.open" = "Открыть";
 "notifications.markRead" = "Отметить прочитанным";
 "notifications.untitled" = "Уведомление";
+"notifications.greeting" = "%@, у вас %lld непрочитанных уведомлений:";
 
 "auth.title" = "Вход в Мегаплан";
 "auth.domain" = "Домен";
@@ -16,17 +17,39 @@
 "auth.password" = "Пароль";
 "auth.password.placeholder" = "••••••••";
 "auth.button" = "Войти";
+"auth.authenticating" = "Авторизация...";
+"auth.description" = "Для продолжения работы приложения необходимо авторизоваться, используя свою учетную запись в Мегаплане";
 
+"settings.title" = "Настройки";
 "settings.account" = "Аккаунт";
 "settings.preferences" = "Настройки";
+"settings.domainDescription" = "Укажите актуальный адрес вашего сервера Мегаплана";
+"settings.loginDescription" = "Email адрес для входа в систему";
+"settings.passwordDescription" = "Пароль от вашего аккаунта";
+"settings.refreshInterval" = "Интервал обновления";
+"settings.interval30" = "30 секунд";
+"settings.interval60" = "1 минута";
+"settings.interval120" = "2 минуты";
+"settings.interval300" = "5 минут";
+"settings.interval600" = "10 минут";
 "settings.intervalFormat" = "%d сек.";
 "settings.autoLaunch" = "Запускать при старте системы";
+"settings.autoLaunchDescription" = "Запускать приложение при входе в систему";
 "settings.logout" = "Выход";
+"settings.logoutAlertTitle" = "Выйти из аккаунта?";
+"settings.logoutAlertMessage" = "Вы уверены, что хотите выйти из аккаунта?";
 "settings.authenticated" = "Выполнен вход";
 "settings.notAuthenticated" = "Не авторизовано";
+"settings.version" = "Версия %@ (Build %@)";
+
+"notifications.comments" = "%d %@";
+"notifications.comment.one" = "комментарий";
+"notifications.comment.few" = "комментария";
+"notifications.comment.many" = "комментариев";
 
 "error.title" = "Ошибка";
 "general.ok" = "OK";
+"general.cancel" = "Отмена";
 "error.invalidURL" = "Адрес сервера введен некорректно.";
 "error.unauthorized" = "Сессия истекла. Выполните вход снова.";
 "error.decoding" = "Не удалось обработать ответ сервера.";
@@ -37,3 +60,6 @@
 "error.autoLaunch" = "Не удалось обновить автозапуск.";
 "error.sessionExpired" = "Сессия истекла. Авторизуйтесь заново.";
 "error.invalidResponse" = "Некорректный ответ сервера.";
+"error.noInternet" = "Нет подключения к интернету";
+"error.timeout" = "Превышено время ожидания";
+"error.tooManyAttempts" = "Слишком много попыток входа. Пожалуйста, подождите минуту.";

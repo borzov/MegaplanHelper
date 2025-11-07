@@ -29,6 +29,27 @@ enum Constants {
     }
 
     static let loginItemIdentifier = "com.ruvents.MegaplanMenuBarApp.LoginItem"
+    
+    /// Набор прав доступа, наличие хотя бы одного из которых указывает на роль администратора
+    enum AdminPermissions {
+        static let permissions: Set<String> = [
+            "settings_setting_employees_rights",
+            "settings_setting_system",
+            "can_edit_employees_settings",
+            "project_admin",
+            "can_install_application"
+        ]
+        
+        /// Проверяет, является ли пользователь администратором на основе списка прав
+        /// - Parameter userPermissions: Массив прав пользователя из `possibleActions`
+        /// - Returns: `true`, если пользователь имеет хотя бы одно административное право
+        static func isAdministrator(_ userPermissions: [String]?) -> Bool {
+            guard let userPermissions = userPermissions else {
+                return false
+            }
+            return userPermissions.contains { permissions.contains($0) }
+        }
+    }
 }
 
 enum AppLogger {
@@ -53,6 +74,11 @@ enum AppLogger {
     static func error(_ message: String) {
         logger.error("\(message, privacy: .public)")
         writeToFile(level: "ERROR", message: message)
+    }
+    
+    static func warning(_ message: String) {
+        logger.warning("\(message, privacy: .public)")
+        writeToFile(level: "WARNING", message: message)
     }
 
     private static func writeToFile(level: String, message: String) {

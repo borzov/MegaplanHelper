@@ -9,11 +9,7 @@ final class AppState: ObservableObject {
     @Published var unreadCount: Int = 0
     @Published var firstName: String = ""
     @Published var apiUnreadCount: Int = 0
-    
-    /// Количество непрочитанных уведомлений для отображения в бейдже
-    var unreadNotificationsCount: Int {
-        notifications.filter { !$0.isRead }.count
-    }
+    @Published var isAdmin: Bool = false
     @Published var isAuthenticated: Bool = false
     @Published var isLoading: Bool = false
     @Published var alertItem: AlertItem?
@@ -23,14 +19,23 @@ final class AppState: ObservableObject {
     @Published var autoLaunchEnabled: Bool
     @Published var tempCredentials: MegaplanCredentials
 
-    private let api = MegaplanAPI()
+    let api: AuthenticationService & NotificationService
     private let keychain = KeychainManager()
     private let userDefaults: UserDefaults
-    private var refreshTimer: AnyCancellable?
+    private var refreshTimerTask: Task<Void, Never>?
+    private var refreshTask: Task<Void, Never>?
     private var accessToken: String?
-    private var cachedPassword: String?
+    private var cachedPasswordData: Data?
+    private var lastRefreshTime: Date?
+    private let minimumRefreshInterval: TimeInterval = 5.0
+    private var failedLoginAttempts = 0
+    private var lastFailedLoginTime: Date?
 
-    init(userDefaults: UserDefaults = .standard) {
+    init(
+        api: AuthenticationService & NotificationService = MegaplanAPI(),
+        userDefaults: UserDefaults = .standard
+    ) {
+        self.api = api
         self.userDefaults = userDefaults
         let domainValue = userDefaults.string(forKey: Constants.UserDefaultsKeys.domain) ?? ""
         let usernameValue = userDefaults.string(forKey: Constants.UserDefaultsKeys.username) ?? ""
@@ -53,7 +58,7 @@ final class AppState: ObservableObject {
         
         // Set domain in API if available
         if !self.domain.isEmpty {
-            api.updateDomain(self.domain)
+            (api as? MegaplanAPI)?.updateDomain(self.domain)
         }
         
         // Update unreadCount from API counter
@@ -66,26 +71,61 @@ final class AppState: ObservableObject {
     }
 
     func signIn(domain: String, login: String, password: String) async {
+        // Check for brute force protection
+        if failedLoginAttempts >= 3,
+           let lastTime = lastFailedLoginTime,
+           Date().timeIntervalSince(lastTime) < 60 {
+            presentError(.tooManyAttempts)
+            return
+        }
+        
         isLoading = true
         defer { isLoading = false }
 
         let trimmedDomain = domain.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedLogin = login.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !trimmedDomain.isEmpty, !trimmedLogin.isEmpty, !password.isEmpty else {
+        guard !trimmedDomain.isEmpty, 
+              isValidEmail(trimmedLogin), 
+              !password.isEmpty else {
             presentError(.validationFailed)
             return
         }
 
-        api.updateDomain(trimmedDomain)
+        (api as? MegaplanAPI)?.updateDomain(trimmedDomain)
         do {
             let token = try await api.authenticate(login: trimmedLogin, password: password)
             try persistCredentials(domain: trimmedDomain, login: trimmedLogin, password: password, token: token)
             isAuthenticated = true
-            AppLogger.info("Authentication succeeded for \(trimmedLogin)")
+            
+            // Validate token and check admin permissions
+            do {
+                let result = try await api.validateToken(token: token)
+                if let firstName = result.firstName {
+                    self.firstName = firstName
+                }
+                if let unreadCount = result.unreadCount {
+                    self.apiUnreadCount = unreadCount
+                }
+                // Check admin permissions
+                self.isAdmin = Constants.AdminPermissions.isAdministrator(result.possibleActions)
+                AppLogger.info("Authentication succeeded for \(trimmedLogin). Admin: \(isAdmin)")
+            } catch {
+                AppLogger.warning("Failed to validate token after authentication: \(error.localizedDescription)")
+                // Continue anyway, admin check will happen on next token validation
+            }
+            
+            // Reset failed attempts on success
+            failedLoginAttempts = 0
+            lastFailedLoginTime = nil
+            
             startRefreshTimer()
             await refresh()
         } catch {
+            // Increment failed attempts
+            failedLoginAttempts += 1
+            lastFailedLoginTime = Date()
+            
             AppLogger.error("Authentication failed: \(error.localizedDescription)")
             presentError(NetworkError(error))
         }
@@ -96,17 +136,20 @@ final class AppState: ObservableObject {
         let currentDomain = domain
 
         accessToken = nil
-        
-        // Securely clear cached password from memory
-        if var password = cachedPassword {
-            password.removeAll()
-        }
-        cachedPassword = nil
+        clearCachedPassword()
         
         isAuthenticated = false
         notifications = []
         unreadCount = 0
+        isAdmin = false
+        firstName = ""
         stopRefreshTimer()
+        
+        // Clear user info cache
+        Task {
+            await UserInfoCache.shared.clearCache()
+            AppLogger.debug("Cleared user info cache")
+        }
 
         do {
             try keychain.delete(service: Constants.Keychain.service, account: Constants.Keychain.tokenAccount)
@@ -129,7 +172,15 @@ final class AppState: ObservableObject {
     }
 
     func refreshNow() {
-        Task {
+        if let lastTime = lastRefreshTime,
+           Date().timeIntervalSince(lastTime) < minimumRefreshInterval {
+            AppLogger.debug("Refresh throttled - too soon since last refresh")
+            return
+        }
+        
+        lastRefreshTime = Date()
+        refreshTask?.cancel()
+        refreshTask = Task {
             await refresh()
         }
     }
@@ -172,14 +223,29 @@ final class AppState: ObservableObject {
             presentError(.missingToken)
             return
         }
-
+        
+        // Save notification for potential rollback
+        let notificationCopy = notification
         Task {
+            // Optimistic UI update
+            await MainActor.run {
+                withAnimation {
+                    notifications.removeAll { $0.id == notification.id }
+                    unreadCount = max(unreadCount - 1, 0)
+                }
+            }
+            
             do {
                 try await api.markAsRead(id: notification.id, token: token)
-                notifications.removeAll { $0.id == notification.id }
-                unreadCount = max(unreadCount - 1, 0)
                 AppLogger.debug("Notification \(notification.id) marked as read")
             } catch {
+                // Rollback on error
+                await MainActor.run {
+                    withAnimation {
+                        notifications.insert(notificationCopy, at: 0)
+                        unreadCount += 1
+                    }
+                }
                 AppLogger.error("Failed to mark notification as read: \(error.localizedDescription)")
                 presentError(NetworkError(error))
             }
@@ -192,14 +258,16 @@ final class AppState: ObservableObject {
             return
         }
 
-        api.updateDomain(domain)
+        (api as? MegaplanAPI)?.updateDomain(domain)
         do {
             if let token = try keychain.read(service: Constants.Keychain.service, account: Constants.Keychain.tokenAccount) {
                 accessToken = token
             }
             if !username.isEmpty {
                 let account = Constants.Keychain.passwordAccount(for: username, domain: domain)
-                cachedPassword = try? keychain.read(service: Constants.Keychain.service, account: account)
+                if let passwordString = try? keychain.read(service: Constants.Keychain.service, account: account) {
+                    cachedPasswordData = passwordString.data(using: .utf8)
+                }
             }
         } catch {
             AppLogger.error("Failed to read credentials from keychain: \(error.localizedDescription)")
@@ -220,10 +288,13 @@ final class AppState: ObservableObject {
                 if let unreadCount = result.unreadCount {
                     self.apiUnreadCount = unreadCount
                 }
-                AppLogger.info("Token validation succeeded, restoring session")
+                // Check admin permissions
+                self.isAdmin = Constants.AdminPermissions.isAdministrator(result.possibleActions)
+                AppLogger.info("Token validation succeeded, restoring session. Admin: \(isAdmin)")
                 startRefreshTimer()
                 await refresh()
-            } else if let password = cachedPassword {
+            } else if let passwordData = cachedPasswordData,
+                      let password = String(data: passwordData, encoding: .utf8) {
                 AppLogger.debug("Token invalid, attempting re-authentication")
                 await signIn(domain: domain, login: username, password: password)
             } else {
@@ -232,7 +303,8 @@ final class AppState: ObservableObject {
             }
         } catch NetworkError.unauthorized {
             AppLogger.debug("Token unauthorized, attempting re-authentication")
-            if let password = cachedPassword {
+            if let passwordData = cachedPasswordData,
+               let password = String(data: passwordData, encoding: .utf8) {
                 await signIn(domain: domain, login: username, password: password)
             } else {
                 logout()
@@ -243,7 +315,8 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func refresh() async {
+    func refresh() async {
+        guard !Task.isCancelled else { return }
         guard let token = accessToken else {
             AppLogger.debug("Refresh called but no access token")
             return
@@ -277,25 +350,34 @@ final class AppState: ObservableObject {
     }
 
     private func startRefreshTimer() {
-        refreshTimer?.cancel()
+        refreshTimerTask?.cancel()
         guard isAuthenticated else { return }
-
-        refreshTimer = Timer.publish(every: refreshInterval, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                guard let self else { return }
-                Task { await self.refresh() }
+        
+        refreshTimerTask = Task { @MainActor in
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(nanoseconds: UInt64(refreshInterval * 1_000_000_000))
+                } catch {
+                    // Task was cancelled
+                    break
+                }
+                
+                guard !Task.isCancelled else { break }
+                await refresh()
             }
+        }
     }
 
     private func stopRefreshTimer() {
-        refreshTimer?.cancel()
-        refreshTimer = nil
+        refreshTimerTask?.cancel()
+        refreshTimerTask = nil
+        refreshTask?.cancel()
+        refreshTask = nil
     }
 
     private func persistCredentials(domain: String, login: String, password: String, token: String) throws {
         accessToken = token
-        cachedPassword = password
+        cachedPasswordData = password.data(using: .utf8)
 
         username = login
         self.domain = domain
@@ -307,9 +389,22 @@ final class AppState: ObservableObject {
         let account = Constants.Keychain.passwordAccount(for: login, domain: domain)
         try keychain.save(password, service: Constants.Keychain.service, account: account)
     }
+    
+    private func clearCachedPassword() {
+        if var data = cachedPasswordData {
+            data.resetBytes(in: 0..<data.count)
+        }
+        cachedPasswordData = nil
+    }
 
     private func presentError(_ error: NetworkError) {
         alertItem = AlertItem(message: error.localizedDescription)
+    }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
     }
 }
 

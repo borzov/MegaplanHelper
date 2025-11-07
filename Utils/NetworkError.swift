@@ -10,6 +10,7 @@ enum NetworkError: LocalizedError, Identifiable {
     case validationFailed
     case autoLaunchFailure
     case sessionExpired
+    case tooManyAttempts
 
     var id: String {
         switch self {
@@ -22,6 +23,7 @@ enum NetworkError: LocalizedError, Identifiable {
         case .validationFailed: return "validationFailed"
         case .autoLaunchFailure: return "autoLaunchFailure"
         case .sessionExpired: return "sessionExpired"
+        case .tooManyAttempts: return "tooManyAttempts"
         }
     }
 
@@ -45,6 +47,8 @@ enum NetworkError: LocalizedError, Identifiable {
             return String(localized: "error.autoLaunch")
         case .sessionExpired:
             return String(localized: "error.sessionExpired")
+        case .tooManyAttempts:
+            return String(localized: "error.tooManyAttempts")
         }
     }
 

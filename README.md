@@ -88,25 +88,72 @@ HTTP клиент для работы с API Мегаплана:
 
 ### Сборка проекта
 
-1. Клонируйте репозиторий:
+#### Вариант 1: Универсальная сборка через скрипт (рекомендуется)
+
+Для создания универсальной сборки, которая будет работать на любом Mac без Xcode:
+
 ```bash
-git clone <repository-url>
-cd MegaplanMenuBarApp
+./build-universal.sh
 ```
 
-2. Откройте проект в Xcode:
+Скрипт создаст универсальный бинарник (arm64 + x86_64) в папке `build/export/`. Приложение будет готово к распространению.
+
+#### Вариант 2: Сборка через Xcode
+
+1. Откройте проект в Xcode:
 ```bash
 open MegaplanHepler.xcodeproj
 ```
 
-3. Выберите схему сборки:
-   - Для универсального бинарника: **Release** → **Any Mac (arm64, x86_64)**
-   - Для текущей архитектуры: **Debug** → ваш Mac
+2. Выберите схему сборки:
+   - Для универсального бинарника: **Product → Archive** (создаст универсальную сборку)
+   - Для текущей архитектуры: **Product → Build** (Cmd+B)
 
-4. Скомпилируйте:
+3. **Настройте подпись (важно!):**
+   
+   **Для распространения без App Store:**
+   - Откройте проект → Выберите таргет → "Signing & Capabilities"
+   - **Отключите** "Automatically manage signing" (Personal Team не работает для Distribution)
+   - Или оставьте включенным, но при экспорте выберите "Sign to Run Locally"
+
+4. **Создайте дистрибутив:**
+   - После Archive: **Window → Organizer → Distribute App**
+   - Выберите **"Custom"** или **"Direct Distribution"**
+   - На следующем шаге выберите **"Export"** (не "Upload")
+   - На шаге настройки подписи:
+     - **НЕ выбирайте команду** или выберите **"None"**
+     - Выберите **"Sign to Run Locally"** (ad-hoc подпись) или **"Don't Sign"**
+   - Нажмите **"Export"** и выберите папку для сохранения
+   
+   **Или используйте скрипт** (рекомендуется, работает без команды):
+   ```bash
+   ./build-universal.sh
+   ```
+
+#### Вариант 3: Командная строка (xcodebuild)
+
 ```bash
-Product → Build (Cmd+B)
+# Создание Archive
+xcodebuild archive \
+    -project MegaplanHepler.xcodeproj \
+    -scheme MegaplanHepler \
+    -configuration Release \
+    -archivePath build/MegaplanHepler.xcarchive \
+    -destination "generic/platform=macOS"
+
+# Экспорт приложения
+xcodebuild -exportArchive \
+    -archivePath build/MegaplanHepler.xcarchive \
+    -exportPath build/export \
+    -exportOptionsPlist exportOptions.plist
 ```
+
+### Важно для распространения
+
+- ✅ Используйте **Release** конфигурацию (не Debug)
+- ✅ Используйте **Archive** вместо обычной сборки
+- ✅ Убедитесь, что включен **BUILD_LIBRARY_FOR_DISTRIBUTION = YES**
+- ✅ Приложение должно быть подписано (Code Signing)
 
 ## Установка
 
@@ -141,6 +188,27 @@ Product → Build (Cmd+B)
 - **Выход из аккаунта** — сброс всех данных авторизации
 
 ## Changelog
+
+### [1.2] - 2025-11-07
+
+#### Добавлено
+- ✅ Автоматическое обновление номера билда на основе количества коммитов в git
+- ✅ Скрипт для автоматического обновления build number при каждой сборке
+- ✅ Локализация для версии приложения и комментариев
+
+#### Улучшено
+- 🔧 Рефакторинг длинных методов: разбиты `fetchNotifications` и `loadAvatar` на более мелкие методы
+- 🔧 Устранено дублирование кода: вынесена общая логика парсинга пользовательской информации
+- 🌐 Исправлена локализация: заменены все хардкод строки на локализованные ключи
+- 🌐 Использование системной локали вместо хардкода "ru_RU" для форматирования дат
+- 🧹 Удален неиспользуемый код: `unreadNotificationsCount`, `preloadUserInfo`, `AvatarLoadError`, `fetchUserInfo`
+
+#### Технические детали
+- Разбит метод `fetchNotifications` на `extractUserInfoFromNotifications`, `extractAndStoreUserInfo`, `extractUserInfoFromSubject`, `cacheUserInfoFromNotifications`
+- Упрощен метод `loadAvatar` в `NotificationRow`: вынесены методы `loadAvatarFromCache`, `buildFullAvatarURL`, `loadAvatarFromURL`, `extractSenderNameFromContent`
+- Добавлены ключи локализации: `settings.version`, `notifications.comments`, `notifications.comment.one/few/many`
+- Создан скрипт `scripts/update-build-number.sh` для автоматического обновления build number
+- Добавлен Build Phase "Update Build Number" в проект Xcode
 
 ### [1.1] - 2025-10-27
 

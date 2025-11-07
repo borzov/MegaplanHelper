@@ -7,6 +7,7 @@
 "notifications.open" = "Open";
 "notifications.markRead" = "Mark as read";
 "notifications.untitled" = "Notification";
+"notifications.greeting" = "%@, you have %lld unread notifications:";
 
 "auth.title" = "Sign in to Megaplan";
 "auth.domain" = "Domain";
@@ -17,17 +18,38 @@
 "auth.password.placeholder" = "••••••••";
 "auth.button" = "Sign In";
 "auth.authenticating" = "Authenticating...";
+"auth.description" = "To continue using the app, please sign in with your Megaplan account";
 
+"settings.title" = "Settings";
 "settings.account" = "Account";
 "settings.preferences" = "Preferences";
+"settings.domainDescription" = "Specify the actual address of your Megaplan server";
+"settings.loginDescription" = "Email address for signing in";
+"settings.passwordDescription" = "Password for your account";
+"settings.refreshInterval" = "Refresh Interval";
+"settings.interval30" = "30 seconds";
+"settings.interval60" = "1 minute";
+"settings.interval120" = "2 minutes";
+"settings.interval300" = "5 minutes";
+"settings.interval600" = "10 minutes";
 "settings.intervalFormat" = "%d seconds";
 "settings.autoLaunch" = "Launch at login";
+"settings.autoLaunchDescription" = "Launch app on system startup";
 "settings.logout" = "Sign Out";
+"settings.logoutAlertTitle" = "Sign out of account?";
+"settings.logoutAlertMessage" = "Are you sure you want to sign out of your account?";
 "settings.authenticated" = "Signed In";
 "settings.notAuthenticated" = "Not signed in";
+"settings.version" = "Version %@ (Build %@)";
+
+"notifications.comments" = "%d %@";
+"notifications.comment.one" = "comment";
+"notifications.comment.few" = "comments";
+"notifications.comment.many" = "comments";
 
 "error.title" = "Error";
 "general.ok" = "OK";
+"general.cancel" = "Cancel";
 "error.invalidURL" = "The server address looks incorrect.";
 "error.unauthorized" = "Your session has expired. Please sign in again.";
 "error.decoding" = "Failed to parse the server response.";
@@ -38,3 +60,6 @@
 "error.autoLaunch" = "Failed to update login item.";
 "error.sessionExpired" = "Session expired. Please sign in.";
 "error.invalidResponse" = "Invalid server response.";
+"error.noInternet" = "No internet connection";
+"error.timeout" = "Request timeout";
+"error.tooManyAttempts" = "Too many login attempts. Please wait a minute.";

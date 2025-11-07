@@ -36,6 +36,8 @@ private struct MenuBarIconView: View {
     @EnvironmentObject var appState: AppState
     @Binding var showingSettings: Bool
     @State private var menuBarImage: NSImage?
+    
+    private static var cachedMenuBarImage: NSImage?
 
     var body: some View {
         Group {
@@ -89,6 +91,12 @@ private struct MenuBarIconView: View {
     }
     
     private func resizeMenuBarIcon() {
+        // Check cache first
+        if let cached = Self.cachedMenuBarImage {
+            menuBarImage = cached
+            return
+        }
+        
         guard let nsImage = NSImage(named: "MenuBarIcon") else {
             return
         }
@@ -104,7 +112,8 @@ private struct MenuBarIconView: View {
             nsImage.draw(at: .zero, from: .zero, operation: .copy, fraction: 1.0)
             resizedImage.unlockFocus()
             
-            await MainActor.run { [self] in
+            await MainActor.run {
+                Self.cachedMenuBarImage = resizedImage
                 menuBarImage = resizedImage
             }
         }
