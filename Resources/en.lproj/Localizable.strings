@@ -8,6 +8,10 @@
 "notifications.markRead" = "Mark as read";
 "notifications.untitled" = "Notification";
 "notifications.greeting" = "%@, you have %lld unread notifications:";
+"notifications.search" = "Search";
+"notifications.search.placeholder" = "Search notifications...";
+"notifications.search.clear" = "Clear";
+"notifications.search.results" = "Found: %lld";
 
 "auth.title" = "Sign in to Megaplan";
 "auth.domain" = "Domain";

@@ -8,6 +8,10 @@
 "notifications.markRead" = "Отметить прочитанным";
 "notifications.untitled" = "Уведомление";
 "notifications.greeting" = "%@, у вас %lld непрочитанных уведомлений:";
+"notifications.search" = "Поиск";
+"notifications.search.placeholder" = "Поиск уведомлений...";
+"notifications.search.clear" = "Очистить";
+"notifications.search.results" = "Найдено: %lld";
 
 "auth.title" = "Вход в Мегаплан";
 "auth.domain" = "Домен";

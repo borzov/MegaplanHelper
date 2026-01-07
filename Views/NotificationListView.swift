@@ -57,6 +57,27 @@ struct NotificationListView: View {
                     Spacer()
                     
                     Button {
+                        withAnimation {
+                            viewModel.isSearchActive.toggle()
+                            if !viewModel.isSearchActive {
+                                viewModel.clearSearch()
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(viewModel.isSearchActive ? .accentColor : .primary)
+                            .font(.system(size: 14))
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel(Text("notifications.search"))
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(viewModel.isSearchActive ? Color.accentColor.opacity(0.15) : Color.clear)
+                            .frame(width: 24, height: 24)
+                    )
+                    .buttonPressEffect()
+                    
+                    Button {
                         Task {
                             await viewModel.refresh()
                         }
@@ -70,13 +91,20 @@ struct NotificationListView: View {
                     }
                     .buttonStyle(.borderless)
                     .accessibilityLabel(Text("notifications.refresh"))
+                    .buttonPressEffect()
                 }
                 
                 // Персональное приветствие
                 if !appState.firstName.isEmpty {
-                    Text(String(format: String(localized: "notifications.greeting"), appState.firstName, appState.unreadCount))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    if viewModel.isSearchActive && viewModel.searchQuery.count >= 2 {
+                        Text(String(format: String(localized: "notifications.search.results"), viewModel.searchResultsCount))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text(String(format: String(localized: "notifications.greeting"), appState.firstName, appState.unreadCount))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
                 }
             } else {
                 HStack {
@@ -104,6 +132,7 @@ struct NotificationListView: View {
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Copy API Log"))
+                .buttonPressEffect()
                 
                 // Кнопки быстрого доступа
                 Button {
@@ -116,6 +145,7 @@ struct NotificationListView: View {
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Knowledge Base"))
+                .buttonPressEffect()
                 
                 Button {
                     if let url = URL(string: "https://\(appState.domain)/deals/list/") {
@@ -127,6 +157,7 @@ struct NotificationListView: View {
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Deals"))
+                .buttonPressEffect()
                 
                 Button {
                     if let url = URL(string: "https://\(appState.domain)/task/") {
@@ -138,6 +169,7 @@ struct NotificationListView: View {
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Tasks"))
+                .buttonPressEffect()
             }
             
             Spacer()
@@ -150,6 +182,7 @@ struct NotificationListView: View {
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(Text("Settings"))
+            .buttonPressEffect()
             
             Button {
                 NSApplication.shared.terminate(nil)
@@ -159,9 +192,49 @@ struct NotificationListView: View {
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(Text("Quit Application"))
+            .buttonPressEffect()
         }
         .padding(.vertical, 0)
         .padding(.horizontal, 4)
+    }
+
+    private var searchBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.secondary)
+                .font(.system(size: 14))
+            
+            TextField("notifications.search.placeholder", text: $viewModel.searchQuery)
+                .textFieldStyle(.plain)
+                .onSubmit {
+                    if viewModel.searchQuery.isEmpty {
+                        viewModel.clearSearch()
+                    }
+                }
+            
+            if !viewModel.searchQuery.isEmpty {
+                Button {
+                    viewModel.clearSearch()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.secondary)
+                        .font(.system(size: 14))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("notifications.search.clear"))
+                .buttonPressEffect()
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color(.controlBackgroundColor))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color(.separatorColor), lineWidth: 1)
+        )
     }
 
     @ViewBuilder
@@ -177,7 +250,13 @@ struct NotificationListView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
         } else {
-            ScrollView {
+            VStack(spacing: 12) {
+                if viewModel.isSearchActive {
+                    searchBar
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+                
+                ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
                     // Offline banner
                     if appState.isOffline {
@@ -218,6 +297,8 @@ struct NotificationListView: View {
                 await viewModel.refresh()
             }
             .animation(.easeInOut(duration: 0.3), value: viewModel.groupedNotifications.count)
+            }
+            .animation(.easeInOut(duration: 0.2), value: viewModel.isSearchActive)
         }
     }
 }
@@ -702,6 +783,39 @@ private struct NotificationRow: View {
         )
         
         AppLogger.debug("Failed to load fallback avatar for senderId \(senderId) from all endpoints")
+    }
+}
+
+extension View {
+    func buttonPressEffect() -> some View {
+        self.modifier(ButtonPressEffectModifier())
+    }
+}
+
+private struct ButtonPressEffectModifier: ViewModifier {
+    @State private var isPressed = false
+    @State private var isHovered = false
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isPressed ? 0.9 : (isHovered ? 1.05 : 1.0))
+            .opacity(isPressed ? 0.7 : 1.0)
+            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isPressed)
+            .animation(.easeInOut(duration: 0.15), value: isHovered)
+            .onHover { hovering in
+                isHovered = hovering
+            }
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        if !isPressed {
+                            isPressed = true
+                        }
+                    }
+                    .onEnded { _ in
+                        isPressed = false
+                    }
+            )
     }
 }
 
