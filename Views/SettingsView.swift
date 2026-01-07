@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @State private var credentials = MegaplanCredentials.empty
     @State private var refreshIntervalValue: Double = Constants.defaultRefreshInterval
     @State private var autoLaunch: Bool = false
@@ -104,14 +105,14 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.menu)
                 .onChange(of: refreshIntervalValue) { newValue in
-                    appState.updateRefreshInterval(newValue)
+                    settingsViewModel.updateRefreshInterval(newValue)
                 }
                 
                 Toggle(isOn: Binding(
                     get: { autoLaunch },
                     set: { newValue in
                         autoLaunch = newValue
-                        appState.updateAutoLaunch(enabled: newValue)
+                        settingsViewModel.updateAutoLaunch(enabled: newValue)
                     }
                 )) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -123,6 +124,74 @@ struct SettingsView: View {
                 }
             } header: {
                 Text(String(localized: "settings.preferences"))
+            }
+            
+            Section {
+                Toggle(isOn: Binding(
+                    get: { settingsViewModel.notificationsEnabled },
+                    set: { settingsViewModel.updateNotificationsEnabled($0) }
+                )) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(String(localized: "settings.notifications.enabled"))
+                        Text(String(localized: "settings.notifications.enabledDescription"))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Toggle(isOn: Binding(
+                    get: { settingsViewModel.groupingEnabled },
+                    set: { settingsViewModel.updateGroupingEnabled($0) }
+                )) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(String(localized: "settings.notifications.grouping"))
+                        Text(String(localized: "settings.notifications.groupingDescription"))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            } header: {
+                Text(String(localized: "settings.notifications"))
+            }
+            
+            Section {
+                Picker(String(localized: "settings.theme"), selection: Binding(
+                    get: { settingsViewModel.theme },
+                    set: { settingsViewModel.updateTheme($0) }
+                )) {
+                    ForEach(AppTheme.allCases, id: \.self) { theme in
+                        Text(theme.displayName).tag(theme)
+                    }
+                }
+                .pickerStyle(.menu)
+                
+                Picker(String(localized: "settings.fontSize"), selection: Binding(
+                    get: { settingsViewModel.fontSize },
+                    set: { settingsViewModel.updateFontSize($0) }
+                )) {
+                    ForEach(FontSize.allCases, id: \.self) { size in
+                        Text(size.displayName).tag(size)
+                    }
+                }
+                .pickerStyle(.menu)
+            } header: {
+                Text(String(localized: "settings.appearance"))
+            }
+            
+            Section {
+                Toggle(isOn: Binding(
+                    get: { settingsViewModel.showOnlyUnread },
+                    set: { settingsViewModel.updateShowOnlyUnread($0) }
+                )) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(String(localized: "settings.showOnlyUnread"))
+                        Text(String(localized: "settings.showOnlyUnreadDescription"))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            } header: {
+                Text(String(localized: "settings.behavior"))
             }
             
             Section {
@@ -155,8 +224,8 @@ struct SettingsView: View {
     private func syncState() {
         credentials.domain = appState.domain
         credentials.login = appState.username
-        refreshIntervalValue = appState.refreshInterval
-        autoLaunch = appState.autoLaunchEnabled
+        refreshIntervalValue = settingsViewModel.refreshInterval
+        autoLaunch = settingsViewModel.autoLaunchEnabled
     }
 
     private func authenticate() {

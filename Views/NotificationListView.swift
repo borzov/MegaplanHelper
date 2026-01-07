@@ -3,7 +3,10 @@ import SwiftUI
 
 struct NotificationListView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var viewModel: NotificationListViewModel
+    @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @Binding var showingSettings: Bool
+    @State private var showToast = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -32,18 +35,16 @@ struct NotificationListView: View {
         }
         .onAppear {
             if appState.isAuthenticated {
-                appState.refreshNow()
-            }
-        }
-        .onChange(of: showingSettings) { newValue in
-            if newValue {
-                SettingsWindowManager.shared.showSettings(appState: appState)
-                // Reset the binding after a short delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    showingSettings = false
+                Task {
+                    await viewModel.refresh()
                 }
             }
         }
+        .onChange(of: appState.notifications) { _ in
+            // Обновляем ViewModel при изменении уведомлений в AppState
+            viewModel.updateGroupedNotifications()
+        }
+        .toast(isShowing: $showToast, message: String(localized: "toast.markedAsRead"))
     }
 
     private var header: some View {
@@ -56,9 +57,11 @@ struct NotificationListView: View {
                     Spacer()
                     
                     Button {
-                        appState.refreshNow()
+                        Task {
+                            await viewModel.refresh()
+                        }
                     } label: {
-                        if appState.isLoading {
+                        if viewModel.isLoading {
                             ProgressView()
                                 .controlSize(.small)
                         } else {
@@ -97,7 +100,6 @@ struct NotificationListView: View {
                     pasteboard.setString(logContent, forType: .string)
                 } label: {
                     Image(systemName: "doc.on.clipboard")
-                        .foregroundColor(.blue)
                         .font(.system(size: 14))
                 }
                 .buttonStyle(.borderless)
@@ -110,7 +112,6 @@ struct NotificationListView: View {
                     }
                 } label: {
                     Image(systemName: "book.closed")
-                        .foregroundColor(.green)
                         .font(.system(size: 14))
                 }
                 .buttonStyle(.borderless)
@@ -122,7 +123,6 @@ struct NotificationListView: View {
                     }
                 } label: {
                     Image(systemName: "briefcase")
-                        .foregroundColor(.orange)
                         .font(.system(size: 14))
                 }
                 .buttonStyle(.borderless)
@@ -134,7 +134,6 @@ struct NotificationListView: View {
                     }
                 } label: {
                     Image(systemName: "checklist")
-                        .foregroundColor(.purple)
                         .font(.system(size: 14))
                 }
                 .buttonStyle(.borderless)
@@ -144,10 +143,9 @@ struct NotificationListView: View {
             Spacer()
             
             Button {
-                showingSettings = true
+                SettingsWindowManager.shared.showSettings(appState: appState, settingsViewModel: settingsViewModel)
             } label: {
                 Image(systemName: "gearshape")
-                    .foregroundColor(.gray)
                     .font(.system(size: 14))
             }
             .buttonStyle(.borderless)
@@ -157,7 +155,6 @@ struct NotificationListView: View {
                 NSApplication.shared.terminate(nil)
             } label: {
                 Image(systemName: "power")
-                    .foregroundColor(.red)
                     .font(.system(size: 14))
             }
             .buttonStyle(.borderless)
@@ -169,35 +166,57 @@ struct NotificationListView: View {
 
     @ViewBuilder
     private var content: some View {
-        if appState.notifications.isEmpty {
-            if appState.isLoading {
-                VStack(spacing: 12) {
-                    ProgressView()
-                    Text("notifications.loading")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        if viewModel.notifications.isEmpty {
+            if viewModel.isLoading {
+                SkeletonListView(count: 3)
+                    .transition(.opacity)
             } else {
-                Text("notifications.empty")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    .foregroundColor(.secondary)
+                EmptyStateView(onRefresh: {
+                    appState.refreshNow()
+                })
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
         } else {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 8) {
-                    ForEach(appState.notifications) { notification in
-                        NotificationRow(notification: notification, onMarkRead: {
-                            appState.markNotificationAsRead(notification)
-                        })
-                        .transition(.opacity.combined(with: .scale))
+                LazyVStack(alignment: .leading, spacing: 12) {
+                    // Offline banner
+                    if appState.isOffline {
+                        OfflineBannerView(lastSyncTime: appState.lastSyncTime)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+
+                    ForEach(viewModel.groupedNotifications) { group in
+                        if !group.title.isEmpty {
+                            // Заголовок группы
+                            Text(group.title)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
+                                .padding(.horizontal, 4)
+                                .padding(.top, 8)
+                                .padding(.bottom, 4)
+                        }
+                        
+                        ForEach(group.notifications) { notification in
+                            NotificationRow(notification: notification, onMarkRead: {
+                                viewModel.markAsRead(notification)
+                                withAnimation {
+                                    showToast = true
+                                }
+                            })
+                            .transition(.asymmetric(
+                                insertion: .opacity.combined(with: .scale(scale: 0.95)).combined(with: .move(edge: .top)),
+                                removal: .opacity.combined(with: .scale(scale: 0.95))
+                            ))
+                        }
                     }
                 }
                 .padding(.vertical, 2)
             }
             .refreshable {
-                await appState.refresh()
+                await viewModel.refresh()
             }
+            .animation(.easeInOut(duration: 0.3), value: viewModel.groupedNotifications.count)
         }
     }
 }
@@ -211,6 +230,54 @@ private struct NotificationRow: View {
     @State private var isLoadingAvatar = false
     @State private var avatarLoadTask: Task<Void, Never>?
     @State private var cachedSenderName: String?
+    
+    private var cardBackgroundColor: Color {
+        if notification.isMention {
+            return Color.orange.opacity(0.08)
+        } else if notification.isCommentNotification {
+            return Color.blue.opacity(0.05)
+        } else if notification.isStatusChangeNotification {
+            return Color.green.opacity(0.05)
+        } else {
+            return Color(.windowBackgroundColor)
+        }
+    }
+    
+    private var cardBorderColor: Color {
+        if notification.isMention {
+            return Color.orange.opacity(0.3)
+        } else if notification.isCommentNotification {
+            return Color.blue.opacity(0.2)
+        } else if notification.isStatusChangeNotification {
+            return Color.green.opacity(0.2)
+        } else {
+            return Color.clear
+        }
+    }
+    
+    private var categoryIcon: String {
+        if notification.isMention {
+            return "at.circle.fill"
+        } else if notification.isCommentNotification {
+            return "bubble.left.and.bubble.right.fill"
+        } else if notification.isStatusChangeNotification {
+            return "arrow.triangle.2.circlepath.circle.fill"
+        } else {
+            return notification.notificationIcon
+        }
+    }
+    
+    private var categoryColor: Color {
+        if notification.isMention {
+            return .orange
+        } else if notification.isCommentNotification {
+            return .blue
+        } else if notification.isStatusChangeNotification {
+            return .green
+        } else {
+            return .gray
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -243,12 +310,18 @@ private struct NotificationRow: View {
                 .clipShape(Circle())
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    // ФИО
-                    if let senderName = notification.senderName ?? cachedSenderName {
-                        Text(senderName)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primary)
+                    // ФИО с иконкой категории
+                    HStack(spacing: 6) {
+                        Image(systemName: categoryIcon)
+                            .foregroundColor(categoryColor)
+                            .font(.caption2)
+                        
+                        if let senderName = notification.senderName ?? cachedSenderName {
+                            Text(senderName)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
+                        }
                     }
                     
                     // Время под ФИО
@@ -258,30 +331,26 @@ private struct NotificationRow: View {
                             .foregroundColor(.secondary)
                         
                         Spacer()
-                        
-                        if notification.isMention {
-                            Image(systemName: "at")
-                                .foregroundColor(.orange)
-                                .font(.caption)
-                        }
                     }
                 }
             }
             
             // Контент без отступа (выровнен по левому краю)
-            VStack(alignment: .leading, spacing: notification.title.isEmpty ? 0 : 4) {
+            VStack(alignment: .leading, spacing: notification.title.isEmpty ? 0 : 6) {
                 if !notification.title.isEmpty {
                     Text(notification.title)
-                        .font(.headline)
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.primary)
                         .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 
                 if !notification.body.isEmpty {
                     Text(notification.body)
-                        .font(.subheadline)
+                        .font(.system(size: 13))
                         .foregroundColor(.secondary)
                         .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
@@ -300,7 +369,7 @@ private struct NotificationRow: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(Color.gray)
+                    .background(categoryColor)
                     .clipShape(Capsule())
                 }
                 
@@ -336,10 +405,15 @@ private struct NotificationRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(notification.isMention ? Color.orange.opacity(0.05) : Color(.windowBackgroundColor))
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                .fill(cardBackgroundColor)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(cardBorderColor, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
         )
         .contentShape(Rectangle())
+        .animation(.easeInOut(duration: 0.2), value: isMarkingAsRead)
         .onTapGesture {
             guard let link = notification.link else { return }
             
@@ -386,17 +460,20 @@ private struct NotificationRow: View {
         .onChange(of: notification.isRead) { _ in
             isMarkingAsRead = false
         }
-        .task {
-            avatarLoadTask = Task {
+        .task(priority: .userInitiated) {
+            avatarLoadTask = Task(priority: .userInitiated) {
                 await loadAvatar()
             }
+            await avatarLoadTask?.value
         }
         .onDisappear {
             avatarLoadTask?.cancel()
+            avatarLoadTask = nil
         }
     }
     
     private func loadAvatar() async {
+        // Проверяем отмену задачи перед началом
         guard !Task.isCancelled else { return }
         
         await MainActor.run {
@@ -415,11 +492,17 @@ private struct NotificationRow: View {
             return
         }
         
-        // Try to load from cache first
+        // Проверяем отмену перед загрузкой из кеша
+        guard !Task.isCancelled else { return }
+        
+        // Try to load from cache first (быстрая операция)
         if await loadAvatarFromCache(senderId: senderId) {
             extractSenderNameFromContent()
             return
         }
+        
+        // Проверяем отмену перед загрузкой из сети
+        guard !Task.isCancelled else { return }
         
         // Try to load from provided URL
         if let avatarURL = notification.senderAvatarURL {
@@ -429,6 +512,9 @@ private struct NotificationRow: View {
                 return
             }
         }
+        
+        // Проверяем отмену перед fallback загрузкой
+        guard !Task.isCancelled else { return }
         
         // Try fallback if domain is available
         if !appState.domain.isEmpty {
@@ -494,7 +580,11 @@ private struct NotificationRow: View {
         guard !Task.isCancelled else { return false }
         
         AppLogger.debug("Loading avatar for user \(userId) from URL: \(url.absoluteString)")
-        let image = await AvatarCacheManager.shared.loadImage(from: url, for: userId)
+        
+        // Используем приоритетную задачу для загрузки
+        let image = await Task(priority: .userInitiated) {
+            await AvatarCacheManager.shared.loadImage(from: url, for: userId)
+        }.value
         
         guard !Task.isCancelled else { return false }
         
@@ -558,7 +648,11 @@ private struct NotificationRow: View {
             if let baseURL = URL(string: domainURL),
                let avatarURL = URL(string: avatarPath, relativeTo: baseURL) {
                 AppLogger.debug("Trying fallback avatar URL for senderId \(senderId): \(avatarURL.absoluteString)")
-                let image = await AvatarCacheManager.shared.loadImage(from: avatarURL, for: senderId)
+                
+                // Используем приоритетную задачу для fallback загрузки
+                let image = await Task(priority: .utility) {
+                    await AvatarCacheManager.shared.loadImage(from: avatarURL, for: senderId)
+                }.value
                 
                 guard !Task.isCancelled else { return }
                 

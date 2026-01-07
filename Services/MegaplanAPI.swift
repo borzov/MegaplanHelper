@@ -368,7 +368,7 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         } catch let urlError as URLError {
             switch urlError.code {
             case .notConnectedToInternet, .networkConnectionLost:
-                throw NetworkError.transport(message: String(localized: "error.noInternet"))
+                throw NetworkError.offline
             case .timedOut:
                 throw NetworkError.transport(message: String(localized: "error.timeout"))
             default:

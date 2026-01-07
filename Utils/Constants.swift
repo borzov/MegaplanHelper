@@ -17,6 +17,11 @@ enum Constants {
         static let username = "megaplan.username"
         static let refreshInterval = "megaplan.refreshInterval"
         static let autoLaunch = "megaplan.autoLaunch"
+        static let notificationsEnabled = "megaplan.notificationsEnabled"
+        static let groupingEnabled = "megaplan.groupingEnabled"
+        static let showOnlyUnread = "megaplan.showOnlyUnread"
+        static let theme = "megaplan.theme"
+        static let fontSize = "megaplan.fontSize"
     }
 
     enum Keychain {

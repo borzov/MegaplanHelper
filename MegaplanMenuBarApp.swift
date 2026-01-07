@@ -3,18 +3,26 @@ import SwiftUI
 @main
 struct MegaplanMenuBarApp: App {
     @StateObject private var appState = AppState()
+    @StateObject private var notificationListViewModel: NotificationListViewModel
+    @StateObject private var settingsViewModel: SettingsViewModel
     @State private var showingSettings = false
 
     init() {
         AppLogger.info("MegaplanMenuBarApp initializing...")
+        let appState = AppState()
+        _appState = StateObject(wrappedValue: appState)
+        _notificationListViewModel = StateObject(wrappedValue: NotificationListViewModel(appState: appState))
+        _settingsViewModel = StateObject(wrappedValue: SettingsViewModel(appState: appState))
     }
 
     var body: some Scene {
-        MenuBarExtra(
+            MenuBarExtra(
             content: {
                 NotificationListView(showingSettings: $showingSettings)
                     .environmentObject(appState)
-                    .frame(minWidth: 340, minHeight: 550)
+                    .environmentObject(notificationListViewModel)
+                    .environmentObject(settingsViewModel)
+                    .frame(minWidth: 340, maxWidth: 400, minHeight: 600, maxHeight: 1000)
             },
             label: {
                 MenuBarIconView(unreadCount: appState.unreadCount, showingSettings: $showingSettings)
@@ -26,6 +34,7 @@ struct MegaplanMenuBarApp: App {
         Settings {
             SettingsView()
                 .environmentObject(appState)
+                .environmentObject(settingsViewModel)
                 .frame(width: 480, height: 500)
         }
     }
@@ -43,13 +52,14 @@ private struct MenuBarIconView: View {
         Group {
             if let image = menuBarImage {
                 Image(nsImage: image)
-                    .renderingMode(.original)
+                    .renderingMode(.template)
             } else {
                 Image(systemName: "bell.fill")
                     .symbolRenderingMode(.hierarchical)
                     .font(.system(size: 14))
             }
         }
+        .opacity(appState.isOffline ? 0.5 : 1.0)
         .onAppear {
             if menuBarImage == nil {
                 resizeMenuBarIcon()

@@ -22,6 +22,7 @@ struct AuthView: View {
                             .interpolation(.high)
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 64, height: 64)
+                            .colorMultiply(.primary)
                     } else {
                         Image(systemName: "bell.fill")
                             .symbolRenderingMode(.hierarchical)

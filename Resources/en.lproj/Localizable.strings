@@ -63,3 +63,39 @@
 "error.noInternet" = "No internet connection";
 "error.timeout" = "Request timeout";
 "error.tooManyAttempts" = "Too many login attempts. Please wait a minute.";
+"error.offline" = "No internet connection";
+
+"notifications.group.today" = "Today";
+"notifications.group.yesterday" = "Yesterday";
+"notifications.group.thisWeek" = "This Week";
+"notifications.group.earlier" = "Earlier";
+
+"settings.notifications" = "Notifications";
+"settings.notifications.enabled" = "Enable system notifications";
+"settings.notifications.enabledDescription" = "Show notifications in Notification Center";
+"settings.notifications.grouping" = "Group notifications";
+"settings.notifications.groupingDescription" = "Group notifications by date";
+"settings.appearance" = "Appearance";
+"settings.theme" = "Theme";
+"settings.theme.light" = "Light";
+"settings.theme.dark" = "Dark";
+"settings.theme.system" = "System";
+"settings.fontSize" = "Font Size";
+"settings.fontSize.small" = "Small";
+"settings.fontSize.medium" = "Medium";
+"settings.fontSize.large" = "Large";
+"settings.behavior" = "Behavior";
+"settings.showOnlyUnread" = "Show only unread";
+"settings.showOnlyUnreadDescription" = "Hide read notifications";
+// Offline Mode
+"offline.mode.title" = "Offline Mode";
+"offline.mode.lastSync" = "Last synced";
+"offline.mode.noSync" = "Showing cached notifications";
+"offline.never" = "never";
+
+// Empty State
+"notifications.empty.title" = "All caught up!";
+"notifications.empty.subtitle" = "You have no unread notifications.\nCheck back later for updates.";
+
+// Toast Messages
+"toast.markedAsRead" = "Marked as read";

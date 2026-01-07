@@ -8,16 +8,22 @@ class SettingsWindowManager: ObservableObject {
     
     private init() {}
     
-    func showSettings(appState: AppState) {
+    func showSettings(appState: AppState, settingsViewModel: SettingsViewModel) {
+        AppLogger.info("showSettings called")
+        
         // If window already exists, bring it to front
         if let window = settingsWindow {
+            AppLogger.info("Settings window already exists, bringing to front")
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
         }
         
+        AppLogger.info("Creating new settings window")
+        
         let settingsView = SettingsView()
             .environmentObject(appState)
+            .environmentObject(settingsViewModel)
             .frame(width: 480, height: 500)
         
         let hostingController = NSHostingController(rootView: settingsView)
@@ -56,8 +62,13 @@ class SettingsWindowManager: ObservableObject {
             menuBarWindow.orderOut(nil)
         }
         
-        window.makeKeyAndOrderFront(nil)
+        // Activate app first, then show window
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
+        
+        AppLogger.info("Settings window created and shown")
     }
     
     func closeSettings() {

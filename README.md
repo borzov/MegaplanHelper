@@ -246,8 +246,6 @@ xcodebuild -exportArchive \
 - Разбит метод `fetchNotifications` на `extractUserInfoFromNotifications`, `extractAndStoreUserInfo`, `extractUserInfoFromSubject`, `cacheUserInfoFromNotifications`
 - Упрощен метод `loadAvatar` в `NotificationRow`: вынесены методы `loadAvatarFromCache`, `buildFullAvatarURL`, `loadAvatarFromURL`, `extractSenderNameFromContent`
 - Добавлены ключи локализации: `settings.version`, `notifications.comments`, `notifications.comment.one/few/many`
-- Создан скрипт `scripts/update-build-number.sh` для автоматического обновления build number
-- Добавлен Build Phase "Update Build Number" в проект Xcode
 
 ### [1.1] - 2025-10-27
 

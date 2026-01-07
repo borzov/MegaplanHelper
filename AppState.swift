@@ -12,6 +12,8 @@ final class AppState: ObservableObject {
     @Published var isAdmin: Bool = false
     @Published var isAuthenticated: Bool = false
     @Published var isLoading: Bool = false
+    @Published var isOffline: Bool = false
+    @Published var lastSyncTime: Date?
     @Published var alertItem: AlertItem?
     @Published var domain: String
     @Published var username: String
@@ -22,6 +24,8 @@ final class AppState: ObservableObject {
     let api: AuthenticationService & NotificationService
     private let keychain = KeychainManager()
     private let userDefaults: UserDefaults
+    private let notificationManager = NotificationManager.shared
+    private let errorRecoveryService = ErrorRecoveryService.shared
     private var refreshTimerTask: Task<Void, Never>?
     private var refreshTask: Task<Void, Never>?
     private var accessToken: String?
@@ -30,6 +34,8 @@ final class AppState: ObservableObject {
     private let minimumRefreshInterval: TimeInterval = 5.0
     private var failedLoginAttempts = 0
     private var lastFailedLoginTime: Date?
+    private var lastSuccessfulNotifications: [MegaplanNotification] = []
+    private var lastSuccessfulUnreadCount: Int = 0
 
     init(
         api: AuthenticationService & NotificationService = MegaplanAPI(),
@@ -64,6 +70,11 @@ final class AppState: ObservableObject {
         // Update unreadCount from API counter
         $apiUnreadCount
             .assign(to: &$unreadCount)
+
+        // Запрашиваем разрешение на уведомления при запуске
+        Task {
+            _ = await notificationManager.requestAuthorization()
+        }
 
         Task {
             await restoreSession()
@@ -143,6 +154,9 @@ final class AppState: ObservableObject {
         unreadCount = 0
         isAdmin = false
         firstName = ""
+        isOffline = false
+        lastSuccessfulNotifications = []
+        lastSuccessfulUnreadCount = 0
         stopRefreshTimer()
         
         // Clear user info cache
@@ -326,17 +340,59 @@ final class AppState: ObservableObject {
         defer { isLoading = false }
 
         do {
-            async let notificationsTask = api.fetchNotifications(token: token)
-            async let counterTask = api.fetchUnreadCount(token: token)
+            // Используем retry механизм для загрузки уведомлений
+            let (fetchedNotifications, counter) = try await errorRecoveryService.executeWithRetry(
+                operation: {
+                    async let notificationsTask = self.api.fetchNotifications(token: token)
+                    async let counterTask = self.api.fetchUnreadCount(token: token)
+                    return try await (notificationsTask, counterTask)
+                },
+                onRetry: { attempt, delay in
+                    AppLogger.info("Retrying refresh after \(delay)s (attempt \(attempt))")
+                },
+                onFailure: { error in
+                    AppLogger.error("All retry attempts failed: \(error.localizedDescription)")
+                }
+            )
+            
+            // Успешное обновление - выходим из оффлайн-режима
+            isOffline = false
+            lastSyncTime = Date()
 
-            let (fetchedNotifications, counter) = try await (notificationsTask, counterTask)
+            // Определяем новые непрочитанные уведомления
+            let previousNotificationIDs = Set(notifications.map { $0.id })
+            let newUnreadNotifications = fetchedNotifications.filter { notification in
+                !previousNotificationIDs.contains(notification.id) && !notification.isRead
+            }
+            
+            // Отправляем уведомления для новых непрочитанных
+            for notification in newUnreadNotifications {
+                notificationManager.sendNotification(for: notification)
+            }
+            
+            // Сохраняем успешные данные для оффлайн-режима
+            lastSuccessfulNotifications = fetchedNotifications
+            lastSuccessfulUnreadCount = counter
             
             withAnimation(.easeInOut) {
                 notifications = fetchedNotifications
             }
             
             apiUnreadCount = counter
-            AppLogger.debug("Refreshed: \(fetchedNotifications.count) notifications, \(counter) unread")
+            AppLogger.debug("Refreshed: \(fetchedNotifications.count) notifications, \(counter) unread, \(newUnreadNotifications.count) new unread")
+        } catch NetworkError.offline {
+            // Переход в оффлайн-режим без показа ошибки
+            AppLogger.info("No internet connection, entering offline mode")
+            isOffline = true
+            
+            // Используем последние успешные данные, если они есть
+            if !lastSuccessfulNotifications.isEmpty {
+                withAnimation(.easeInOut) {
+                    notifications = lastSuccessfulNotifications
+                }
+                apiUnreadCount = lastSuccessfulUnreadCount
+                AppLogger.debug("Using cached data in offline mode: \(lastSuccessfulNotifications.count) notifications")
+            }
         } catch NetworkError.unauthorized {
             AppLogger.error("Unauthorized during refresh")
             isAuthenticated = false
@@ -344,8 +400,29 @@ final class AppState: ObservableObject {
             stopRefreshTimer()
             presentError(.sessionExpired)
         } catch {
+            // Для других ошибок проверяем, не связаны ли они с сетью
+            if let networkError = error as? NetworkError,
+               case .transport = networkError {
+                // Проверяем, не является ли это сетевой ошибкой
+                if let urlError = (error as NSError).userInfo[NSUnderlyingErrorKey] as? URLError,
+                   urlError.code == .notConnectedToInternet || urlError.code == .networkConnectionLost {
+                    isOffline = true
+                    if !lastSuccessfulNotifications.isEmpty {
+                        withAnimation(.easeInOut) {
+                            notifications = lastSuccessfulNotifications
+                        }
+                        apiUnreadCount = lastSuccessfulUnreadCount
+                    }
+                    AppLogger.info("Network error detected, entering offline mode")
+                    return
+                }
+            }
+            
             AppLogger.error("Refresh failed: \(error.localizedDescription)")
-            presentError(NetworkError(error))
+            // Не показываем ошибку для сетевых проблем в оффлайн-режиме
+            if !isOffline {
+                presentError(NetworkError(error))
+            }
         }
     }
 
@@ -391,9 +468,9 @@ final class AppState: ObservableObject {
     }
     
     private func clearCachedPassword() {
-        if var data = cachedPasswordData {
-            data.resetBytes(in: 0..<data.count)
-        }
+        // Securely clear password from memory
+        guard var data = cachedPasswordData else { return }
+        data.resetBytes(in: 0..<data.count)
         cachedPasswordData = nil
     }
 

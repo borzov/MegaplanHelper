@@ -63,3 +63,39 @@
 "error.noInternet" = "Нет подключения к интернету";
 "error.timeout" = "Превышено время ожидания";
 "error.tooManyAttempts" = "Слишком много попыток входа. Пожалуйста, подождите минуту.";
+"error.offline" = "Нет подключения к интернету";
+
+"notifications.group.today" = "Сегодня";
+"notifications.group.yesterday" = "Вчера";
+"notifications.group.thisWeek" = "На этой неделе";
+"notifications.group.earlier" = "Ранее";
+
+"settings.notifications" = "Уведомления";
+"settings.notifications.enabled" = "Включить системные уведомления";
+"settings.notifications.enabledDescription" = "Показывать уведомления в Центре уведомлений";
+"settings.notifications.grouping" = "Группировать уведомления";
+"settings.notifications.groupingDescription" = "Группировать уведомления по датам";
+"settings.appearance" = "Внешний вид";
+"settings.theme" = "Тема";
+"settings.theme.light" = "Светлая";
+"settings.theme.dark" = "Темная";
+"settings.theme.system" = "Системная";
+"settings.fontSize" = "Размер шрифта";
+"settings.fontSize.small" = "Маленький";
+"settings.fontSize.medium" = "Средний";
+"settings.fontSize.large" = "Большой";
+"settings.behavior" = "Поведение";
+"settings.showOnlyUnread" = "Показывать только непрочитанные";
+"settings.showOnlyUnreadDescription" = "Скрывать прочитанные уведомления";
+// Offline Mode
+"offline.mode.title" = "Оффлайн режим";
+"offline.mode.lastSync" = "Последняя синхронизация";
+"offline.mode.noSync" = "Показаны кэшированные уведомления";
+"offline.never" = "никогда";
+
+// Empty State
+"notifications.empty.title" = "Все прочитано!";
+"notifications.empty.subtitle" = "У вас нет непрочитанных уведомлений.\nПроверьте позже для обновлений.";
+
+// Toast Messages
+"toast.markedAsRead" = "Отмечено как прочитанное";
