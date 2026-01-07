@@ -22,6 +22,7 @@ enum Constants {
         static let showOnlyUnread = "megaplan.showOnlyUnread"
         static let theme = "megaplan.theme"
         static let fontSize = "megaplan.fontSize"
+        static let visitedNotificationIds = "megaplan.visitedNotificationIds"
     }
 
     enum Keychain {

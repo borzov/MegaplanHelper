@@ -204,6 +204,7 @@ struct NotificationListView: View {
                                     showToast = true
                                 }
                             })
+                            .environmentObject(viewModel)
                             .transition(.asymmetric(
                                 insertion: .opacity.combined(with: .scale(scale: 0.95)).combined(with: .move(edge: .top)),
                                 removal: .opacity.combined(with: .scale(scale: 0.95))
@@ -225,11 +226,13 @@ private struct NotificationRow: View {
     let notification: MegaplanNotification
     let onMarkRead: () -> Void
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var viewModel: NotificationListViewModel
     @State private var isMarkingAsRead = false
     @State private var avatarImage: NSImage?
     @State private var isLoadingAvatar = false
     @State private var avatarLoadTask: Task<Void, Never>?
     @State private var cachedSenderName: String?
+    @State private var isPressed = false
     
     private var cardBackgroundColor: Color {
         if notification.isMention {
@@ -413,50 +416,25 @@ private struct NotificationRow: View {
                 .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
         )
         .contentShape(Rectangle())
-        .animation(.easeInOut(duration: 0.2), value: isMarkingAsRead)
-        .onTapGesture {
-            guard let link = notification.link else { return }
-            
-            // Проверяем, что URL валидный перед открытием
-            var finalURL = link
-            
-            // Если URL относительный (нет схемы или хоста), строим полный URL
-            if link.scheme == nil || link.host == nil {
-                if link.path.hasPrefix("/") {
-                    // Относительный URL - строим полный URL используя домен
-                    let domain = appState.domain.hasPrefix("http") ? appState.domain : "https://\(appState.domain)"
-                    if let baseURL = URL(string: domain),
-                       let fullURL = URL(string: link.path, relativeTo: baseURL) {
-                        finalURL = fullURL
-                        AppLogger.debug("Constructed full URL from relative path: \(link.path) -> \(finalURL.absoluteString)")
-                    } else {
-                        AppLogger.error("Failed to construct full URL from relative path: \(link.path), domain: \(domain)")
-                        return
+        .scaleEffect(isPressed ? 0.96 : 1.0)
+        .brightness(isPressed ? -0.05 : 0)
+        .opacity(viewModel.isVisited(notification) ? 0.65 : 1.0)
+        .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isPressed)
+        .animation(.easeInOut(duration: 0.3), value: isMarkingAsRead)
+        .animation(.easeInOut(duration: 0.3), value: viewModel.isVisited(notification))
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    if !isPressed {
+                        isPressed = true
                     }
-                } else {
-                    AppLogger.error("Invalid notification link (no scheme/host and not relative): \(link.absoluteString)")
-                    return
                 }
-            }
-            
-            // Проверяем, что финальный URL валидный
-            guard finalURL.scheme != nil, finalURL.host != nil else {
-                AppLogger.error("Invalid final notification link: \(finalURL.absoluteString)")
-                return
-            }
-            
-            // Открываем ссылку с обработкой ошибок
-            do {
-                let success = NSWorkspace.shared.open(finalURL)
-                if !success {
-                    AppLogger.error("NSWorkspace.shared.open returned false for URL: \(finalURL.absoluteString)")
-                } else {
-                    AppLogger.debug("Successfully opened notification link: \(finalURL.absoluteString)")
+                .onEnded { _ in
+                    isPressed = false
+                    // Открываем ссылку после завершения жеста
+                    openNotificationLink()
                 }
-            } catch {
-                AppLogger.error("Failed to open notification link: \(finalURL.absoluteString), error: \(error.localizedDescription)")
-            }
-        }
+        )
         .onChange(of: notification.isRead) { _ in
             isMarkingAsRead = false
         }
@@ -469,6 +447,48 @@ private struct NotificationRow: View {
         .onDisappear {
             avatarLoadTask?.cancel()
             avatarLoadTask = nil
+        }
+    }
+    
+    private func openNotificationLink() {
+        guard let link = notification.link else { return }
+        
+        // Проверяем, что URL валидный перед открытием
+        var finalURL = link
+        
+        // Если URL относительный (нет схемы или хоста), строим полный URL
+        if link.scheme == nil || link.host == nil {
+            if link.path.hasPrefix("/") {
+                // Относительный URL - строим полный URL используя домен
+                let domain = appState.domain.hasPrefix("http") ? appState.domain : "https://\(appState.domain)"
+                if let baseURL = URL(string: domain),
+                   let fullURL = URL(string: link.path, relativeTo: baseURL) {
+                    finalURL = fullURL
+                    AppLogger.debug("Constructed full URL from relative path: \(link.path) -> \(finalURL.absoluteString)")
+                } else {
+                    AppLogger.error("Failed to construct full URL from relative path: \(link.path), domain: \(domain)")
+                    return
+                }
+            } else {
+                AppLogger.error("Invalid notification link (no scheme/host and not relative): \(link.absoluteString)")
+                return
+            }
+        }
+        
+        // Проверяем, что финальный URL валидный
+        guard finalURL.scheme != nil, finalURL.host != nil else {
+            AppLogger.error("Invalid final notification link: \(finalURL.absoluteString)")
+            return
+        }
+        
+        // Открываем ссылку с обработкой ошибок
+        let success = NSWorkspace.shared.open(finalURL)
+        if !success {
+            AppLogger.error("NSWorkspace.shared.open returned false for URL: \(finalURL.absoluteString)")
+        } else {
+            AppLogger.debug("Successfully opened notification link: \(finalURL.absoluteString)")
+            // Помечаем уведомление как посещенное после успешного открытия
+            viewModel.markAsVisited(notification)
         }
     }
     

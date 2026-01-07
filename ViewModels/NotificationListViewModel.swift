@@ -16,6 +16,7 @@ final class NotificationListViewModel: ObservableObject {
     private let userDefaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
     private var lastSuccessfulNotifications: [MegaplanNotification] = []
+    private var visitedNotificationIds: Set<String> = []
     
     init(appState: AppState, userDefaults: UserDefaults = .standard) {
         self.appState = appState
@@ -24,6 +25,11 @@ final class NotificationListViewModel: ObservableObject {
         // Загружаем настройки
         groupingEnabled = userDefaults.object(forKey: Constants.UserDefaultsKeys.groupingEnabled) as? Bool ?? true
         showOnlyUnread = userDefaults.bool(forKey: Constants.UserDefaultsKeys.showOnlyUnread)
+        
+        // Загружаем список посещенных уведомлений
+        if let visitedIds = userDefaults.array(forKey: Constants.UserDefaultsKeys.visitedNotificationIds) as? [String] {
+            visitedNotificationIds = Set(visitedIds)
+        }
         
         // Подписываемся на изменения уведомлений из AppState
         appState.$notifications
@@ -88,6 +94,22 @@ final class NotificationListViewModel: ObservableObject {
         showOnlyUnread = enabled
         userDefaults.set(enabled, forKey: Constants.UserDefaultsKeys.showOnlyUnread)
         updateGroupedNotifications()
+    }
+    
+    /// Проверяет, было ли уведомление посещено
+    func isVisited(_ notification: MegaplanNotification) -> Bool {
+        visitedNotificationIds.contains(notification.id)
+    }
+    
+    /// Помечает уведомление как посещенное
+    func markAsVisited(_ notification: MegaplanNotification) {
+        visitedNotificationIds.insert(notification.id)
+        saveVisitedIds()
+    }
+    
+    /// Сохраняет список посещенных уведомлений в UserDefaults
+    private func saveVisitedIds() {
+        userDefaults.set(Array(visitedNotificationIds), forKey: Constants.UserDefaultsKeys.visitedNotificationIds)
     }
 }
 
