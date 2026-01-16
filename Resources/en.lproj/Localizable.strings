@@ -103,3 +103,6 @@
 
 // Toast Messages
 "toast.markedAsRead" = "Marked as read";
+
+// Security
+"security.pinning.warning" = "Security warning: The server certificate has changed. This may indicate a security issue or certificate update. The connection is encrypted but not verified against known certificates.";

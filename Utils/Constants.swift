@@ -35,7 +35,27 @@ enum Constants {
     }
 
     static let loginItemIdentifier = "com.ruvents.MegaplanMenuBarApp.LoginItem"
-    
+
+    /// Certificate pinning configuration for Megaplan API
+    /// Hashes obtained from demo.megaplan.ru certificate chain
+    enum CertificatePinning {
+        /// SHA256 hashes of public keys in the certificate chain
+        /// - Intermediate CA: GlobalSign GCC R6 AlphaSSL CA 2023
+        /// - Root CA: GlobalSign Root CA - R6
+        static let pinnedPublicKeyHashes: Set<String> = [
+            "JdFERRONSeokpPRwHKoZgZPPGO+7YwoMHGHoe1BAq3c=",  // Intermediate CA (primary)
+            "aCdH+LpiG4fN07wpXtXKvOciocDANj0daLOJKNJ4fx4="   // Root CA (backup)
+        ]
+
+        /// Whether certificate pinning is enabled
+        /// Set to false for debugging with proxy tools like Charles
+        #if DEBUG
+        static let isEnabled = false
+        #else
+        static let isEnabled = true
+        #endif
+    }
+
     /// Набор прав доступа, наличие хотя бы одного из которых указывает на роль администратора
     enum AdminPermissions {
         static let permissions: Set<String> = [

@@ -7,6 +7,7 @@ struct NotificationListView: View {
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @Binding var showingSettings: Bool
     @State private var showToast = false
+    @FocusState private var isSearchFieldFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -40,10 +41,8 @@ struct NotificationListView: View {
                 }
             }
         }
-        .onChange(of: appState.notifications) { _ in
-            // Обновляем ViewModel при изменении уведомлений в AppState
-            viewModel.updateGroupedNotifications()
-        }
+        // Note: ViewModel already subscribes to appState.$notifications via Combine
+        // Do not add .onChange here to avoid duplicate updates
         .toast(isShowing: $showToast, message: String(localized: "toast.markedAsRead"))
     }
 
@@ -59,8 +58,14 @@ struct NotificationListView: View {
                     Button {
                         withAnimation {
                             viewModel.isSearchActive.toggle()
-                            if !viewModel.isSearchActive {
+                            if viewModel.isSearchActive {
+                                // Set focus with small delay to allow animation
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    isSearchFieldFocused = true
+                                }
+                            } else {
                                 viewModel.clearSearch()
+                                isSearchFieldFocused = false
                             }
                         }
                     } label: {
@@ -203,9 +208,10 @@ struct NotificationListView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.secondary)
                 .font(.system(size: 14))
-            
+
             TextField("notifications.search.placeholder", text: $viewModel.searchQuery)
                 .textFieldStyle(.plain)
+                .focused($isSearchFieldFocused)
                 .onSubmit {
                     if viewModel.searchQuery.isEmpty {
                         viewModel.clearSearch()
@@ -215,6 +221,8 @@ struct NotificationListView: View {
             if !viewModel.searchQuery.isEmpty {
                 Button {
                     viewModel.clearSearch()
+                    // Keep focus on search field after clearing
+                    isSearchFieldFocused = true
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.secondary)
@@ -311,7 +319,6 @@ private struct NotificationRow: View {
     @State private var isMarkingAsRead = false
     @State private var avatarImage: NSImage?
     @State private var isLoadingAvatar = false
-    @State private var avatarLoadTask: Task<Void, Never>?
     @State private var cachedSenderName: String?
     @State private var isPressed = false
     
@@ -519,15 +526,8 @@ private struct NotificationRow: View {
         .onChange(of: notification.isRead) { _ in
             isMarkingAsRead = false
         }
-        .task(priority: .userInitiated) {
-            avatarLoadTask = Task(priority: .userInitiated) {
-                await loadAvatar()
-            }
-            await avatarLoadTask?.value
-        }
-        .onDisappear {
-            avatarLoadTask?.cancel()
-            avatarLoadTask = nil
+        .task(id: notification.senderId) {
+            await loadAvatar()
         }
     }
     
