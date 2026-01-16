@@ -1,4 +1,5 @@
 "menu.title" = "Мегаплан";
+"menu.quit" = "Выйти";
 
 "notifications.title" = "Уведомления";
 "notifications.refresh" = "Обновить";

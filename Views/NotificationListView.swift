@@ -5,7 +5,6 @@ struct NotificationListView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var viewModel: NotificationListViewModel
     @EnvironmentObject private var settingsViewModel: SettingsViewModel
-    @Binding var showingSettings: Bool
     @State private var showToast = false
     @FocusState private var isSearchFieldFocused: Bool
 
@@ -822,7 +821,7 @@ private struct ButtonPressEffectModifier: ViewModifier {
 #if DEBUG
 struct NotificationListView_Previews: PreviewProvider {
     static var previews: some View {
-        NotificationListView(showingSettings: .constant(false))
+        NotificationListView()
             .environmentObject({
                 let state = AppState()
                 state.notifications = [

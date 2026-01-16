@@ -14,21 +14,21 @@ on:
 jobs:
   build-and-release:
     runs-on: macos-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: latest-stable
-        
+
     - name: Build universal binary
       run: |
         chmod +x ./scripts/build-universal.sh
         ./scripts/build-universal.sh
-        
+
     - name: Verify app exists
       run: |
         if [ ! -d "build/export/MegaplanHepler.app" ]; then
@@ -38,7 +38,7 @@ jobs:
         fi
         echo "✅ Приложение найдено: build/export/MegaplanHepler.app"
         du -sh build/export/MegaplanHepler.app
-        
+
     - name: Create release archive
       run: |
         VERSION=${GITHUB_REF#refs/tags/v}
@@ -47,7 +47,7 @@ jobs:
         cd ../..
         echo "✅ Архив создан: build/export/MegaplanHelper-v${VERSION}.zip"
         ls -lh build/export/*.zip
-        
+
     - name: Upload release asset
       uses: softprops/action-gh-release@v1
       with:

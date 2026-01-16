@@ -1,0 +1,311 @@
+import SwiftUI
+import AppKit
+import Combine
+
+/// Controls the menu bar status item, popover, and context menu.
+@MainActor
+final class StatusBarController: NSObject, ObservableObject {
+    private var statusItem: NSStatusItem?
+    private var popover: NSPopover?
+    private var eventMonitor: Any?
+    private weak var appState: AppState?
+    private weak var settingsViewModel: SettingsViewModel?
+    private var cancellables = Set<AnyCancellable>()
+
+    private static var cachedMenuBarImage: NSImage?
+
+    override init() {
+        super.init()
+    }
+
+    /// Sets up the status bar item with the given app state and content view.
+    /// - Parameters:
+    ///   - appState: The app state to observe for changes
+    ///   - settingsViewModel: The settings view model for opening settings
+    ///   - contentView: The SwiftUI view to display in the popover
+    func setup<Content: View>(
+        appState: AppState,
+        settingsViewModel: SettingsViewModel,
+        contentView: Content
+    ) {
+        self.appState = appState
+        self.settingsViewModel = settingsViewModel
+
+        setupStatusItem()
+        setupPopover(with: contentView)
+        setupEventMonitor()
+        observeAppState()
+
+        AppLogger.info("StatusBarController setup complete")
+    }
+
+    // MARK: - Setup
+
+    private func setupStatusItem() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+
+        guard let button = statusItem?.button else {
+            AppLogger.error("Failed to create status bar button")
+            return
+        }
+
+        button.target = self
+        button.action = #selector(handleStatusItemClick(_:))
+        button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+
+        updateIcon()
+        updateBadge(appState?.unreadCount ?? 0)
+    }
+
+    private func setupPopover<Content: View>(with contentView: Content) {
+        popover = NSPopover()
+        popover?.contentSize = NSSize(width: 370, height: 700)
+        popover?.behavior = .transient
+        popover?.animates = true
+        popover?.contentViewController = NSHostingController(rootView: contentView)
+    }
+
+    private func setupEventMonitor() {
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            if self?.popover?.isShown == true {
+                self?.hidePopover()
+            }
+        }
+    }
+
+    private func observeAppState() {
+        guard let appState = appState else { return }
+
+        appState.$unreadCount
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] count in
+                self?.updateBadge(count)
+            }
+            .store(in: &cancellables)
+
+        appState.$isOffline
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updateIcon()
+            }
+            .store(in: &cancellables)
+    }
+
+    // MARK: - Icon and Badge
+
+    private func updateIcon() {
+        guard let button = statusItem?.button else { return }
+
+        let image: NSImage
+        if let cached = Self.cachedMenuBarImage {
+            image = cached
+        } else if let nsImage = NSImage(named: "MenuBarIcon") {
+            let targetSize = NSSize(width: 18, height: 18)
+            let resizedImage = NSImage(size: targetSize)
+            resizedImage.lockFocus()
+            nsImage.size = targetSize
+            nsImage.draw(at: .zero, from: .zero, operation: .copy, fraction: 1.0)
+            resizedImage.unlockFocus()
+            resizedImage.isTemplate = true
+            Self.cachedMenuBarImage = resizedImage
+            image = resizedImage
+        } else {
+            image = NSImage(systemSymbolName: "bell.fill", accessibilityDescription: "Notifications")
+                ?? NSImage()
+            image.isTemplate = true
+        }
+
+        button.image = image
+        button.alphaValue = appState?.isOffline == true ? 0.5 : 1.0
+    }
+
+    private func updateBadge(_ count: Int) {
+        guard let button = statusItem?.button else { return }
+
+        // Remove existing badge subview
+        button.subviews.forEach { $0.removeFromSuperview() }
+
+        guard count > 0 else { return }
+
+        let badgeText = count > 99 ? "99+" : "\(count)"
+        let badgeView = BadgeView(text: badgeText)
+        badgeView.translatesAutoresizingMaskIntoConstraints = false
+        button.addSubview(badgeView)
+
+        NSLayoutConstraint.activate([
+            badgeView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: 2),
+            badgeView.topAnchor.constraint(equalTo: button.topAnchor, constant: -2)
+        ])
+    }
+
+    // MARK: - Click Handling
+
+    @objc private func handleStatusItemClick(_ sender: NSStatusBarButton) {
+        guard let event = NSApp.currentEvent else { return }
+
+        if event.type == .rightMouseUp {
+            showContextMenu()
+        } else {
+            togglePopover()
+        }
+    }
+
+    // MARK: - Popover
+
+    func showPopover() {
+        guard let button = statusItem?.button else { return }
+        popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    func hidePopover() {
+        popover?.performClose(nil)
+    }
+
+    func togglePopover() {
+        if popover?.isShown == true {
+            hidePopover()
+        } else {
+            showPopover()
+        }
+    }
+
+    // MARK: - Context Menu
+
+    private func showContextMenu() {
+        guard let button = statusItem?.button else { return }
+
+        let menu = buildContextMenu()
+        statusItem?.menu = menu
+        button.performClick(nil)
+        statusItem?.menu = nil
+    }
+
+    private func buildContextMenu() -> NSMenu {
+        let menu = NSMenu()
+
+        // Notifications
+        let notificationsItem = NSMenuItem(
+            title: String(localized: "notifications.title"),
+            action: #selector(menuNotificationsClicked),
+            keyEquivalent: ""
+        )
+        notificationsItem.target = self
+        menu.addItem(notificationsItem)
+
+        // Settings
+        let settingsItem = NSMenuItem(
+            title: String(localized: "settings.title"),
+            action: #selector(menuSettingsClicked),
+            keyEquivalent: ","
+        )
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Logout (only if authenticated)
+        if appState?.isAuthenticated == true {
+            let logoutItem = NSMenuItem(
+                title: String(localized: "settings.logout"),
+                action: #selector(menuLogoutClicked),
+                keyEquivalent: ""
+            )
+            logoutItem.target = self
+            menu.addItem(logoutItem)
+
+            menu.addItem(NSMenuItem.separator())
+        }
+
+        // Quit
+        let quitItem = NSMenuItem(
+            title: String(localized: "menu.quit"),
+            action: #selector(menuQuitClicked),
+            keyEquivalent: "q"
+        )
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        return menu
+    }
+
+    // MARK: - Menu Actions
+
+    @objc private func menuNotificationsClicked() {
+        showPopover()
+    }
+
+    @objc private func menuSettingsClicked() {
+        hidePopover()
+        guard let appState = appState, let settingsViewModel = settingsViewModel else { return }
+        SettingsWindowManager.shared.showSettings(appState: appState, settingsViewModel: settingsViewModel)
+    }
+
+    @objc private func menuLogoutClicked() {
+        hidePopover()
+        guard let appState = appState else { return }
+        Task {
+            await appState.logout()
+        }
+    }
+
+    @objc private func menuQuitClicked() {
+        NSApplication.shared.terminate(nil)
+    }
+
+    // MARK: - Cleanup
+
+    deinit {
+        if let eventMonitor = eventMonitor {
+            NSEvent.removeMonitor(eventMonitor)
+        }
+        cancellables.removeAll()
+    }
+}
+
+// MARK: - Badge View
+
+private class BadgeView: NSView {
+    private let text: String
+
+    init(text: String) {
+        self.text = text
+        super.init(frame: .zero)
+        wantsLayer = true
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override var intrinsicContentSize: NSSize {
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 9, weight: .bold)
+        ]
+        let textSize = (text as NSString).size(withAttributes: attributes)
+        let width = max(textSize.width + 6, 14)
+        return NSSize(width: width, height: 14)
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+
+        let path = NSBezierPath(roundedRect: bounds, xRadius: 7, yRadius: 7)
+        NSColor.red.setFill()
+        path.fill()
+
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 9, weight: .bold),
+            .foregroundColor: NSColor.white
+        ]
+        let textSize = (text as NSString).size(withAttributes: attributes)
+        let textRect = NSRect(
+            x: (bounds.width - textSize.width) / 2,
+            y: (bounds.height - textSize.height) / 2,
+            width: textSize.width,
+            height: textSize.height
+        )
+        (text as NSString).draw(in: textRect, withAttributes: attributes)
+    }
+}
