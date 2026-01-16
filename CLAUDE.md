@@ -11,7 +11,7 @@ MegaplanMenuBarApp is a native macOS menu bar application that displays notifica
 ### Build and Run
 ```bash
 # Build universal binary (arm64 + x86_64) - recommended for distribution
-./build-universal.sh
+./scripts/build-universal.sh
 
 # Open in Xcode
 open MegaplanHepler.xcodeproj
@@ -31,19 +31,11 @@ xcodebuild archive \
 
 ### Linting
 ```bash
-# SwiftLint is configured in .swiftlint.yml
 swiftlint lint
-
-# Auto-fix issues
-swiftlint --fix
+swiftlint --fix  # Auto-fix issues
 ```
 
-SwiftLint configuration highlights:
-- Line length warning: 120, error: 150
-- File length warning: 500, error: 1000
-- Function body length warning: 50, error: 100
-- Custom rule: No `print()` statements (use `AppLogger` instead)
-- Disabled: trailing_whitespace, todo, line_length
+SwiftLint enforces: no `print()` statements (use `AppLogger`), function body ≤50 lines, file length ≤500 lines.
 
 ### Testing
 No automated tests are currently configured in this project.
@@ -63,9 +55,7 @@ git push origin v1.3
 gh release create v1.3 --title "v1.3 - Release Name" --notes "Changelog description"
 ```
 
-GitHub Actions workflows:
-- `.github/workflows/build.yml` - builds on every push to master
-- `.github/workflows/release.yml` - creates universal binary and attaches to release on tag creation
+GitHub Actions: `build.yml` (on push to master), `release.yml` (on tag `v*` creates release with universal binary).
 
 ## Architecture
 
@@ -144,34 +134,23 @@ Populated during notification fetch to avoid repeated API calls
 
 ### Key Patterns
 
-1. **@MainActor for UI Classes**: All ViewModels and AppState are @MainActor to ensure UI updates on main thread
-
-2. **Combine Publishers**: ViewModels subscribe to AppState published properties for reactive updates
-
+1. **@MainActor for UI Classes**: All ViewModels and AppState are @MainActor
+2. **Combine Publishers**: ViewModels subscribe to AppState published properties
 3. **Secure Memory Management**: `clearCachedPassword()` zeros out password data before release
-
 4. **Throttling**: `refreshNow()` has minimum 5s interval to prevent abuse
-
 5. **Optimistic UI**: `markNotificationAsRead()` updates UI immediately, rolls back on error
-
-6. **Offline Mode**: Network errors trigger `isOffline` flag, app uses cached data, no error alerts shown
-
-7. **ServiceManagement for Auto-Launch**: Uses modern `SMAppService.mainApp` API (macOS 13.0+)
+6. **Offline Mode**: Network errors trigger `isOffline` flag, app uses cached data
+7. **Auto-Launch**: Uses `SMAppService.mainApp` API (macOS 13.0+)
 
 ## Localization
 
-Localized strings in `Resources/{en,ru}.lproj/Localizable.strings`
-All user-facing strings use `Text()` or `NSLocalizedString()` with keys
-
-Date formatting uses system locale (not hardcoded "ru_RU")
+Localized strings in `Resources/{en,ru}.lproj/Localizable.strings`. Date formatting uses system locale.
 
 ## Security Considerations
 
 - Passwords/tokens stored in Keychain, never in UserDefaults
-- `APILogger` sanitizes sensitive data (passwords, tokens) from logs
 - Passwords cleared from memory on logout using `resetBytes()`
 - Brute-force protection: max 3 login attempts per 60 seconds
-- All API requests over HTTPS (HTTP auto-upgraded)
 - Admin permission check via `possibleActions` array from API
 
 ## Constants
@@ -186,13 +165,12 @@ Never hardcode these values elsewhere - always reference Constants.
 
 ## Logging
 
-Use `AppLogger` (in `Utils/APILogger.swift`) instead of `print()`:
-- `AppLogger.debug()` - development only
-- `AppLogger.info()` - important events
-- `AppLogger.warning()` - recoverable issues
-- `AppLogger.error()` - errors
+Use `AppLogger` (defined in `Utils/Constants.swift`) instead of `print()`:
+- `AppLogger.debug()`, `AppLogger.info()`, `AppLogger.warning()`, `AppLogger.error()`
 
-Log levels automatically filtered: DEBUG in dev, ERROR in release.
+Logs are written to both:
+- macOS unified logging (view with Console.app or `log stream`)
+- File: `~/Library/Logs/MegaplanApp.log`
 
 ## Common Tasks
 

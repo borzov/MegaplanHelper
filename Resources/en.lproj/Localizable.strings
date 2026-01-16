@@ -1,4 +1,5 @@
 "menu.title" = "Megaplan";
+"menu.quit" = "Quit";
 
 "notifications.title" = "Notifications";
 "notifications.refresh" = "Refresh";

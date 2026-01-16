@@ -1,15 +1,71 @@
 #!/bin/bash
 
 # Скрипт для создания универсальной сборки macOS приложения
-# Использование: ./build-universal.sh
+# Использование: ./scripts/build-universal.sh или из корня проекта
 
 set -e
+
+# Определяем корневую директорию проекта (где находится .xcodeproj)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "${PROJECT_ROOT}"
 
 PROJECT_NAME="MegaplanHepler"
 SCHEME_NAME="MegaplanHepler"
 BUILD_DIR="build"
 ARCHIVE_DIR="${BUILD_DIR}/archive"
 EXPORT_DIR="${BUILD_DIR}/export"
+PROJECT_FILE="${PROJECT_NAME}.xcodeproj/project.pbxproj"
+INFO_PLIST="Info.plist"
+
+# Функция для обновления build number
+update_build_number() {
+    echo "🔢 Обновление build number..."
+    
+    # Получаем количество коммитов в текущей ветке
+    BUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo "1")
+    
+    # Если git недоступен, используем timestamp
+    if [ "$BUILD_NUMBER" = "1" ] && ! git rev-parse --git-dir > /dev/null 2>&1; then
+        BUILD_NUMBER=$(date +%s)
+    fi
+    
+    echo "   Build number: ${BUILD_NUMBER}"
+    
+    # Обновляем CURRENT_PROJECT_VERSION в project.pbxproj
+    if [ -f "$PROJECT_FILE" ]; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = ${BUILD_NUMBER};/g" "$PROJECT_FILE" 2>/dev/null || {
+                echo "⚠️  Предупреждение: не удалось обновить CURRENT_PROJECT_VERSION в project.pbxproj"
+            }
+        else
+            sed -i "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = ${BUILD_NUMBER};/g" "$PROJECT_FILE" 2>/dev/null || {
+                echo "⚠️  Предупреждение: не удалось обновить CURRENT_PROJECT_VERSION в project.pbxproj"
+            }
+        fi
+        echo "   ✅ Обновлен CURRENT_PROJECT_VERSION в project.pbxproj"
+    fi
+    
+    # Обновляем CFBundleVersion в Info.plist
+    if [ -f "$INFO_PLIST" ]; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # Используем PlistBuddy для более надежного обновления
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER}" "$INFO_PLIST" 2>/dev/null || {
+                # Fallback на sed если PlistBuddy не работает (ищем конкретно CFBundleVersion)
+                sed -i '' "/<key>CFBundleVersion<\/key>/,/<\/string>/s/<string>[0-9]*<\/string>/<string>${BUILD_NUMBER}<\/string>/" "$INFO_PLIST" 2>/dev/null || {
+                    echo "⚠️  Предупреждение: не удалось обновить CFBundleVersion в Info.plist"
+                }
+            }
+        else
+            sed -i "/<key>CFBundleVersion<\/key>/,/<\/string>/s/<string>[0-9]*<\/string>/<string>${BUILD_NUMBER}<\/string>/" "$INFO_PLIST" 2>/dev/null || {
+                echo "⚠️  Предупреждение: не удалось обновить CFBundleVersion в Info.plist"
+            }
+        fi
+        echo "   ✅ Обновлен CFBundleVersion в Info.plist"
+    fi
+    
+    echo "✅ Build number обновлен до: ${BUILD_NUMBER}"
+}
 
 # Проверка и настройка Xcode
 echo "🔍 Проверка Xcode..."
@@ -34,6 +90,9 @@ else
     echo "   Установите Xcode из App Store"
     exit 1
 fi
+
+# Обновляем build number перед сборкой
+update_build_number
 
 echo "🧹 Очистка предыдущих сборок..."
 rm -rf "${BUILD_DIR}"
@@ -87,4 +146,3 @@ else
     echo "❌ Ошибка: приложение не найдено"
     exit 1
 fi
-
