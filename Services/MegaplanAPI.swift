@@ -1,3 +1,4 @@
+import CommonCrypto
 import Foundation
 
 protocol AuthenticationService {
@@ -394,8 +395,28 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
     }
 
     private static func makeBaseURL(from domain: String) -> URL? {
-        let trimmed = domain.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = domain.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !trimmed.isEmpty else { return nil }
+
+        // SSRF protection: block internal/private network addresses
+        let blockedPatterns = [
+            "localhost", "127.0.0", "127.0.1", "0.0.0.0",
+            "10.0.", "10.1.", "10.2.", "10.255.",
+            "172.16.", "172.17.", "172.18.", "172.19.",
+            "172.20.", "172.21.", "172.22.", "172.23.",
+            "172.24.", "172.25.", "172.26.", "172.27.",
+            "172.28.", "172.29.", "172.30.", "172.31.",
+            "192.168.", "169.254.",
+            "::1", "fe80:", "fc00:", "fd00:",
+            "file://", "ftp://", "gopher://"
+        ]
+
+        for pattern in blockedPatterns {
+            if trimmed.contains(pattern) {
+                AppLogger.warning("Blocked potentially unsafe domain: \(domain)")
+                return nil
+            }
+        }
 
         if let url = URL(string: trimmed), url.scheme != nil {
             return url
@@ -403,19 +424,184 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
 
         return URL(string: "https://\(trimmed)")
     }
+
+    deinit {
+        session.invalidateAndCancel()
+    }
 }
 
-// MARK: - URLSessionDelegate
+// MARK: - Certificate Pinning State
+
+extension Notification.Name {
+    /// Posted when certificate pinning fails but connection is allowed (graceful degradation)
+    static let certificatePinningFailed = Notification.Name("MegaplanCertificatePinningFailed")
+}
+
+// MARK: - URLSessionDelegate (Certificate Pinning)
 
 extension MegaplanAPI: URLSessionDelegate {
+    /// Tracks whether pinning has failed in current session (to avoid repeated warnings)
+    private static var pinningFailureNotified = false
+
     func urlSession(
         _ session: URLSession,
         didReceive challenge: URLAuthenticationChallenge,
         completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
-        // TODO: Implement certificate pinning for production
-        // For now, use default handling
-        completionHandler(.performDefaultHandling, nil)
+        // Skip pinning in debug builds to allow proxy debugging
+        guard Constants.CertificatePinning.isEnabled else {
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+
+        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+              let serverTrust = challenge.protectionSpace.serverTrust else {
+            completionHandler(.cancelAuthenticationChallenge, nil)
+            return
+        }
+
+        // Validate certificate chain (standard TLS validation)
+        let policies = [SecPolicyCreateSSL(true, challenge.protectionSpace.host as CFString)]
+        SecTrustSetPolicies(serverTrust, policies as CFArray)
+
+        var error: CFError?
+        guard SecTrustEvaluateWithError(serverTrust, &error) else {
+            // Standard TLS validation failed — block connection
+            AppLogger.error("Certificate validation failed: \(error?.localizedDescription ?? "unknown")")
+            completionHandler(.cancelAuthenticationChallenge, nil)
+            return
+        }
+
+        // Check if any certificate in chain matches our pinned hashes
+        let certificateCount = SecTrustGetCertificateCount(serverTrust)
+        var isPinned = false
+
+        AppLogger.debug("Certificate pinning: checking \(certificateCount) certificates for \(challenge.protectionSpace.host)")
+
+        for index in 0..<certificateCount {
+            guard let certificate = SecTrustGetCertificateAtIndex(serverTrust, index) else { continue }
+
+            if let publicKeyHash = getPublicKeyHash(for: certificate) {
+                AppLogger.debug("Certificate[\(index)] hash: \(publicKeyHash)")
+                if Constants.CertificatePinning.pinnedPublicKeyHashes.contains(publicKeyHash) {
+                    isPinned = true
+                    break
+                }
+            } else {
+                AppLogger.debug("Certificate[\(index)] hash: failed to compute")
+            }
+        }
+
+        if isPinned {
+            AppLogger.debug("Certificate pinning succeeded for \(challenge.protectionSpace.host)")
+            completionHandler(.useCredential, URLCredential(trust: serverTrust))
+        } else {
+            // Graceful degradation: allow connection but warn user
+            AppLogger.warning("Certificate pinning failed for \(challenge.protectionSpace.host) — allowing with warning")
+
+            // Notify UI only once per session
+            if !Self.pinningFailureNotified {
+                Self.pinningFailureNotified = true
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: .certificatePinningFailed,
+                        object: nil,
+                        userInfo: ["host": challenge.protectionSpace.host]
+                    )
+                }
+            }
+
+            // Allow connection (TLS is still valid, just not pinned)
+            completionHandler(.useCredential, URLCredential(trust: serverTrust))
+        }
+    }
+
+    private func getPublicKeyHash(for certificate: SecCertificate) -> String? {
+        guard let publicKey = SecCertificateCopyKey(certificate) else { return nil }
+
+        var error: Unmanaged<CFError>?
+        guard let publicKeyData = SecKeyCopyExternalRepresentation(publicKey, &error) as Data? else {
+            return nil
+        }
+
+        // Get the key type and size to determine correct ASN.1 header
+        guard let keyAttributes = SecKeyCopyAttributes(publicKey) as? [String: Any],
+              let keyType = keyAttributes[kSecAttrKeyType as String] as? String else {
+            return nil
+        }
+
+        // Build SPKI (Subject Public Key Info) by prepending ASN.1 header
+        // This matches what openssl outputs for public key hashes
+        var spkiData = Data()
+
+        if keyType == (kSecAttrKeyTypeRSA as String) {
+            // RSA key - determine header based on key size
+            let keySize = publicKeyData.count
+            if keySize > 256 {
+                // RSA 4096 bit key
+                spkiData.append(contentsOf: Self.rsa4096SPKIHeader)
+            } else {
+                // RSA 2048 bit key (most common)
+                spkiData.append(contentsOf: Self.rsa2048SPKIHeader)
+            }
+        } else if keyType == (kSecAttrKeyTypeECSECPrimeRandom as String) {
+            // ECDSA key - P-256 is most common for TLS
+            spkiData.append(contentsOf: Self.ecdsaSecp256r1SPKIHeader)
+        } else {
+            // Unknown key type - hash raw data as fallback
+            AppLogger.warning("Unknown key type for certificate pinning: \(keyType)")
+        }
+
+        spkiData.append(publicKeyData)
+
+        // SHA256 hash of SPKI
+        var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
+        spkiData.withUnsafeBytes { buffer in
+            _ = CC_SHA256(buffer.baseAddress, CC_LONG(buffer.count), &hash)
+        }
+
+        return Data(hash).base64EncodedString()
+    }
+
+    // MARK: - ASN.1 SPKI Headers
+
+    // RSA 2048 SPKI header (for keys ~256 bytes)
+    private static let rsa2048SPKIHeader: [UInt8] = [
+        0x30, 0x82, 0x01, 0x22,  // SEQUENCE, length 290
+        0x30, 0x0D,              // SEQUENCE, length 13
+        0x06, 0x09,              // OID, length 9
+        0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01,  // rsaEncryption OID
+        0x05, 0x00,              // NULL
+        0x03, 0x82, 0x01, 0x0F,  // BIT STRING, length 271
+        0x00                     // padding
+    ]
+
+    // RSA 4096 SPKI header (for keys ~512 bytes)
+    private static let rsa4096SPKIHeader: [UInt8] = [
+        0x30, 0x82, 0x02, 0x22,  // SEQUENCE, length 546
+        0x30, 0x0D,              // SEQUENCE, length 13
+        0x06, 0x09,              // OID, length 9
+        0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01,  // rsaEncryption OID
+        0x05, 0x00,              // NULL
+        0x03, 0x82, 0x02, 0x0F,  // BIT STRING, length 527
+        0x00                     // padding
+    ]
+
+    // ECDSA P-256 (secp256r1) SPKI header
+    private static let ecdsaSecp256r1SPKIHeader: [UInt8] = [
+        0x30, 0x59,              // SEQUENCE, length 89
+        0x30, 0x13,              // SEQUENCE, length 19
+        0x06, 0x07,              // OID, length 7
+        0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x02, 0x01,  // ecPublicKey OID
+        0x06, 0x08,              // OID, length 8
+        0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07,  // secp256r1 OID
+        0x03, 0x42,              // BIT STRING, length 66
+        0x00                     // padding
+    ]
+
+    /// Resets pinning failure state (call on logout or app restart)
+    static func resetPinningState() {
+        pinningFailureNotified = false
     }
 }
 

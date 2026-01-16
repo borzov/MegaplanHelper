@@ -9,14 +9,42 @@ struct NotificationGroup: Identifiable {
 
 enum NotificationGrouper {
     static func group(_ notifications: [MegaplanNotification]) -> [NotificationGroup] {
+        guard !notifications.isEmpty else { return [] }
+
         let calendar = Calendar.current
         let now = Date()
-        
-        var groups: [NotificationGroup] = []
-        
-        // Сегодня
+
+        // Pre-compute date boundaries once
         let today = calendar.startOfDay(for: now)
-        let todayNotifications = notifications.filter { calendar.isDate($0.createdAt, inSameDayAs: now) }
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today) ?? today
+        let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now)) ?? today
+
+        // Pre-compute notification dates to avoid repeated startOfDay calls
+        let notificationsWithDates = notifications.map { notification in
+            (notification: notification, dayStart: calendar.startOfDay(for: notification.createdAt))
+        }
+
+        // Group notifications in a single pass
+        var todayNotifications: [MegaplanNotification] = []
+        var yesterdayNotifications: [MegaplanNotification] = []
+        var weekNotifications: [MegaplanNotification] = []
+        var earlierNotifications: [MegaplanNotification] = []
+
+        for item in notificationsWithDates {
+            if item.dayStart >= today {
+                todayNotifications.append(item.notification)
+            } else if item.dayStart >= yesterday {
+                yesterdayNotifications.append(item.notification)
+            } else if item.dayStart >= weekStart {
+                weekNotifications.append(item.notification)
+            } else {
+                earlierNotifications.append(item.notification)
+            }
+        }
+
+        // Build groups
+        var groups: [NotificationGroup] = []
+
         if !todayNotifications.isEmpty {
             groups.append(NotificationGroup(
                 id: "today",
@@ -25,44 +53,25 @@ enum NotificationGrouper {
                 date: today
             ))
         }
-        
-        // Вчера
-        if let yesterday = calendar.date(byAdding: .day, value: -1, to: today) {
-            let yesterdayNotifications = notifications.filter { calendar.isDate($0.createdAt, inSameDayAs: yesterday) }
-            if !yesterdayNotifications.isEmpty {
-                groups.append(NotificationGroup(
-                    id: "yesterday",
-                    title: String(localized: "notifications.group.yesterday"),
-                    notifications: yesterdayNotifications,
-                    date: yesterday
-                ))
-            }
+
+        if !yesterdayNotifications.isEmpty {
+            groups.append(NotificationGroup(
+                id: "yesterday",
+                title: String(localized: "notifications.group.yesterday"),
+                notifications: yesterdayNotifications,
+                date: yesterday
+            ))
         }
-        
-        // На этой неделе
-        if let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now)) {
-            let weekNotifications = notifications.filter { notification in
-                let notificationDate = calendar.startOfDay(for: notification.createdAt)
-                return notificationDate >= weekStart && notificationDate < today && !calendar.isDate(notification.createdAt, inSameDayAs: calendar.date(byAdding: .day, value: -1, to: today) ?? today)
-            }
-            if !weekNotifications.isEmpty {
-                groups.append(NotificationGroup(
-                    id: "thisWeek",
-                    title: String(localized: "notifications.group.thisWeek"),
-                    notifications: weekNotifications,
-                    date: weekStart
-                ))
-            }
+
+        if !weekNotifications.isEmpty {
+            groups.append(NotificationGroup(
+                id: "thisWeek",
+                title: String(localized: "notifications.group.thisWeek"),
+                notifications: weekNotifications,
+                date: weekStart
+            ))
         }
-        
-        // Ранее
-        let earlierNotifications = notifications.filter { notification in
-            let notificationDate = calendar.startOfDay(for: notification.createdAt)
-            if let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now)) {
-                return notificationDate < weekStart
-            }
-            return notificationDate < today
-        }
+
         if !earlierNotifications.isEmpty {
             groups.append(NotificationGroup(
                 id: "earlier",
@@ -71,7 +80,7 @@ enum NotificationGrouper {
                 date: Date.distantPast
             ))
         }
-        
+
         return groups
     }
 }

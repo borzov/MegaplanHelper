@@ -18,6 +18,8 @@ final class KeychainManager {
 
         var attributes = query
         attributes[kSecValueData as String] = encodedValue
+        // Only accessible when device is unlocked for better security
+        attributes[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlocked
 
         let status = SecItemAdd(attributes as CFDictionary, nil)
         guard status == errSecSuccess else {

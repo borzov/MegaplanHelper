@@ -1,8 +1,7 @@
 import Foundation
 
-/// Сервис для восстановления после ошибок с retry механизмом
-@MainActor
-final class ErrorRecoveryService {
+/// Service for error recovery with retry mechanism
+final class ErrorRecoveryService: Sendable {
     static let shared = ErrorRecoveryService()
     
     private let maxRetries = 3

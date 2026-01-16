@@ -15,6 +15,7 @@ final class AppState: ObservableObject {
     @Published var isOffline: Bool = false
     @Published var lastSyncTime: Date?
     @Published var alertItem: AlertItem?
+    @Published var certificatePinningFailed: Bool = false
     @Published var domain: String
     @Published var username: String
     @Published var refreshInterval: Double
@@ -76,16 +77,32 @@ final class AppState: ObservableObject {
             _ = await notificationManager.requestAuthorization()
         }
 
+        // Subscribe to certificate pinning failure notifications
+        NotificationCenter.default.addObserver(
+            forName: .certificatePinningFailed,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self else { return }
+            self.certificatePinningFailed = true
+            let host = notification.userInfo?["host"] as? String ?? "unknown"
+            AppLogger.warning("Certificate pinning failed for \(host) — showing warning to user")
+            self.alertItem = AlertItem(
+                message: String(localized: "security.pinning.warning")
+            )
+        }
+
         Task {
             await restoreSession()
         }
     }
 
     func signIn(domain: String, login: String, password: String) async {
-        // Check for brute force protection
+        // Brute force protection: 15 minutes lockout after 3 failed attempts
+        let lockoutDuration: TimeInterval = 15 * 60 // 15 minutes
         if failedLoginAttempts >= 3,
            let lastTime = lastFailedLoginTime,
-           Date().timeIntervalSince(lastTime) < 60 {
+           Date().timeIntervalSince(lastTime) < lockoutDuration {
             presentError(.tooManyAttempts)
             return
         }
@@ -96,8 +113,8 @@ final class AppState: ObservableObject {
         let trimmedDomain = domain.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedLogin = login.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !trimmedDomain.isEmpty, 
-              isValidEmail(trimmedLogin), 
+        guard !trimmedDomain.isEmpty,
+              trimmedLogin.isValidEmail(),
               !password.isEmpty else {
             presentError(.validationFailed)
             return
@@ -155,9 +172,13 @@ final class AppState: ObservableObject {
         isAdmin = false
         firstName = ""
         isOffline = false
+        certificatePinningFailed = false
         lastSuccessfulNotifications = []
         lastSuccessfulUnreadCount = 0
         stopRefreshTimer()
+
+        // Reset certificate pinning state for next session
+        MegaplanAPI.resetPinningState()
         
         // Clear user info cache
         Task {
@@ -354,8 +375,11 @@ final class AppState: ObservableObject {
                     AppLogger.error("All retry attempts failed: \(error.localizedDescription)")
                 }
             )
-            
-            // Успешное обновление - выходим из оффлайн-режима
+
+            // Check for cancellation after async operation completes
+            guard !Task.isCancelled else { return }
+
+            // Success - exit offline mode
             isOffline = false
             lastSyncTime = Date()
 
@@ -477,11 +501,10 @@ final class AppState: ObservableObject {
     private func presentError(_ error: NetworkError) {
         alertItem = AlertItem(message: error.localizedDescription)
     }
-    
-    private func isValidEmail(_ email: String) -> Bool {
-        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
-        return emailPredicate.evaluate(with: email)
+
+    deinit {
+        refreshTimerTask?.cancel()
+        refreshTask?.cancel()
     }
 }
 

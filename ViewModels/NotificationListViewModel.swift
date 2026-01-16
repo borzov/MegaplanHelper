@@ -52,9 +52,9 @@ final class NotificationListViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .assign(to: &$isOffline)
         
-        // Подписываемся на изменения поискового запроса
+        // Subscribe to search query changes with debounce for performance
         $searchQuery
-            .receive(on: DispatchQueue.main)
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.updateGroupedNotifications()
             }

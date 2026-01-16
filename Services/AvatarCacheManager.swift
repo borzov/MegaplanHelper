@@ -9,11 +9,12 @@ final class AvatarCacheManager {
     private let fileManager = FileManager.default
     
     private init() {
-        let cachesURL = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        let cachesURL = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         cacheDirectory = cachesURL.appendingPathComponent("MegaplanMenuBarApp", isDirectory: true)
             .appendingPathComponent("Avatars", isDirectory: true)
-        
-        // Создаем директорию кеша, если её нет
+
+        // Create cache directory if needed
         try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true, attributes: nil)
     }
     

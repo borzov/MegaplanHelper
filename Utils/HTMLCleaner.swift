@@ -41,13 +41,13 @@ struct HTMLCleaner {
         // Удаляем HTML-теги (using cached regex)
         cleaned = applyRegex(htmlTagsRegex, to: cleaned, replacement: "")
 
-        // Декодируем HTML-сущности
+        // Decode HTML entities (IMPORTANT: &amp; must be decoded LAST to prevent XSS via double encoding)
         cleaned = cleaned.replacingOccurrences(of: "&quot;", with: "\"")
-        cleaned = cleaned.replacingOccurrences(of: "&amp;", with: "&")
         cleaned = cleaned.replacingOccurrences(of: "&lt;", with: "<")
         cleaned = cleaned.replacingOccurrences(of: "&gt;", with: ">")
         cleaned = cleaned.replacingOccurrences(of: "&nbsp;", with: " ")
         cleaned = cleaned.replacingOccurrences(of: "&#39;", with: "'")
+        cleaned = cleaned.replacingOccurrences(of: "&amp;", with: "&")
 
         // Убираем лишние пробелы и переносы строк (using cached regex)
         cleaned = applyRegex(whitespaceRegex, to: cleaned, replacement: " ")
