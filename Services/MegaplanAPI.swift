@@ -1,6 +1,13 @@
 import CommonCrypto
 import Foundation
 
+/// Validated user information from token validation
+struct ValidatedUser {
+    let firstName: String
+    let unreadCount: Int
+    let possibleActions: [String]
+}
+
 protocol AuthenticationService {
     func authenticate(login: String, password: String) async throws -> String
     func validateToken(token: String) async throws -> (isValid: Bool, firstName: String?, unreadCount: Int?, possibleActions: [String]?)
@@ -84,28 +91,49 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
 
         do {
             let data = try await perform(request)
-            
-            // Parse user info
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let dataDict = json["data"] as? [String: Any] {
-                let firstName = dataDict["firstName"] as? String
-                let unreadCount = dataDict["notificationsUnreadCount"] as? Int
-                
-                // Extract possibleActions array
-                var possibleActions: [String]? = nil
-                if let actions = dataDict["possibleActions"] as? [String] {
-                    possibleActions = actions
-                } else if let actions = dataDict["possibleActions"] as? [Any] {
-                    // Handle case where actions might be objects or other types
-                    possibleActions = actions.compactMap { $0 as? String }
-                }
-                
-                return (true, firstName, unreadCount, possibleActions)
+
+            // Parse user info with strict validation
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                AppLogger.error("Token validation: Failed to parse JSON response")
+                throw NetworkError.decodingFailed
             }
-            
-            return (true, nil, nil, nil)
+
+            guard let dataDict = json["data"] as? [String: Any] else {
+                AppLogger.error("Token validation: Missing 'data' field in response")
+                throw NetworkError.decodingFailed
+            }
+
+            // firstName is optional but should be present for valid users
+            let firstName = dataDict["firstName"] as? String
+            if firstName == nil {
+                AppLogger.warning("Token validation: firstName field is missing")
+            }
+
+            // unreadCount defaults to 0 if missing
+            let unreadCount = dataDict["notificationsUnreadCount"] as? Int ?? 0
+
+            // Extract possibleActions array
+            var possibleActions: [String] = []
+            if let actions = dataDict["possibleActions"] as? [String] {
+                possibleActions = actions
+            } else if let actions = dataDict["possibleActions"] as? [Any] {
+                // Handle case where actions might be objects or other types
+                possibleActions = actions.compactMap { $0 as? String }
+                if possibleActions.count != actions.count {
+                    AppLogger.warning("Token validation: Some possibleActions could not be converted to String")
+                }
+            } else {
+                AppLogger.debug("Token validation: possibleActions field is missing or invalid")
+            }
+
+            AppLogger.debug("Token validation succeeded: firstName=\(firstName ?? "nil"), unreadCount=\(unreadCount), permissions=\(possibleActions.count)")
+            return (true, firstName, unreadCount, possibleActions.isEmpty ? nil : possibleActions)
         } catch NetworkError.unauthorized {
+            AppLogger.info("Token validation: Unauthorized (token expired or invalid)")
             return (false, nil, nil, nil)
+        } catch {
+            AppLogger.error("Token validation failed with error: \(error.localizedDescription)")
+            throw error
         }
     }
 
@@ -990,6 +1018,10 @@ private struct NotificationDTO: Decodable {
                let match = regex.firstMatch(in: content, options: [], range: NSRange(location: 0, length: content.utf16.count)),
                let urlRange = Range(match.range(at: 1), in: content) {
                 let urlString = String(content[urlRange])
+
+                // Validate URL scheme for security (XSS/phishing protection)
+                let allowedSchemes: Set<String> = ["http", "https"]
+
                 if urlString.hasPrefix("/") {
                     // Relative URL - construct full URL using baseURL
                     // Note: This requires baseURL to be accessible in static context
@@ -997,8 +1029,14 @@ private struct NotificationDTO: Decodable {
                     if let url = URL(string: urlString) {
                         parsedLink = url
                     }
-                } else if let url = URL(string: urlString) {
+                } else if let url = URL(string: urlString),
+                          let scheme = url.scheme?.lowercased(),
+                          allowedSchemes.contains(scheme) {
+                    // Only allow http/https schemes to prevent javascript:, data:, file: URIs
                     parsedLink = url
+                    AppLogger.debug("Validated and accepted URL with scheme: \(scheme)")
+                } else if let url = URL(string: urlString) {
+                    AppLogger.warning("Blocked URL with unsafe scheme: \(url.scheme ?? "none")")
                 }
             }
         }

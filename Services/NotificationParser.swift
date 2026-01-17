@@ -213,11 +213,9 @@ struct NotificationParser {
     }
     
     // MARK: - Content Parser
-    
-    /// Извлекает имя отправителя из текста уведомления
-    /// - Parameter content: HTML контент уведомления
-    /// - Returns: Извлеченное имя или nil
-    static func extractSenderNameFromContent(_ content: String) -> String? {
+
+    /// Cached regex patterns for sender name extraction
+    private static let namePatterns: [(regex: NSRegularExpression, action: String)] = {
         let patterns: [(pattern: String, action: String)] = [
             // Russian patterns
             (#"([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,3})\s+написал"#, "написал"),
@@ -225,26 +223,38 @@ struct NotificationParser {
             (#"([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,3})\s+добавил"#, "добавил"),
             (#"([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,3})\s+изменил"#, "изменил"),
             (#"([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,3})\s+создал"#, "создал"),
-            
+
             // English patterns
             (#"([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\s+wrote"#, "wrote"),
             (#"([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\s+assigned"#, "assigned"),
             (#"([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\s+added"#, "added"),
             (#"([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\s+created"#, "created"),
-            
+
             // Mixed patterns (Cyrillic + Latin)
             (#"([A-ZА-ЯЁ][a-zа-яё]+(?:\s+[A-ZА-ЯЁ][a-zа-яё]+){1,3})\s+написал"#, "написал"),
             (#"([A-ZА-ЯЁ][a-zа-яё]+(?:\s+[A-ZА-ЯЁ][a-zа-яё]+){1,3})\s+назначил"#, "назначил"),
         ]
-        
-        for (pattern, action) in patterns {
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
-               let match = regex.firstMatch(in: content, options: [], range: NSRange(location: 0, length: content.utf16.count)),
+
+        return patterns.compactMap { pattern, action in
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+                AppLogger.warning("Failed to compile regex pattern: \(pattern)")
+                return nil
+            }
+            return (regex, action)
+        }
+    }()
+
+    /// Извлекает имя отправителя из текста уведомления
+    /// - Parameter content: HTML контент уведомления
+    /// - Returns: Извлеченное имя или nil
+    static func extractSenderNameFromContent(_ content: String) -> String? {
+        for (regex, action) in namePatterns {
+            if let match = regex.firstMatch(in: content, options: [], range: NSRange(location: 0, length: content.utf16.count)),
                match.numberOfRanges > 1,
                let nameRange = Range(match.range(at: 1), in: content) {
                 let extractedName = String(content[nameRange]).trimmingCharacters(in: .whitespacesAndNewlines)
                 let nameComponents = extractedName.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
-                
+
                 // Validate name has 2-4 words (first name + last name, possibly with middle name)
                 if nameComponents.count >= 2 && nameComponents.count <= 4 {
                     AppLogger.debug("Extracted sender name from content: \(extractedName) (action: \(action))")
@@ -252,7 +262,7 @@ struct NotificationParser {
                 }
             }
         }
-        
+
         return nil
     }
 }

@@ -310,3 +310,40 @@ extension Array where Element == MegaplanNotification {
         Dictionary(grouping: self) { $0.notificationType }
     }
 }
+
+// MARK: - Search Optimization
+
+/// Wrapper для уведомления с предварительно обработанным поисковым текстом
+/// Используется для оптимизации поиска - избегает повторных вызовов lowercased()
+struct SearchableNotification {
+    let notification: MegaplanNotification
+    let searchText: String
+
+    init(notification: MegaplanNotification) {
+        self.notification = notification
+
+        // Предварительно создаем lowercased текст для поиска
+        var components: [String] = []
+
+        if !notification.title.isEmpty {
+            components.append(notification.title)
+        }
+
+        if !notification.body.isEmpty {
+            components.append(notification.body)
+        }
+
+        if let senderName = notification.senderName, !senderName.isEmpty {
+            components.append(senderName)
+        }
+
+        self.searchText = components.joined(separator: " ").lowercased()
+    }
+
+    /// Проверяет, содержит ли уведомление заданный поисковый запрос
+    /// - Parameter query: Поисковый запрос (уже lowercased)
+    /// - Returns: true если уведомление соответствует запросу
+    func matches(query: String) -> Bool {
+        return searchText.contains(query)
+    }
+}

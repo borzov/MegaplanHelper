@@ -13,12 +13,13 @@ final class NotificationListViewModel: ObservableObject {
     @Published var showOnlyUnread: Bool = false
     @Published var searchQuery: String = ""
     @Published var isSearchActive: Bool = false
-    
+
     private let appState: AppState
     private let userDefaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
     private var lastSuccessfulNotifications: [MegaplanNotification] = []
     private var visitedNotificationIds: Set<String> = []
+    private var searchableNotifications: [SearchableNotification] = []
     
     init(appState: AppState, userDefaults: UserDefaults = .standard) {
         self.appState = appState
@@ -38,6 +39,8 @@ final class NotificationListViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newNotifications in
                 self?.notifications = newNotifications
+                // Создаем searchable версии для оптимизированного поиска
+                self?.searchableNotifications = newNotifications.map { SearchableNotification(notification: $0) }
                 self?.updateGroupedNotifications()
             }
             .store(in: &cancellables)
@@ -150,30 +153,19 @@ final class NotificationListViewModel: ObservableObject {
     }
     
     /// Фильтрует уведомления по поисковому запросу
-    /// Ищет по title, body и senderName (case-insensitive)
+    /// Использует предварительно обработанный searchText для оптимизации
     private func filterNotifications(_ notifications: [MegaplanNotification], query: String) -> [MegaplanNotification] {
         let lowercasedQuery = query.lowercased()
-        
-        return notifications.filter { notification in
-            // Поиск по названию
-            if !notification.title.isEmpty && notification.title.lowercased().contains(lowercasedQuery) {
-                return true
-            }
-            
-            // Поиск по описанию
-            if !notification.body.isEmpty && notification.body.lowercased().contains(lowercasedQuery) {
-                return true
-            }
-            
-            // Поиск по имени автора
-            if let senderName = notification.senderName, !senderName.isEmpty {
-                if senderName.lowercased().contains(lowercasedQuery) {
-                    return true
-                }
-            }
-            
-            return false
+
+        // Используем searchableNotifications для оптимизированного поиска
+        var matchedIds = Set<String>()
+
+        for searchable in searchableNotifications where searchable.matches(query: lowercasedQuery) {
+            matchedIds.insert(searchable.notification.id)
         }
+
+        // Возвращаем отфильтрованные уведомления в исходном порядке
+        return notifications.filter { matchedIds.contains($0.id) }
     }
 }
 

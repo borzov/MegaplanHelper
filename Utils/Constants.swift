@@ -93,6 +93,13 @@ enum AppLogger {
         return formatter
     }()
 
+    // Buffering configuration
+    private static var logBuffer: [String] = []
+    private static let bufferSize = 10
+    private static let maxLogSize: Int64 = 5 * 1024 * 1024  // 5 MB
+    private static var lastFlushTime = Date()
+    private static let maxFlushInterval: TimeInterval = 5.0  // Flush every 5 seconds
+
     static func info(_ message: String) {
         logger.log("\(message, privacy: .public)")
         writeToFile(level: "INFO", message: message)
@@ -107,43 +114,87 @@ enum AppLogger {
         logger.error("\(message, privacy: .public)")
         writeToFile(level: "ERROR", message: message)
     }
-    
+
     static func warning(_ message: String) {
         logger.warning("\(message, privacy: .public)")
         writeToFile(level: "WARNING", message: message)
     }
 
+    /// Flushes any remaining buffered log entries
+    /// Should be called before app termination
+    static func flush() {
+        logQueue.sync {
+            flushLogBuffer()
+        }
+    }
+
     private static func writeToFile(level: String, message: String) {
         logQueue.async {
             let logEntry = "[\(dateFormatter.string(from: Date()))] [\(level)] \(message)\n"
-            guard let data = logEntry.data(using: .utf8) else {
-                return
-            }
+            logBuffer.append(logEntry)
 
-            let logURL = Constants.logFileURL
-            let directory = logURL.deletingLastPathComponent()
-
-            if !FileManager.default.fileExists(atPath: directory.path) {
-                do {
-                    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-                } catch {
-                    logger.error("Failed to create log directory: \(error.localizedDescription, privacy: .public)")
-                    return
-                }
-            }
-
-            if !FileManager.default.fileExists(atPath: logURL.path) {
-                FileManager.default.createFile(atPath: logURL.path, contents: data)
-            } else {
-                do {
-                    let handle = try FileHandle(forWritingTo: logURL)
-                    try handle.seekToEnd()
-                    try handle.write(contentsOf: data)
-                    try handle.close()
-                } catch {
-                    logger.error("Failed to append to log file: \(error.localizedDescription, privacy: .public)")
-                }
+            // Flush buffer if it's full or enough time has passed
+            let timeSinceLastFlush = Date().timeIntervalSince(lastFlushTime)
+            if logBuffer.count >= bufferSize || timeSinceLastFlush >= maxFlushInterval {
+                flushLogBuffer()
             }
         }
+    }
+
+    private static func flushLogBuffer() {
+        guard !logBuffer.isEmpty else { return }
+
+        let logURL = Constants.logFileURL
+        let directory = logURL.deletingLastPathComponent()
+
+        // Ensure directory exists
+        if !FileManager.default.fileExists(atPath: directory.path) {
+            do {
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            } catch {
+                logger.error("Failed to create log directory: \(error.localizedDescription, privacy: .public)")
+                logBuffer.removeAll()
+                return
+            }
+        }
+
+        // Rotate log if too large
+        if FileManager.default.fileExists(atPath: logURL.path),
+           let attrs = try? FileManager.default.attributesOfItem(atPath: logURL.path),
+           let fileSize = attrs[.size] as? Int64,
+           fileSize > maxLogSize {
+            rotateLog(at: logURL)
+        }
+
+        // Write buffered entries
+        let combined = logBuffer.joined()
+        if let data = combined.data(using: .utf8) {
+            if FileManager.default.fileExists(atPath: logURL.path) {
+                if let handle = try? FileHandle(forWritingTo: logURL) {
+                    try? handle.seekToEnd()
+                    try? handle.write(contentsOf: data)
+                    try? handle.close()
+                }
+            } else {
+                FileManager.default.createFile(atPath: logURL.path, contents: data)
+            }
+        }
+
+        logBuffer.removeAll()
+        lastFlushTime = Date()
+    }
+
+    private static func rotateLog(at logURL: URL) {
+        let backupURL = logURL.deletingPathExtension().appendingPathExtension("old.log")
+
+        // Remove old backup if exists
+        if FileManager.default.fileExists(atPath: backupURL.path) {
+            try? FileManager.default.removeItem(at: backupURL)
+        }
+
+        // Move current log to backup
+        try? FileManager.default.moveItem(at: logURL, to: backupURL)
+
+        logger.info("Log file rotated")
     }
 }

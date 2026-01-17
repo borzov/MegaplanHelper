@@ -34,7 +34,7 @@ final class AppState: ObservableObject {
     private let userDefaults: UserDefaults
     private let notificationManager = NotificationManager.shared
     private let errorRecoveryService = ErrorRecoveryService.shared
-    private var refreshTimerTask: Task<Void, Never>?
+    private let refreshScheduler: RefreshScheduler
     private var refreshTask: Task<Void, Never>?
     private var accessToken: String?
     private var cachedPasswordData: Data?
@@ -45,6 +45,7 @@ final class AppState: ObservableObject {
     private var lastSuccessfulNotifications: [MegaplanNotification] = []
     private var lastSuccessfulUnreadCount: Int = 0
     private var isShuttingDown = false
+    private var isSessionRestored = false
 
     init(
         api: AuthenticationService & NotificationService = MegaplanAPI(),
@@ -57,12 +58,16 @@ final class AppState: ObservableObject {
         self.domain = domainValue
         self.username = usernameValue
         let storedInterval = userDefaults.double(forKey: Constants.UserDefaultsKeys.refreshInterval)
+        let intervalValue: TimeInterval
         if storedInterval > 0 {
+            intervalValue = storedInterval
             self.refreshInterval = storedInterval
         } else {
+            intervalValue = Constants.defaultRefreshInterval
             self.refreshInterval = Constants.defaultRefreshInterval
         }
         self.autoLaunchEnabled = userDefaults.bool(forKey: Constants.UserDefaultsKeys.autoLaunch)
+        self.refreshScheduler = RefreshScheduler(interval: intervalValue)
         
         // Initialize tempCredentials using local variables
         self.tempCredentials = MegaplanCredentials(
@@ -159,7 +164,14 @@ final class AppState: ObservableObject {
             // Reset failed attempts on success
             failedLoginAttempts = 0
             lastFailedLoginTime = nil
-            
+
+            // Clear cached password after successful authentication if session was already restored
+            // This reduces the time password stays in memory
+            if isSessionRestored {
+                AppLogger.info("Clearing cached password after successful authentication")
+                clearCachedPassword()
+            }
+
             startRefreshTimer()
             await refresh()
         } catch {
@@ -244,7 +256,12 @@ final class AppState: ObservableObject {
         refreshInterval = clampedInterval
         userDefaults.set(clampedInterval, forKey: Constants.UserDefaultsKeys.refreshInterval)
         AppLogger.debug("Refresh interval updated to \(clampedInterval) seconds")
-        startRefreshTimer()
+
+        Task {
+            await refreshScheduler.updateInterval(clampedInterval) { [weak self] in
+                await self?.refresh()
+            }
+        }
     }
 
     func updateTempCredentials(_ credentials: MegaplanCredentials) {
@@ -336,6 +353,8 @@ final class AppState: ObservableObject {
             let result = try await api.validateToken(token: token)
             if result.isValid {
                 isAuthenticated = true
+                isSessionRestored = true
+
                 if let firstName = result.firstName {
                     self.firstName = firstName
                 }
@@ -347,6 +366,10 @@ final class AppState: ObservableObject {
                 AppLogger.info("Token validation succeeded, restoring session. Admin: \(isAdmin)")
                 startRefreshTimer()
                 await refresh()
+
+                // Clear cached password after successful session restore to minimize exposure time
+                AppLogger.info("Clearing cached password after successful session restore")
+                clearCachedPassword()
             } else if let passwordData = cachedPasswordData,
                       let password = String(data: passwordData, encoding: .utf8) {
                 AppLogger.debug("Token invalid, attempting re-authentication")
@@ -474,28 +497,22 @@ final class AppState: ObservableObject {
     }
 
     private func startRefreshTimer() {
-        refreshTimerTask?.cancel()
         guard isAuthenticated, !isShuttingDown else { return }
 
-        refreshTimerTask = Task { @MainActor [weak self] in
-            while !Task.isCancelled {
-                guard let self = self, !self.isShuttingDown else { break }
-
-                do {
-                    try await Task.sleep(nanoseconds: UInt64(self.refreshInterval * 1_000_000_000))
-                } catch {
-                    break
-                }
-
-                guard !Task.isCancelled, !self.isShuttingDown else { break }
+        Task {
+            await refreshScheduler.start(interval: refreshInterval) { [weak self] in
+                guard let self = self else { return }
+                // Need to await access to @MainActor property from actor context
+                if await self.isShuttingDown { return }
                 await self.refresh()
             }
         }
     }
 
     private func stopRefreshTimer() {
-        refreshTimerTask?.cancel()
-        refreshTimerTask = nil
+        Task {
+            await refreshScheduler.stop()
+        }
         refreshTask?.cancel()
         refreshTask = nil
     }
@@ -529,7 +546,9 @@ final class AppState: ObservableObject {
     deinit {
         // Note: isShuttingDown cannot be set in deinit due to @MainActor isolation
         // but tasks will be cancelled immediately
-        refreshTimerTask?.cancel()
+        Task {
+            await refreshScheduler.stop()
+        }
         refreshTask?.cancel()
     }
 }
@@ -537,4 +556,73 @@ final class AppState: ObservableObject {
 struct AlertItem: Identifiable {
     let id = UUID()
     let message: String
+}
+
+// MARK: - RefreshScheduler
+
+/// Thread-safe refresh timer scheduler using actor
+actor RefreshScheduler {
+    private var task: Task<Void, Never>?
+    private var interval: TimeInterval
+    private var isRunning: Bool = false
+
+    init(interval: TimeInterval) {
+        self.interval = interval
+    }
+
+    /// Starts the refresh timer with the given interval
+    /// - Parameters:
+    ///   - interval: Interval in seconds between refreshes
+    ///   - action: Async action to perform on each tick
+    func start(interval: TimeInterval, action: @escaping @Sendable () async -> Void) {
+        // Cancel existing task first
+        task?.cancel()
+
+        self.interval = interval
+        self.isRunning = true
+
+        task = Task {
+            while !Task.isCancelled {
+                guard !Task.isCancelled else { break }
+
+                do {
+                    try await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+                } catch {
+                    // Task was cancelled
+                    break
+                }
+
+                guard !Task.isCancelled else { break }
+                await action()
+            }
+            await self.markAsStopped()
+        }
+
+        AppLogger.debug("RefreshScheduler started with interval: \(interval)s")
+    }
+
+    /// Stops the refresh timer
+    func stop() {
+        task?.cancel()
+        task = nil
+        isRunning = false
+        AppLogger.debug("RefreshScheduler stopped")
+    }
+
+    /// Updates the interval and restarts if currently running
+    func updateInterval(_ newInterval: TimeInterval, action: @escaping @Sendable () async -> Void) {
+        self.interval = newInterval
+        if isRunning {
+            start(interval: newInterval, action: action)
+        }
+    }
+
+    /// Returns whether the scheduler is currently running
+    func getIsRunning() -> Bool {
+        return isRunning
+    }
+
+    private func markAsStopped() {
+        isRunning = false
+    }
 }
