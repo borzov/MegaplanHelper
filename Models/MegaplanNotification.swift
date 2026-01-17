@@ -226,8 +226,10 @@ struct MegaplanNotification: Identifiable, Codable, Equatable {
         return formatter
     }()
 
+    private static let calendar = Calendar.current
+
     private static func formatRelativeDate(_ date: Date) -> String {
-        let calendar = Calendar.current
+        let calendar = Self.calendar
 
         if calendar.isDateInToday(date) {
             return "сегодня \(timeFormatter.string(from: date))"

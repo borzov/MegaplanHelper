@@ -27,7 +27,7 @@ final class SettingsViewModel: ObservableObject {
         appState.$refreshInterval
             .receive(on: DispatchQueue.main)
             .assign(to: &$refreshInterval)
-        
+
         appState.$autoLaunchEnabled
             .receive(on: DispatchQueue.main)
             .assign(to: &$autoLaunchEnabled)
@@ -46,28 +46,38 @@ final class SettingsViewModel: ObservableObject {
     }
     
     func updateNotificationsEnabled(_ enabled: Bool) {
-        notificationsEnabled = enabled
-        userDefaults.set(enabled, forKey: Constants.UserDefaultsKeys.notificationsEnabled)
+        updateSetting(enabled, key: Constants.UserDefaultsKeys.notificationsEnabled) {
+            notificationsEnabled = $0
+        }
     }
-    
+
     func updateGroupingEnabled(_ enabled: Bool) {
-        groupingEnabled = enabled
-        userDefaults.set(enabled, forKey: Constants.UserDefaultsKeys.groupingEnabled)
+        updateSetting(enabled, key: Constants.UserDefaultsKeys.groupingEnabled) {
+            groupingEnabled = $0
+        }
     }
-    
+
     func updateShowOnlyUnread(_ enabled: Bool) {
-        showOnlyUnread = enabled
-        userDefaults.set(enabled, forKey: Constants.UserDefaultsKeys.showOnlyUnread)
+        updateSetting(enabled, key: Constants.UserDefaultsKeys.showOnlyUnread) {
+            showOnlyUnread = $0
+        }
     }
-    
+
     func updateTheme(_ newTheme: AppTheme) {
-        theme = newTheme
-        userDefaults.set(newTheme.rawValue, forKey: Constants.UserDefaultsKeys.theme)
+        updateSetting(newTheme.rawValue, key: Constants.UserDefaultsKeys.theme) { _ in
+            theme = newTheme
+        }
     }
-    
+
     func updateFontSize(_ size: FontSize) {
-        fontSize = size
-        userDefaults.set(size.rawValue, forKey: Constants.UserDefaultsKeys.fontSize)
+        updateSetting(size.rawValue, key: Constants.UserDefaultsKeys.fontSize) { _ in
+            fontSize = size
+        }
+    }
+
+    private func updateSetting<T>(_ newValue: T, key: String, update: (T) -> Void) {
+        update(newValue)
+        userDefaults.set(newValue, forKey: key)
     }
     
     private func loadSettings() {

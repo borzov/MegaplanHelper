@@ -63,18 +63,13 @@ struct NotificationParser {
     }
     
     // MARK: - Private Helpers
-    
-    private static func parseName(from container: KeyedDecodingContainer<DynamicCodingKey>) -> String? {
-        // Try direct name field
-        if let name = try? container.decodeFlexibleString(keys: ["name", "fullName", "displayName"], defaultValue: nil),
-           !name.isEmpty {
-            return name
-        }
-        
-        // Try firstName + lastName combinations
-        let firstName = try? container.decodeFlexibleString(keys: ["firstName", "first_name", "givenName"], defaultValue: nil)
-        let lastName = try? container.decodeFlexibleString(keys: ["lastName", "last_name", "surname", "familyName"], defaultValue: nil)
-        
+
+    private static func normalizeURLString(_ urlString: String) -> URL? {
+        let normalized = urlString.hasPrefix("//") ? "https:\(urlString)" : urlString
+        return URL(string: normalized)
+    }
+
+    private static func parseNameComponents(firstName: String?, lastName: String?) -> String? {
         if let firstName = firstName, !firstName.isEmpty,
            let lastName = lastName, !lastName.isEmpty {
             return "\(lastName) \(firstName)"
@@ -83,53 +78,54 @@ struct NotificationParser {
         } else if let lastName = lastName, !lastName.isEmpty {
             return lastName
         }
-        
         return nil
+    }
+
+    private static func parseName(from container: KeyedDecodingContainer<DynamicCodingKey>) -> String? {
+        // Try direct name field
+        if let name = try? container.decodeFlexibleString(keys: ["name", "fullName", "displayName"], defaultValue: nil),
+           !name.isEmpty {
+            return name
+        }
+
+        // Try firstName + lastName combinations
+        let firstName = try? container.decodeFlexibleString(keys: ["firstName", "first_name", "givenName"], defaultValue: nil)
+        let lastName = try? container.decodeFlexibleString(keys: ["lastName", "last_name", "surname", "familyName"], defaultValue: nil)
+
+        return parseNameComponents(firstName: firstName, lastName: lastName)
     }
     
     private static func parseAvatar(from container: KeyedDecodingContainer<DynamicCodingKey>) -> URL? {
         // Try nested avatar object
         if let avatarKey = DynamicCodingKey(stringValue: "avatar"),
            let avatarContainer = try? container.nestedContainer(keyedBy: DynamicCodingKey.self, forKey: avatarKey) {
-            
+
             // Try thumbnail with size replacement
             if let thumbnail = try? avatarContainer.decodeFlexibleString(keys: ["thumbnail", "thumb", "small"], defaultValue: nil),
                !thumbnail.isEmpty {
                 let avatarURLString = thumbnail.replacingOccurrences(of: "{width}x{height}", with: "64x64")
                 AppLogger.debug("Parsed avatar thumbnail: \(thumbnail) -> \(avatarURLString)")
-                if avatarURLString.hasPrefix("//") {
-                    let finalURL = URL(string: "https:\(avatarURLString)")
-                    AppLogger.debug("Created avatar URL from // prefix: \(finalURL?.absoluteString ?? "nil")")
-                    return finalURL
-                } else if let url = URL(string: avatarURLString) {
+                if let url = normalizeURLString(avatarURLString) {
                     AppLogger.debug("Created avatar URL: \(url.absoluteString)")
                     return url
                 } else {
                     AppLogger.debug("Failed to create URL from avatar string: \(avatarURLString)")
                 }
             }
-            
+
             // Try path or URL
             if let path = try? avatarContainer.decodeFlexibleString(keys: ["path", "url", "href"], defaultValue: nil),
                !path.isEmpty {
-                if path.hasPrefix("//") {
-                    return URL(string: "https:\(path)")
-                } else {
-                    return URL(string: path)
-                }
+                return normalizeURLString(path)
             }
         }
-        
+
         // Try direct avatar field
         if let avatarString = try? container.decodeFlexibleString(keys: ["avatar", "avatarUrl", "avatarURL", "photo", "picture", "image"], defaultValue: nil),
            !avatarString.isEmpty {
-            if avatarString.hasPrefix("//") {
-                return URL(string: "https:\(avatarString)")
-            } else {
-                return URL(string: avatarString)
-            }
+            return normalizeURLString(avatarString)
         }
-        
+
         return nil
     }
     
@@ -151,21 +147,12 @@ struct NotificationParser {
         if let name = dict["name"] as? String, !name.isEmpty {
             return name
         }
-        
+
         // Try firstName + lastName combinations
         let firstName = dict["firstName"] as? String
         let lastName = dict["lastName"] as? String
-        
-        if let firstName = firstName, !firstName.isEmpty,
-           let lastName = lastName, !lastName.isEmpty {
-            return "\(lastName) \(firstName)"
-        } else if let firstName = firstName, !firstName.isEmpty {
-            return firstName
-        } else if let lastName = lastName, !lastName.isEmpty {
-            return lastName
-        }
-        
-        return nil
+
+        return parseNameComponents(firstName: firstName, lastName: lastName)
     }
     
     /// Извлекает URL аватара из словаря [String: Any]
@@ -178,37 +165,25 @@ struct NotificationParser {
             if let thumbnail = avatar["thumbnail"] as? String, !thumbnail.isEmpty {
                 let avatarURLString = thumbnail.replacingOccurrences(of: "{width}x{height}", with: "64x64")
                 AppLogger.debug("Parsed avatar thumbnail from dict: \(thumbnail) -> \(avatarURLString)")
-                if avatarURLString.hasPrefix("//") {
-                    let finalURL = URL(string: "https:\(avatarURLString)")
-                    AppLogger.debug("Created avatar URL from // prefix: \(finalURL?.absoluteString ?? "nil")")
-                    return finalURL
-                } else if let url = URL(string: avatarURLString) {
+                if let url = normalizeURLString(avatarURLString) {
                     AppLogger.debug("Created avatar URL: \(url.absoluteString)")
                     return url
                 } else {
                     AppLogger.debug("Failed to create URL from avatar string: \(avatarURLString)")
                 }
             }
-            
+
             // Try path or URL
             if let path = avatar["path"] as? String, !path.isEmpty {
-                if path.hasPrefix("//") {
-                    return URL(string: "https:\(path)")
-                } else {
-                    return URL(string: path)
-                }
+                return normalizeURLString(path)
             }
         }
-        
+
         // Try direct avatar field
         if let avatarString = dict["avatar"] as? String, !avatarString.isEmpty {
-            if avatarString.hasPrefix("//") {
-                return URL(string: "https:\(avatarString)")
-            } else {
-                return URL(string: avatarString)
-            }
+            return normalizeURLString(avatarString)
         }
-        
+
         return nil
     }
     

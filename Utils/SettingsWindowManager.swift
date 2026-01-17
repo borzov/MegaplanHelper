@@ -46,7 +46,7 @@ class SettingsWindowManager: ObservableObject {
             window.setFrameOrigin(NSPoint(x: x, y: y))
         }
         
-        // Handle window close to clean up
+        // Обработка закрытия окна для очистки ресурсов
         windowObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
             object: window,
@@ -57,7 +57,7 @@ class SettingsWindowManager: ObservableObject {
         
         self.settingsWindow = window
         
-        // Hide menu bar popover window (identified by statusItem level)
+        // Скрытие popover окна menu bar (определяется по statusItem уровню)
         if let menuBarWindow = NSApp.windows.first(where: { $0.level == .statusBar || $0.level == .popUpMenu }) {
             menuBarWindow.orderOut(nil)
         }

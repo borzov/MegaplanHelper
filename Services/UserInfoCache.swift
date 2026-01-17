@@ -20,14 +20,12 @@ actor UserInfoCache {
     func getUserInfo(for userId: String) -> CachedUserInfo? {
         guard var cached = cache[userId] else { return nil }
 
-        // Check if cache is still valid
         if Date().timeIntervalSince(cached.cachedAt) > cacheExpiration {
             cache.removeValue(forKey: userId)
             removeFromAccessOrder(userId)
             return nil
         }
 
-        // Update last accessed time and move to end of access order (most recent)
         cached.lastAccessedAt = Date()
         cache[userId] = cached
         updateAccessOrder(for: userId)
@@ -36,7 +34,6 @@ actor UserInfoCache {
     }
 
     func cacheUserInfo(userId: String, name: String?, avatarURL: URL?) {
-        // Check if this is an update to existing entry
         let isNewEntry = cache[userId] == nil
 
         // Evict least recently used entries if cache is full and this is a new entry

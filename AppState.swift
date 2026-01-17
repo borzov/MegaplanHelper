@@ -5,7 +5,7 @@ import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
-    // Note: Some properties remain public for SwiftUI Preview support in DEBUG builds
+    // Примечание: Некоторые свойства остаются публичными для поддержки SwiftUI Preview в DEBUG сборках
     #if DEBUG
     @Published var notifications: [MegaplanNotification] = []
     @Published var isAuthenticated: Bool = false
@@ -69,19 +69,19 @@ final class AppState: ObservableObject {
         self.autoLaunchEnabled = userDefaults.bool(forKey: Constants.UserDefaultsKeys.autoLaunch)
         self.refreshScheduler = RefreshScheduler(interval: intervalValue)
         
-        // Initialize tempCredentials using local variables
+        // Инициализация tempCredentials используя локальные переменные
         self.tempCredentials = MegaplanCredentials(
             domain: domainValue,
             login: usernameValue,
             password: ""
         )
         
-        // Set domain in API if available
+        // Устанавливаем domain в API если доступен
         if !self.domain.isEmpty {
             (api as? MegaplanAPI)?.updateDomain(self.domain)
         }
         
-        // Update unreadCount from API counter
+        // Синхронизация unreadCount с счётчиком из API
         $apiUnreadCount
             .assign(to: &$unreadCount)
 
@@ -147,14 +147,7 @@ final class AppState: ObservableObject {
             // Validate token and check admin permissions
             do {
                 let result = try await api.validateToken(token: token)
-                if let firstName = result.firstName {
-                    self.firstName = firstName
-                }
-                if let unreadCount = result.unreadCount {
-                    self.apiUnreadCount = unreadCount
-                }
-                // Check admin permissions
-                self.isAdmin = Constants.AdminPermissions.isAdministrator(result.possibleActions)
+                applyTokenValidationResult(result)
                 AppLogger.info("Authentication succeeded for \(trimmedLogin). Admin: \(isAdmin)")
             } catch {
                 AppLogger.warning("Failed to validate token after authentication: \(error.localizedDescription)")
@@ -227,7 +220,7 @@ final class AppState: ObservableObject {
             AppLogger.error("Failed to clear keychain during logout: \(error.localizedDescription)")
         }
 
-        // Clear password from tempCredentials for security, but keep domain/login for convenience
+        // Очистка пароля из tempCredentials для безопасности, сохраняя domain/login для удобства
         tempCredentials.password = ""
 
         domain = ""
@@ -354,15 +347,7 @@ final class AppState: ObservableObject {
             if result.isValid {
                 isAuthenticated = true
                 isSessionRestored = true
-
-                if let firstName = result.firstName {
-                    self.firstName = firstName
-                }
-                if let unreadCount = result.unreadCount {
-                    self.apiUnreadCount = unreadCount
-                }
-                // Check admin permissions
-                self.isAdmin = Constants.AdminPermissions.isAdministrator(result.possibleActions)
+                applyTokenValidationResult(result)
                 AppLogger.info("Token validation succeeded, restoring session. Admin: \(isAdmin)")
                 startRefreshTimer()
                 await refresh()
@@ -451,17 +436,7 @@ final class AppState: ObservableObject {
             // Переход в оффлайн-режим без показа ошибки
             AppLogger.info("No internet connection, entering offline mode")
             isOffline = true
-
-            // Используем последние успешные данные, если они есть
-            if !lastSuccessfulNotifications.isEmpty {
-                withAnimation(.easeInOut) {
-                    notifications = lastSuccessfulNotifications
-                }
-                apiUnreadCount = lastSuccessfulUnreadCount
-                // Note: lastSyncTime keeps the timestamp of last successful sync
-                // so UI can show how stale the data is
-                AppLogger.debug("Using cached data in offline mode: \(lastSuccessfulNotifications.count) notifications, last sync: \(lastSyncTime?.description ?? "never")")
-            }
+            restoreCachedNotifications()
         } catch NetworkError.unauthorized {
             AppLogger.error("Unauthorized during refresh - session expired")
             isSessionExpired = true
@@ -477,12 +452,7 @@ final class AppState: ObservableObject {
                 if let urlError = (error as NSError).userInfo[NSUnderlyingErrorKey] as? URLError,
                    urlError.code == .notConnectedToInternet || urlError.code == .networkConnectionLost {
                     isOffline = true
-                    if !lastSuccessfulNotifications.isEmpty {
-                        withAnimation(.easeInOut) {
-                            notifications = lastSuccessfulNotifications
-                        }
-                        apiUnreadCount = lastSuccessfulUnreadCount
-                    }
+                    restoreCachedNotifications()
                     AppLogger.info("Network error detected, entering offline mode")
                     return
                 }
@@ -502,7 +472,7 @@ final class AppState: ObservableObject {
         Task {
             await refreshScheduler.start(interval: refreshInterval) { [weak self] in
                 guard let self = self else { return }
-                // Need to await access to @MainActor property from actor context
+                // Требуется await для доступа к @MainActor свойству из actor контекста
                 if await self.isShuttingDown { return }
                 await self.refresh()
             }
@@ -539,13 +509,33 @@ final class AppState: ObservableObject {
         cachedPasswordData = nil
     }
 
+    private func applyTokenValidationResult(_ result: (isValid: Bool, firstName: String?, unreadCount: Int?, possibleActions: [String]?)) {
+        if let firstName = result.firstName {
+            self.firstName = firstName
+        }
+        if let unreadCount = result.unreadCount {
+            self.apiUnreadCount = unreadCount
+        }
+        self.isAdmin = Constants.AdminPermissions.isAdministrator(result.possibleActions)
+    }
+
+    private func restoreCachedNotifications() {
+        guard !lastSuccessfulNotifications.isEmpty else { return }
+
+        withAnimation(.easeInOut) {
+            notifications = lastSuccessfulNotifications
+        }
+        apiUnreadCount = lastSuccessfulUnreadCount
+        AppLogger.debug("Using cached data in offline mode (total: \(lastSuccessfulNotifications.count))")
+    }
+
     private func presentError(_ error: NetworkError) {
         alertItem = AlertItem(message: error.localizedDescription)
     }
 
     deinit {
-        // Note: isShuttingDown cannot be set in deinit due to @MainActor isolation
-        // but tasks will be cancelled immediately
+        // Примечание: isShuttingDown нельзя установить в deinit из-за @MainActor изоляции,
+        // но задачи будут отменены немедленно
         Task {
             await refreshScheduler.stop()
         }

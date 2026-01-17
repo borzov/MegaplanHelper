@@ -40,8 +40,8 @@ struct NotificationListView: View {
                 }
             }
         }
-        // Note: ViewModel already subscribes to appState.$notifications via Combine
-        // Do not add .onChange here to avoid duplicate updates
+        // Примечание: ViewModel уже подписан на appState.$notifications через Combine
+        // Не добавляйте .onChange здесь чтобы избежать дублирования обновлений
         .toast(isShowing: $showToast, message: String(localized: "toast.markedAsRead"))
     }
 
@@ -58,7 +58,7 @@ struct NotificationListView: View {
                         withAnimation {
                             viewModel.isSearchActive.toggle()
                             if viewModel.isSearchActive {
-                                // Set focus with small delay to allow animation
+                                // Установка фокуса с небольшой задержкой для завершения анимации
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                     isSearchFieldFocused = true
                                 }

@@ -7,6 +7,9 @@ final class AvatarCacheManager {
     private let cacheDirectory: URL
     private let cacheExpirationInterval: TimeInterval = 3600 // 1 час
     private let fileManager = FileManager.default
+
+    private static let metadataDecoder = JSONDecoder()
+    private static let metadataEncoder = JSONEncoder()
     
     private init() {
         let cachesURL = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
@@ -136,14 +139,14 @@ final class AvatarCacheManager {
     
     private func loadMetadata(from url: URL) -> CacheMetadata? {
         guard let data = try? Data(contentsOf: url),
-              let metadata = try? JSONDecoder().decode(CacheMetadata.self, from: data) else {
+              let metadata = try? Self.metadataDecoder.decode(CacheMetadata.self, from: data) else {
             return nil
         }
         return metadata
     }
     
     private func saveMetadata(_ metadata: CacheMetadata, to url: URL) {
-        guard let data = try? JSONEncoder().encode(metadata) else {
+        guard let data = try? Self.metadataEncoder.encode(metadata) else {
             return
         }
         try? data.write(to: url)

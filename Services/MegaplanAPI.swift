@@ -47,23 +47,19 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         // Create multipart/form-data request
         let boundary = UUID().uuidString
         var body = Data()
-        
-        // Add username
+
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"username\"\r\n\r\n".data(using: .utf8)!)
         body.append("\(login)\r\n".data(using: .utf8)!)
-        
-        // Add password
+
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"password\"\r\n\r\n".data(using: .utf8)!)
         body.append("\(password)\r\n".data(using: .utf8)!)
-        
-        // Add grant_type
+
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"grant_type\"\r\n\r\n".data(using: .utf8)!)
         body.append("password\r\n".data(using: .utf8)!)
-        
-        // Close boundary
+
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
         
         let request = try makeRequest(
@@ -875,6 +871,10 @@ private struct NotificationDTO: Decodable {
     let senderAvatarURL: URL?
     let senderId: String?
 
+    private static let linkPatternRegex: NSRegularExpression? = {
+        try? NSRegularExpression(pattern: #"href=["']([^"']+)["']"#, options: [])
+    }()
+
     var domainModel: MegaplanNotification {
         MegaplanNotification(
             id: id,
@@ -1012,9 +1012,7 @@ private struct NotificationDTO: Decodable {
         
         // Try to extract link from content HTML
         if parsedLink == nil, let content = try? container.decodeFlexibleString(keys: ["content"], defaultValue: nil) {
-            // Extract URL from HTML links in content
-            let pattern = #"href=["']([^"']+)["']"#
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+            if let regex = Self.linkPatternRegex,
                let match = regex.firstMatch(in: content, options: [], range: NSRange(location: 0, length: content.utf16.count)),
                let urlRange = Range(match.range(at: 1), in: content) {
                 let urlString = String(content[urlRange])

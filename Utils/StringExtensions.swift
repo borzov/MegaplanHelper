@@ -2,14 +2,21 @@ import Foundation
 
 // MARK: - Email Validation Extension
 extension String {
+    private static let emailDetector: NSDataDetector? = {
+        try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+    }()
+
+    private static let emailPredicate: NSPredicate = {
+        let emailRegex = "[A-Z0-9a-z._%+\\-!#$&'*/=?^`{|}~]+@[A-Za-z0-9][A-Za-z0-9.\\-]*[A-Za-z0-9]\\.[A-Za-z]{2,}"
+        return NSPredicate(format: "SELF MATCHES %@", emailRegex)
+    }()
+
     /// Validates email address format using NSDataDetector for RFC-compliant validation
     /// - Returns: true if the string is a valid email address
     func isValidEmail() -> Bool {
         guard !self.isEmpty else { return false }
 
-        // Use NSDataDetector for more accurate email validation
-        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else {
-            // Fallback to basic regex if detector fails
+        guard let detector = Self.emailDetector else {
             return isValidEmailFallback()
         }
 
@@ -31,10 +38,7 @@ extension String {
 
     /// Fallback regex validation supporting + in local part
     private func isValidEmailFallback() -> Bool {
-        // RFC 5321 compliant pattern allowing + and other valid characters
-        let emailRegex = "[A-Z0-9a-z._%+\\-!#$&'*/=?^`{|}~]+@[A-Za-z0-9][A-Za-z0-9.\\-]*[A-Za-z0-9]\\.[A-Za-z]{2,}"
-        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
-        return emailPredicate.evaluate(with: self)
+        return Self.emailPredicate.evaluate(with: self)
     }
 }
 

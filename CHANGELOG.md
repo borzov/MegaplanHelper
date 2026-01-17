@@ -19,6 +19,15 @@
 - Оптимизирован поиск по уведомлениям через предварительную обработку текста (SearchableNotification)
 - Оптимизировано логирование: добавлен буферизованный вывод с автоматической ротацией файлов (лимит 5MB)
 - Кэшированы regex паттерны в NotificationParser для устранения повторной компиляции
+- Оптимизация производительности: кэширование JSONDecoder/JSONEncoder в AvatarCacheManager
+- Оптимизация производительности: кэширование NSDataDetector/NSPredicate в StringExtensions
+- Оптимизация производительности: кэширование Calendar.current в MegaplanNotification
+- Оптимизация производительности: кэширование NSRegularExpression в MegaplanAPI
+- Устранено дублирование кода в NotificationParser (normalizeURLString, parseNameComponents)
+- Устранено дублирование кода в SettingsViewModel (универсальный метод updateSetting)
+- Устранено дублирование кода в AppState (applyTokenValidationResult, restoreCachedNotifications)
+- Переведены комментарии на русский язык (кроме docstrings)
+- Удалены избыточные и очевидные комментарии из кода
 
 ## [1.5] - 2026-01-17
 

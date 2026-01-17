@@ -22,19 +22,19 @@ final class AuthViewModel: ObservableObject {
         appState.$isAuthenticated
             .receive(on: DispatchQueue.main)
             .assign(to: &$isAuthenticated)
-        
+
         appState.$domain
             .receive(on: DispatchQueue.main)
             .assign(to: &$domain)
-        
+
         appState.$username
             .receive(on: DispatchQueue.main)
             .assign(to: &$login)
-        
+
         appState.$firstName
             .receive(on: DispatchQueue.main)
             .assign(to: &$firstName)
-        
+
         // Подписываемся на ошибки
         appState.$alertItem
             .compactMap { $0?.message }
