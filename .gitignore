@@ -42,3 +42,6 @@ fastlane/screenshots
 # App-specific
 *.app
 
+# AI
+.claude/
+CLAUDE.md
