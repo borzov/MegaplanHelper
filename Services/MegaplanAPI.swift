@@ -398,31 +398,123 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         let trimmed = domain.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !trimmed.isEmpty else { return nil }
 
-        // SSRF protection: block internal/private network addresses
-        let blockedPatterns = [
-            "localhost", "127.0.0", "127.0.1", "0.0.0.0",
-            "10.0.", "10.1.", "10.2.", "10.255.",
+        // Construct URL string with scheme if not present
+        let urlString: String
+        if trimmed.hasPrefix("https://") || trimmed.hasPrefix("http://") {
+            urlString = trimmed
+        } else {
+            urlString = "https://\(trimmed)"
+        }
+
+        // Use URLComponents for proper parsing
+        guard var components = URLComponents(string: urlString) else {
+            AppLogger.warning("Invalid URL format: \(domain)")
+            return nil
+        }
+
+        // Ensure HTTPS scheme
+        if components.scheme == "http" {
+            components.scheme = "https"
+        }
+
+        // Validate scheme is HTTPS only
+        guard components.scheme == "https" else {
+            AppLogger.warning("Blocked non-HTTPS scheme: \(domain)")
+            return nil
+        }
+
+        // Extract and validate host
+        guard let host = components.host, !host.isEmpty else {
+            AppLogger.warning("No host in URL: \(domain)")
+            return nil
+        }
+
+        // Block URLs with query parameters or fragments (potential injection)
+        if components.query != nil || components.fragment != nil {
+            AppLogger.warning("Blocked URL with query/fragment: \(domain)")
+            return nil
+        }
+
+        // Block URLs with user info (username:password@host)
+        if components.user != nil || components.password != nil {
+            AppLogger.warning("Blocked URL with credentials: \(domain)")
+            return nil
+        }
+
+        // SSRF protection: validate host against blocklist
+        if isBlockedHost(host) {
+            AppLogger.warning("Blocked potentially unsafe domain: \(domain)")
+            return nil
+        }
+
+        // Construct clean URL with only scheme and host (and optional port)
+        var cleanComponents = URLComponents()
+        cleanComponents.scheme = "https"
+        cleanComponents.host = host
+        cleanComponents.port = components.port
+
+        return cleanComponents.url
+    }
+
+    /// Checks if host matches any blocked pattern for SSRF protection
+    private static func isBlockedHost(_ host: String) -> Bool {
+        let lowercasedHost = host.lowercased()
+
+        // Block localhost variants
+        if lowercasedHost == "localhost" ||
+           lowercasedHost.hasSuffix(".localhost") ||
+           lowercasedHost == "localhost.localdomain" {
+            return true
+        }
+
+        // Block IP address patterns
+        let blockedIPPrefixes = [
+            "127.", "0.0.0.0", "0.",  // Loopback and zero addresses
+            "10.",                     // Class A private
             "172.16.", "172.17.", "172.18.", "172.19.",
             "172.20.", "172.21.", "172.22.", "172.23.",
             "172.24.", "172.25.", "172.26.", "172.27.",
-            "172.28.", "172.29.", "172.30.", "172.31.",
-            "192.168.", "169.254.",
-            "::1", "fe80:", "fc00:", "fd00:",
-            "file://", "ftp://", "gopher://"
+            "172.28.", "172.29.", "172.30.", "172.31.",  // Class B private
+            "192.168.",                // Class C private
+            "169.254.",                // Link-local
+            "224.", "225.", "226.", "227.", "228.", "229.",
+            "230.", "231.", "232.", "233.", "234.", "235.",
+            "236.", "237.", "238.", "239.",  // Multicast
+            "255."                     // Broadcast
         ]
 
-        for pattern in blockedPatterns {
-            if trimmed.contains(pattern) {
-                AppLogger.warning("Blocked potentially unsafe domain: \(domain)")
-                return nil
+        for prefix in blockedIPPrefixes {
+            if lowercasedHost.hasPrefix(prefix) {
+                return true
             }
         }
 
-        if let url = URL(string: trimmed), url.scheme != nil {
-            return url
+        // Block IPv6 localhost and private addresses
+        let blockedIPv6Patterns = [
+            "::1", "[::1]",           // IPv6 loopback
+            "fe80:", "[fe80:",        // Link-local
+            "fc00:", "[fc00:",        // Unique local
+            "fd00:", "[fd00:"         // Unique local
+        ]
+
+        for pattern in blockedIPv6Patterns {
+            if lowercasedHost.hasPrefix(pattern) || lowercasedHost.contains(pattern) {
+                return true
+            }
         }
 
-        return URL(string: "https://\(trimmed)")
+        // Block metadata service endpoints (cloud environments)
+        let metadataHosts = [
+            "169.254.169.254",        // AWS/GCP/Azure metadata
+            "metadata.google.internal",
+            "metadata.goog"
+        ]
+
+        if metadataHosts.contains(lowercasedHost) {
+            return true
+        }
+
+        return false
     }
 
     deinit {
@@ -437,11 +529,46 @@ extension Notification.Name {
     static let certificatePinningFailed = Notification.Name("MegaplanCertificatePinningFailed")
 }
 
+/// Thread-safe wrapper for certificate pinning failure state
+private final class PinningState {
+    private var _pinningFailureNotified = false
+    private let lock = NSLock()
+
+    var pinningFailureNotified: Bool {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _pinningFailureNotified
+        }
+        set {
+            lock.lock()
+            defer { lock.unlock() }
+            _pinningFailureNotified = newValue
+        }
+    }
+
+    func setNotifiedIfNeeded() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if _pinningFailureNotified {
+            return false
+        }
+        _pinningFailureNotified = true
+        return true
+    }
+
+    func reset() {
+        lock.lock()
+        defer { lock.unlock() }
+        _pinningFailureNotified = false
+    }
+}
+
 // MARK: - URLSessionDelegate (Certificate Pinning)
 
 extension MegaplanAPI: URLSessionDelegate {
-    /// Tracks whether pinning has failed in current session (to avoid repeated warnings)
-    private static var pinningFailureNotified = false
+    /// Thread-safe state for tracking pinning failures
+    private static let pinningState = PinningState()
 
     func urlSession(
         _ session: URLSession,
@@ -474,6 +601,15 @@ extension MegaplanAPI: URLSessionDelegate {
 
         // Check if any certificate in chain matches our pinned hashes
         let certificateCount = SecTrustGetCertificateCount(serverTrust)
+
+        // DoS protection: reject excessively deep certificate chains
+        let maxCertificateChainDepth = 32
+        guard certificateCount <= maxCertificateChainDepth else {
+            AppLogger.warning("Rejected certificate chain with \(certificateCount) certificates (max: \(maxCertificateChainDepth))")
+            completionHandler(.cancelAuthenticationChallenge, nil)
+            return
+        }
+
         var isPinned = false
 
         AppLogger.debug("Certificate pinning: checking \(certificateCount) certificates for \(challenge.protectionSpace.host)")
@@ -499,9 +635,8 @@ extension MegaplanAPI: URLSessionDelegate {
             // Graceful degradation: allow connection but warn user
             AppLogger.warning("Certificate pinning failed for \(challenge.protectionSpace.host) — allowing with warning")
 
-            // Notify UI only once per session
-            if !Self.pinningFailureNotified {
-                Self.pinningFailureNotified = true
+            // Notify UI only once per session (thread-safe check-and-set)
+            if Self.pinningState.setNotifiedIfNeeded() {
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(
                         name: .certificatePinningFailed,
@@ -601,7 +736,7 @@ extension MegaplanAPI: URLSessionDelegate {
 
     /// Resets pinning failure state (call on logout or app restart)
     static func resetPinningState() {
-        pinningFailureNotified = false
+        pinningState.reset()
     }
 }
 
@@ -896,7 +1031,7 @@ private struct NotificationDTO: Decodable {
         self.unreadCommentsCount = parsedUnreadCount
         
         // Parse size
-        self.size = try container.decodeFlexibleInt(keys: ["size"], defaultValue: 0)
+        self.size = container.decodeFlexibleInt(keys: ["size"], defaultValue: 0)
         
         // Parse type
         self.type = try? container.decodeFlexibleString(keys: ["type"], defaultValue: nil)
@@ -904,8 +1039,8 @@ private struct NotificationDTO: Decodable {
         // Parse sender name and avatar using NotificationParser
         let senderInfo = NotificationParser.parseSenderInfo(from: container)
         var parsedSenderName = senderInfo.name
-        var parsedAvatarURL = senderInfo.avatarURL
-        var parsedSenderId = senderInfo.id
+        let parsedAvatarURL = senderInfo.avatarURL
+        let parsedSenderId = senderInfo.id
         
         // Fallback: extract sender name from content if still missing
         if parsedSenderName == nil,

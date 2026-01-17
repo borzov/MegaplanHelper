@@ -14,10 +14,18 @@ enum NotificationGrouper {
         let calendar = Calendar.current
         let now = Date()
 
-        // Pre-compute date boundaries once
+        // Pre-compute date boundaries once with safe fallbacks
         let today = calendar.startOfDay(for: now)
         let yesterday = calendar.date(byAdding: .day, value: -1, to: today) ?? today
-        let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now)) ?? today
+
+        // Safely compute week start - fallback to 7 days ago if dateComponents fails
+        let weekStart: Date = {
+            if let start = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now)) {
+                return start
+            }
+            // Fallback: use 7 days ago as week start
+            return calendar.date(byAdding: .day, value: -7, to: today) ?? today
+        }()
 
         // Pre-compute notification dates to avoid repeated startOfDay calls
         let notificationsWithDates = notifications.map { notification in

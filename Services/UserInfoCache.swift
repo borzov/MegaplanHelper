@@ -36,9 +36,14 @@ actor UserInfoCache {
     }
 
     func cacheUserInfo(userId: String, name: String?, avatarURL: URL?) {
-        // Evict least recently used entry if cache is full
-        if cache.count >= maxCacheSize, cache[userId] == nil {
-            evictLRU()
+        // Check if this is an update to existing entry
+        let isNewEntry = cache[userId] == nil
+
+        // Evict least recently used entries if cache is full and this is a new entry
+        if isNewEntry {
+            while cache.count >= maxCacheSize {
+                evictLRU()
+            }
         }
 
         cache[userId] = CachedUserInfo(

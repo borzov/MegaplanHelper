@@ -12,6 +12,8 @@ final class NotificationManager {
     private init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
         loadSentNotificationIDs()
+        // Clean up old notification IDs on startup to prevent unbounded growth
+        clearOldSentNotifications(keepingLast: 500)
     }
     
     /// Запрашивает разрешение на отправку уведомлений
@@ -104,7 +106,12 @@ final class NotificationManager {
                 // Сохраняем ID отправленного уведомления
                 sentNotificationIDs.insert(notification.id)
                 saveSentNotificationIDs()
-                
+
+                // Periodically clean up old IDs to prevent unbounded growth
+                if sentNotificationIDs.count > 600 {
+                    clearOldSentNotifications(keepingLast: 500)
+                }
+
                 AppLogger.info("Sent notification for \(notification.id)")
             } catch {
                 AppLogger.error("Failed to send notification: \(error.localizedDescription)")

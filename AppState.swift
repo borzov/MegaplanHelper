@@ -13,6 +13,7 @@ final class AppState: ObservableObject {
     @Published var isAuthenticated: Bool = false
     @Published var isLoading: Bool = false
     @Published var isOffline: Bool = false
+    @Published var isSessionExpired: Bool = false
     @Published var lastSyncTime: Date?
     @Published var alertItem: AlertItem?
     @Published var certificatePinningFailed: Bool = false
@@ -37,6 +38,7 @@ final class AppState: ObservableObject {
     private var lastFailedLoginTime: Date?
     private var lastSuccessfulNotifications: [MegaplanNotification] = []
     private var lastSuccessfulUnreadCount: Int = 0
+    private var isShuttingDown = false
 
     init(
         api: AuthenticationService & NotificationService = MegaplanAPI(),
@@ -101,10 +103,15 @@ final class AppState: ObservableObject {
         // Brute force protection: 15 minutes lockout after 3 failed attempts
         let lockoutDuration: TimeInterval = 15 * 60 // 15 minutes
         if failedLoginAttempts >= 3,
-           let lastTime = lastFailedLoginTime,
-           Date().timeIntervalSince(lastTime) < lockoutDuration {
-            presentError(.tooManyAttempts)
-            return
+           let lastTime = lastFailedLoginTime {
+            if Date().timeIntervalSince(lastTime) < lockoutDuration {
+                presentError(.tooManyAttempts)
+                return
+            } else {
+                // Lockout period has expired, reset the counter
+                failedLoginAttempts = 0
+                lastFailedLoginTime = nil
+            }
         }
         
         isLoading = true
@@ -160,22 +167,27 @@ final class AppState: ObservableObject {
     }
 
     func logout() {
+        isShuttingDown = true
+
         let currentUsername = username
         let currentDomain = domain
 
         accessToken = nil
         clearCachedPassword()
-        
+
         isAuthenticated = false
         notifications = []
         unreadCount = 0
         isAdmin = false
         firstName = ""
         isOffline = false
+        isSessionExpired = false
         certificatePinningFailed = false
         lastSuccessfulNotifications = []
         lastSuccessfulUnreadCount = 0
         stopRefreshTimer()
+
+        isShuttingDown = false
 
         // Reset certificate pinning state for next session
         MegaplanAPI.resetPinningState()
@@ -379,8 +391,9 @@ final class AppState: ObservableObject {
             // Check for cancellation after async operation completes
             guard !Task.isCancelled else { return }
 
-            // Success - exit offline mode
+            // Success - exit offline mode and clear session expired flag
             isOffline = false
+            isSessionExpired = false
             lastSyncTime = Date()
 
             // Определяем новые непрочитанные уведомления
@@ -408,17 +421,20 @@ final class AppState: ObservableObject {
             // Переход в оффлайн-режим без показа ошибки
             AppLogger.info("No internet connection, entering offline mode")
             isOffline = true
-            
+
             // Используем последние успешные данные, если они есть
             if !lastSuccessfulNotifications.isEmpty {
                 withAnimation(.easeInOut) {
                     notifications = lastSuccessfulNotifications
                 }
                 apiUnreadCount = lastSuccessfulUnreadCount
-                AppLogger.debug("Using cached data in offline mode: \(lastSuccessfulNotifications.count) notifications")
+                // Note: lastSyncTime keeps the timestamp of last successful sync
+                // so UI can show how stale the data is
+                AppLogger.debug("Using cached data in offline mode: \(lastSuccessfulNotifications.count) notifications, last sync: \(lastSyncTime?.description ?? "never")")
             }
         } catch NetworkError.unauthorized {
-            AppLogger.error("Unauthorized during refresh")
+            AppLogger.error("Unauthorized during refresh - session expired")
+            isSessionExpired = true
             isAuthenticated = false
             accessToken = nil
             stopRefreshTimer()
@@ -452,19 +468,20 @@ final class AppState: ObservableObject {
 
     private func startRefreshTimer() {
         refreshTimerTask?.cancel()
-        guard isAuthenticated else { return }
-        
-        refreshTimerTask = Task { @MainActor in
+        guard isAuthenticated, !isShuttingDown else { return }
+
+        refreshTimerTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
+                guard let self = self, !self.isShuttingDown else { break }
+
                 do {
-                    try await Task.sleep(nanoseconds: UInt64(refreshInterval * 1_000_000_000))
+                    try await Task.sleep(nanoseconds: UInt64(self.refreshInterval * 1_000_000_000))
                 } catch {
-                    // Task was cancelled
                     break
                 }
-                
-                guard !Task.isCancelled else { break }
-                await refresh()
+
+                guard !Task.isCancelled, !self.isShuttingDown else { break }
+                await self.refresh()
             }
         }
     }
@@ -503,6 +520,8 @@ final class AppState: ObservableObject {
     }
 
     deinit {
+        // Note: isShuttingDown cannot be set in deinit due to @MainActor isolation
+        // but tasks will be cancelled immediately
         refreshTimerTask?.cancel()
         refreshTask?.cancel()
     }

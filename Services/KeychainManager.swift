@@ -14,14 +14,23 @@ final class KeychainManager {
             kSecAttrAccount as String: account
         ]
 
-        SecItemDelete(query as CFDictionary)
+        // Try to update existing item first (atomic operation)
+        let updateAttributes: [String: Any] = [
+            kSecValueData as String: encodedValue,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked
+        ]
 
-        var attributes = query
-        attributes[kSecValueData as String] = encodedValue
-        // Only accessible when device is unlocked for better security
-        attributes[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlocked
+        var status = SecItemUpdate(query as CFDictionary, updateAttributes as CFDictionary)
 
-        let status = SecItemAdd(attributes as CFDictionary, nil)
+        if status == errSecItemNotFound {
+            // Item doesn't exist, create new one
+            var addAttributes = query
+            addAttributes[kSecValueData as String] = encodedValue
+            addAttributes[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlocked
+
+            status = SecItemAdd(addAttributes as CFDictionary, nil)
+        }
+
         guard status == errSecSuccess else {
             throw KeychainError.unexpectedStatus(status)
         }
