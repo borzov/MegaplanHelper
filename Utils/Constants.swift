@@ -4,6 +4,12 @@ import OSLog
 enum Constants {
     static let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.ruvents.MegaplanMenuBarApp"
     static let defaultRefreshInterval: TimeInterval = 60
+
+    /// Network request timeouts
+    enum NetworkTimeouts {
+        static let requestTimeout: TimeInterval = 30
+        static let resourceTimeout: TimeInterval = 60
+    }
     static let logFileURL: URL = {
         let logsDirectory = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)
             .first?

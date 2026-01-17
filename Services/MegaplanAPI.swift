@@ -16,8 +16,8 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
     private var baseURL: URL?
     private lazy var session: URLSession = {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 30
-        configuration.timeoutIntervalForResource = 60
+        configuration.timeoutIntervalForRequest = Constants.NetworkTimeouts.requestTimeout
+        configuration.timeoutIntervalForResource = Constants.NetworkTimeouts.resourceTimeout
         return URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
     }()
     private let decoder: JSONDecoder

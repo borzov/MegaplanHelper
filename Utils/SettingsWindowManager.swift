@@ -57,8 +57,8 @@ class SettingsWindowManager: ObservableObject {
         
         self.settingsWindow = window
         
-        // Hide menu bar window
-        if let menuBarWindow = NSApp.windows.first(where: { $0.title.isEmpty }) {
+        // Hide menu bar popover window (identified by statusItem level)
+        if let menuBarWindow = NSApp.windows.first(where: { $0.level == .statusBar || $0.level == .popUpMenu }) {
             menuBarWindow.orderOut(nil)
         }
         

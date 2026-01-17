@@ -5,22 +5,28 @@ import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
+    // Note: Some properties remain public for SwiftUI Preview support in DEBUG builds
+    #if DEBUG
     @Published var notifications: [MegaplanNotification] = []
-    @Published var unreadCount: Int = 0
-    @Published var firstName: String = ""
-    @Published var apiUnreadCount: Int = 0
-    @Published var isAdmin: Bool = false
     @Published var isAuthenticated: Bool = false
-    @Published var isLoading: Bool = false
-    @Published var isOffline: Bool = false
-    @Published var isSessionExpired: Bool = false
-    @Published var lastSyncTime: Date?
+    #else
+    @Published private(set) var notifications: [MegaplanNotification] = []
+    @Published private(set) var isAuthenticated: Bool = false
+    #endif
+    @Published private(set) var unreadCount: Int = 0
+    @Published private(set) var firstName: String = ""
+    @Published private(set) var apiUnreadCount: Int = 0
+    @Published private(set) var isAdmin: Bool = false
+    @Published private(set) var isLoading: Bool = false
+    @Published private(set) var isOffline: Bool = false
+    @Published private(set) var isSessionExpired: Bool = false
+    @Published private(set) var lastSyncTime: Date?
     @Published var alertItem: AlertItem?
-    @Published var certificatePinningFailed: Bool = false
-    @Published var domain: String
-    @Published var username: String
-    @Published var refreshInterval: Double
-    @Published var autoLaunchEnabled: Bool
+    @Published private(set) var certificatePinningFailed: Bool = false
+    @Published private(set) var domain: String
+    @Published private(set) var username: String
+    @Published private(set) var refreshInterval: Double
+    @Published private(set) var autoLaunchEnabled: Bool
     @Published var tempCredentials: MegaplanCredentials
 
     let api: AuthenticationService & NotificationService
@@ -209,8 +215,9 @@ final class AppState: ObservableObject {
             AppLogger.error("Failed to clear keychain during logout: \(error.localizedDescription)")
         }
 
-        // Don't clear tempCredentials to allow copy-pasting data
-        // Clear only the persisted credentials
+        // Clear password from tempCredentials for security, but keep domain/login for convenience
+        tempCredentials.password = ""
+
         domain = ""
         username = ""
 

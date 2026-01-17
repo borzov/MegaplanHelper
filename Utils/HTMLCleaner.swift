@@ -23,6 +23,18 @@ struct HTMLCleaner {
         try? NSRegularExpression(pattern: #"<megaplan:mention[^>]*>([^<]+)</megaplan:mention>"#, options: [])
     }()
 
+    // MARK: - HTML Entity Mapping
+
+    /// HTML entity to character mapping (ordered: &amp; must be last)
+    private static let htmlEntities: [(entity: String, replacement: String)] = [
+        ("&quot;", "\""),
+        ("&lt;", "<"),
+        ("&gt;", ">"),
+        ("&nbsp;", " "),
+        ("&#39;", "'"),
+        ("&amp;", "&")  // Must be last to prevent double decoding
+    ]
+
     // MARK: - Helper Methods
 
     /// Apply regex replacement using cached NSRegularExpression
@@ -30,6 +42,18 @@ struct HTMLCleaner {
         guard let regex = regex else { return string }
         let range = NSRange(string.startIndex..., in: string)
         return regex.stringByReplacingMatches(in: string, options: [], range: range, withTemplate: replacement)
+    }
+
+    /// Decode HTML entities efficiently
+    private static func decodeHTMLEntities(_ string: String) -> String {
+        // Quick check if any entities exist
+        guard string.contains("&") else { return string }
+
+        var result = string
+        for (entity, replacement) in htmlEntities {
+            result = result.replacingOccurrences(of: entity, with: replacement)
+        }
+        return result
     }
 
     // MARK: - Public API
@@ -41,13 +65,9 @@ struct HTMLCleaner {
         // Удаляем HTML-теги (using cached regex)
         cleaned = applyRegex(htmlTagsRegex, to: cleaned, replacement: "")
 
-        // Decode HTML entities (IMPORTANT: &amp; must be decoded LAST to prevent XSS via double encoding)
-        cleaned = cleaned.replacingOccurrences(of: "&quot;", with: "\"")
-        cleaned = cleaned.replacingOccurrences(of: "&lt;", with: "<")
-        cleaned = cleaned.replacingOccurrences(of: "&gt;", with: ">")
-        cleaned = cleaned.replacingOccurrences(of: "&nbsp;", with: " ")
-        cleaned = cleaned.replacingOccurrences(of: "&#39;", with: "'")
-        cleaned = cleaned.replacingOccurrences(of: "&amp;", with: "&")
+        // Decode HTML entities in single pass using cached regex
+        // IMPORTANT: &amp; must be decoded LAST to prevent XSS via double encoding
+        cleaned = decodeHTMLEntities(cleaned)
 
         // Убираем лишние пробелы и переносы строк (using cached regex)
         cleaned = applyRegex(whitespaceRegex, to: cleaned, replacement: " ")

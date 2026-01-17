@@ -79,23 +79,7 @@ final class ErrorRecoveryService: Sendable {
         
         return false
     }
-    
-    /// Автоматически восстанавливается после сетевых ошибок
-    func recoverFromNetworkError(_ error: Error) async -> Bool {
-        // Проверяем, является ли это сетевой ошибкой
-        guard isNetworkError(error) else {
-            return false
-        }
-        
-        // Ждем немного перед повторной попыткой
-        do {
-            try await Task.sleep(nanoseconds: UInt64(baseDelay * 1_000_000_000))
-            return true
-        } catch {
-            return false
-        }
-    }
-    
+
     /// Проверяет, является ли ошибка сетевой
     private func isNetworkError(_ error: Error) -> Bool {
         if let networkError = error as? NetworkError {

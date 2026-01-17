@@ -205,34 +205,35 @@ struct MegaplanNotification: Identifiable, Codable, Equatable {
     }
 
     var displayDate: String {
-        formatRelativeDate(createdAt)
+        Self.formatRelativeDate(createdAt)
     }
-    
-    private func formatRelativeDate(_ date: Date) -> String {
+
+    // MARK: - Cached Date Formatters
+
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.timeZone = TimeZone.current
+        formatter.dateFormat = "в HH:mm"
+        return formatter
+    }()
+
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.timeZone = TimeZone.current
+        formatter.dateFormat = "d MMMM"
+        return formatter
+    }()
+
+    private static func formatRelativeDate(_ date: Date) -> String {
         let calendar = Calendar.current
-        let locale = Locale.current
-        
+
         if calendar.isDateInToday(date) {
-            let timeFormatter = DateFormatter()
-            timeFormatter.locale = locale
-            timeFormatter.timeZone = TimeZone.current
-            timeFormatter.dateFormat = "в HH:mm"
             return "сегодня \(timeFormatter.string(from: date))"
         } else if calendar.isDateInYesterday(date) {
-            let timeFormatter = DateFormatter()
-            timeFormatter.locale = locale
-            timeFormatter.timeZone = TimeZone.current
-            timeFormatter.dateFormat = "в HH:mm"
             return "вчера \(timeFormatter.string(from: date))"
         } else {
-            let dayFormatter = DateFormatter()
-            dayFormatter.locale = locale
-            dayFormatter.timeZone = TimeZone.current
-            dayFormatter.dateFormat = "d MMMM"
-            let timeFormatter = DateFormatter()
-            timeFormatter.locale = locale
-            timeFormatter.timeZone = TimeZone.current
-            timeFormatter.dateFormat = "в HH:mm"
             return "\(dayFormatter.string(from: date)) \(timeFormatter.string(from: date))"
         }
     }

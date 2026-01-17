@@ -65,5 +65,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         AppLogger.info("AppDelegate: applicationWillTerminate")
+        cleanup()
+    }
+
+    private func cleanup() {
+        statusBarController = nil
+        settingsViewModel = nil
+        notificationListViewModel = nil
+        appState = nil
     }
 }
