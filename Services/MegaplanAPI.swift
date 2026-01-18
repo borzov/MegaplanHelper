@@ -875,6 +875,18 @@ private struct NotificationDTO: Decodable {
         try? NSRegularExpression(pattern: #"href=["']([^"']+)["']"#, options: [])
     }()
 
+    // Security limits to prevent DoS via oversized data
+    private static let maxTitleLength = 500
+    private static let maxBodyLength = 5000
+
+    /// Truncates string to prevent memory exhaustion attacks
+    private static func truncate(_ string: String, maxLength: Int) -> String {
+        if string.count <= maxLength {
+            return string
+        }
+        return String(string.prefix(maxLength))
+    }
+
     var domainModel: MegaplanNotification {
         MegaplanNotification(
             id: id,
@@ -967,10 +979,10 @@ private struct NotificationDTO: Decodable {
             // If no parsed title, use content as body and clear title
             AppLogger.debug("Bums event: \(type), parsedTitle: \(parsedTitle ?? "nil"), hasSubject: \(hasSubject)")
             if let title = parsedTitle, !title.isEmpty {
-                self.title = title
+                self.title = Self.truncate(title, maxLength: Self.maxTitleLength)
                 if let content = try? container.decodeFlexibleString(keys: ["content"], defaultValue: nil),
                    !content.isEmpty {
-                    self.body = HTMLCleaner.fullClean(content)
+                    self.body = Self.truncate(HTMLCleaner.fullClean(content), maxLength: Self.maxBodyLength)
                 } else {
                     self.body = ""
                 }
@@ -979,7 +991,7 @@ private struct NotificationDTO: Decodable {
                 if let content = try? container.decodeFlexibleString(keys: ["content"], defaultValue: nil),
                    !content.isEmpty {
                     self.title = ""
-                    self.body = HTMLCleaner.fullClean(content)
+                    self.body = Self.truncate(HTMLCleaner.fullClean(content), maxLength: Self.maxBodyLength)
                 } else {
                     self.title = String(localized: "notifications.untitled")
                     self.body = ""
@@ -987,7 +999,7 @@ private struct NotificationDTO: Decodable {
             }
         } else if !hasSubject && parsedBody?.isEmpty == false {
             // For service notifications without subject, use content as title and clear body
-            self.title = HTMLCleaner.fullClean(parsedBody ?? "")
+            self.title = Self.truncate(HTMLCleaner.fullClean(parsedBody ?? ""), maxLength: Self.maxTitleLength)
             self.body = ""
         } else {
             // Normal notifications with subject - apply fallback for title
@@ -995,8 +1007,8 @@ private struct NotificationDTO: Decodable {
                 let fallbackTitle = try container.decodeFlexibleString(keys: ["type", "title", "name", "header"], defaultValue: String(localized: "notifications.untitled"))
                 parsedTitle = HTMLCleaner.fullClean(fallbackTitle)
             }
-            self.title = parsedTitle ?? String(localized: "notifications.untitled")
-            self.body = parsedBody ?? ""
+            self.title = Self.truncate(parsedTitle ?? String(localized: "notifications.untitled"), maxLength: Self.maxTitleLength)
+            self.body = Self.truncate(parsedBody ?? "", maxLength: Self.maxBodyLength)
         }
         
         // Parse link from content or subject

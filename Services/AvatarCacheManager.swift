@@ -129,12 +129,29 @@ final class AvatarCacheManager {
         }
     }
     
-    private func cacheFileURL(for userId: String) -> URL {
-        cacheDirectory.appendingPathComponent("\(userId).png")
+    /// Sanitizes userId to prevent path traversal attacks
+    /// Only allows alphanumeric characters, hyphens, and underscores
+    private func sanitizeUserId(_ userId: String) -> String {
+        let allowedCharacters = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
+        let sanitized = userId.unicodeScalars.filter { allowedCharacters.contains($0) }
+        let result = String(String.UnicodeScalarView(sanitized))
+
+        // If sanitization removed everything, use a hash of the original
+        if result.isEmpty {
+            return String(userId.hashValue)
+        }
+
+        return result
     }
-    
+
+    private func cacheFileURL(for userId: String) -> URL {
+        let sanitized = sanitizeUserId(userId)
+        return cacheDirectory.appendingPathComponent("\(sanitized).png")
+    }
+
     private func metadataFileURL(for userId: String) -> URL {
-        cacheDirectory.appendingPathComponent("\(userId).metadata.json")
+        let sanitized = sanitizeUserId(userId)
+        return cacheDirectory.appendingPathComponent("\(sanitized).metadata.json")
     }
     
     private func loadMetadata(from url: URL) -> CacheMetadata? {

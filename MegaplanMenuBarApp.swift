@@ -3,23 +3,12 @@ import SwiftUI
 @main
 struct MegaplanMenuBarApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var appState: AppState
-    @StateObject private var notificationListViewModel: NotificationListViewModel
-    @StateObject private var settingsViewModel: SettingsViewModel
-
-    init() {
-        AppLogger.info("MegaplanMenuBarApp initializing...")
-        let appState = AppState()
-        _appState = StateObject(wrappedValue: appState)
-        _notificationListViewModel = StateObject(wrappedValue: NotificationListViewModel(appState: appState))
-        _settingsViewModel = StateObject(wrappedValue: SettingsViewModel(appState: appState))
-    }
 
     var body: some Scene {
         Settings {
             SettingsView()
-                .environmentObject(appState)
-                .environmentObject(settingsViewModel)
+                .environmentObject(appDelegate.appState)
+                .environmentObject(appDelegate.settingsViewModel)
                 .frame(width: 480, height: 500)
         }
     }
@@ -28,21 +17,24 @@ struct MegaplanMenuBarApp: App {
 /// App delegate to manage the status bar controller lifecycle.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBarController: StatusBarController?
-    private var appState: AppState?
-    private var notificationListViewModel: NotificationListViewModel?
-    private var settingsViewModel: SettingsViewModel?
+    let appState: AppState
+    let notificationListViewModel: NotificationListViewModel
+    let settingsViewModel: SettingsViewModel
+
+    @MainActor
+    override init() {
+        AppLogger.info("AppDelegate: Initializing shared state objects")
+
+        // Create shared state objects once
+        self.appState = AppState()
+        self.notificationListViewModel = NotificationListViewModel(appState: self.appState)
+        self.settingsViewModel = SettingsViewModel(appState: self.appState)
+
+        super.init()
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppLogger.info("AppDelegate: applicationDidFinishLaunching")
-
-        // Create shared state objects
-        let appState = AppState()
-        let notificationListViewModel = NotificationListViewModel(appState: appState)
-        let settingsViewModel = SettingsViewModel(appState: appState)
-
-        self.appState = appState
-        self.notificationListViewModel = notificationListViewModel
-        self.settingsViewModel = settingsViewModel
 
         // Create content view for popover
         let contentView = NotificationListView()
@@ -70,8 +62,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func cleanup() {
         statusBarController = nil
-        settingsViewModel = nil
-        notificationListViewModel = nil
-        appState = nil
+        // State objects are let constants and will be deallocated when AppDelegate is deallocated
     }
 }

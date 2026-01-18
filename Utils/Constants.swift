@@ -170,10 +170,13 @@ enum AppLogger {
         let combined = logBuffer.joined()
         if let data = combined.data(using: .utf8) {
             if FileManager.default.fileExists(atPath: logURL.path) {
-                if let handle = try? FileHandle(forWritingTo: logURL) {
-                    try? handle.seekToEnd()
-                    try? handle.write(contentsOf: data)
-                    try? handle.close()
+                do {
+                    let handle = try FileHandle(forWritingTo: logURL)
+                    defer { try? handle.close() }  // Guaranteed cleanup
+                    try handle.seekToEnd()
+                    try handle.write(contentsOf: data)
+                } catch {
+                    logger.error("Failed to write to log file: \(error.localizedDescription)")
                 }
             } else {
                 FileManager.default.createFile(atPath: logURL.path, contents: data)

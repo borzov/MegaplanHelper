@@ -3,7 +3,10 @@ import Foundation
 struct APILogger {
     private static var logEntries: [String] = []
     private static let logQueue = DispatchQueue(label: "com.ruvents.api-logger", qos: .utility)
-    
+
+    // Prevent unbounded memory growth in DEBUG mode
+    private static let maxEntries = 1000
+
     #if DEBUG
     private static var currentLevel: LogLevel = .debug
     #else
@@ -14,12 +17,21 @@ struct APILogger {
         case debug
         case info
         case error
-        
+
         static func < (lhs: LogLevel, rhs: LogLevel) -> Bool {
             lhs.rawValue < rhs.rawValue
         }
     }
-    
+
+    /// Appends log entry with size limit enforcement to prevent memory leaks
+    private static func appendLogEntry(_ entry: String) {
+        logEntries.append(entry)
+        if logEntries.count > maxEntries {
+            let exceededCount = logEntries.count - maxEntries
+            logEntries.removeFirst(exceededCount)
+        }
+    }
+
     static func logRequest(method: String, url: String, headers: [String: String]?, body: Data?) {
         guard LogLevel.debug >= currentLevel else { return }
         
@@ -56,9 +68,9 @@ struct APILogger {
             } else {
                 logEntry += "Body: nil\n"
             }
-            
+
             logEntry += "\n"
-            logEntries.append(logEntry)
+            appendLogEntry(logEntry)
         }
     }
     
@@ -100,12 +112,12 @@ struct APILogger {
             } else {
                 logEntry += "Data: nil\n"
             }
-            
+
             logEntry += "\n"
-            logEntries.append(logEntry)
+            appendLogEntry(logEntry)
         }
     }
-    
+
     static func clearLog() {
         logQueue.async {
             logEntries.removeAll()
