@@ -1,75 +1,127 @@
 import Foundation
 import AppKit
 
+/// Errors that can occur during avatar caching operations
+enum AvatarCacheError: Error {
+    case fileTooLarge(size: Int64)
+    case invalidImageData
+    case fileSystemError(Error)
+}
+
 final class AvatarCacheManager {
     static let shared = AvatarCacheManager()
-    
+
     private let cacheDirectory: URL
     private let cacheExpirationInterval: TimeInterval = 3600 // 1 час
     private let fileManager = FileManager.default
 
+    // Network session with configured timeouts
+    private static let urlSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 10  // 10 seconds for request
+        config.timeoutIntervalForResource = 30  // 30 seconds total
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: config)
+    }()
+
+    // Rate limiting: max 5 concurrent downloads
+    private let downloadSemaphore = DispatchSemaphore(value: 5)
+
+    // Size limits
+    private static let maxAvatarSize: Int64 = 1024 * 1024  // 1MB
+
     private static let metadataDecoder = JSONDecoder()
     private static let metadataEncoder = JSONEncoder()
-    
+
     private init() {
         let cachesURL = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
         cacheDirectory = cachesURL.appendingPathComponent("MegaplanMenuBarApp", isDirectory: true)
             .appendingPathComponent("Avatars", isDirectory: true)
 
-        // Create cache directory if needed
-        try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true, attributes: nil)
+        createCacheDirectoryIfNeeded()
+    }
+
+    /// Creates cache directory with proper error handling
+    private func createCacheDirectoryIfNeeded() {
+        do {
+            try fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true, attributes: nil)
+        } catch {
+            AppLogger.error("Failed to create avatar cache directory at \(cacheDirectory.path): \(error.localizedDescription)")
+        }
     }
     
     func getCachedImage(for userId: String, from url: URL) async -> NSImage? {
         let cacheURL = cacheFileURL(for: userId)
         let metadataURL = metadataFileURL(for: userId)
-        
-        // Проверяем, существует ли файл и его метаданные
+
+        // Check if file and metadata exist
         guard fileManager.fileExists(atPath: cacheURL.path),
               let metadata = loadMetadata(from: metadataURL) else {
             return nil
         }
-        
-        // Проверяем, не истек ли срок кеша
+
+        // Check if cache has expired
         let now = Date()
         if now.timeIntervalSince(metadata.cachedAt) > cacheExpirationInterval {
-            // Удаляем устаревший файл
-            try? fileManager.removeItem(at: cacheURL)
-            try? fileManager.removeItem(at: metadataURL)
+            removeCacheFiles(cacheURL: cacheURL, metadataURL: metadataURL, reason: "expired")
             return nil
         }
-        
-        // Проверяем, изменился ли URL
+
+        // Check if URL has changed
         if metadata.originalURL != url.absoluteString {
-            // URL изменился, удаляем старый кеш
-            try? fileManager.removeItem(at: cacheURL)
-            try? fileManager.removeItem(at: metadataURL)
+            removeCacheFiles(cacheURL: cacheURL, metadataURL: metadataURL, reason: "URL changed")
             return nil
         }
-        
-        // Загружаем изображение из кеша
+
+        // Load image from cache
         guard let imageData = try? Data(contentsOf: cacheURL),
               let image = NSImage(data: imageData) else {
             return nil
         }
-        
+
         return image
+    }
+
+    /// Removes cache files with proper error handling
+    /// - Parameters:
+    ///   - cacheURL: URL of the cached image file
+    ///   - metadataURL: URL of the metadata file
+    ///   - reason: Reason for removal (for logging)
+    private func removeCacheFiles(cacheURL: URL, metadataURL: URL, reason: String) {
+        do {
+            try fileManager.removeItem(at: cacheURL)
+        } catch {
+            AppLogger.error("Failed to remove cached avatar at \(cacheURL.path) (\(reason)): \(error.localizedDescription)")
+        }
+
+        do {
+            try fileManager.removeItem(at: metadataURL)
+        } catch {
+            AppLogger.error("Failed to remove avatar metadata at \(metadataURL.path) (\(reason)): \(error.localizedDescription)")
+        }
     }
     
     func cacheImage(_ image: NSImage, for userId: String, from url: URL) async {
         let cacheURL = cacheFileURL(for: userId)
         let metadataURL = metadataFileURL(for: userId)
-        
-        // Сохраняем изображение
+
+        // Convert image to PNG
         guard let tiffData = image.tiffRepresentation,
               let pngData = NSBitmapImageRep(data: tiffData)?.representation(using: .png, properties: [:]) else {
+            AppLogger.error("Failed to convert avatar to PNG for user \(userId)")
             return
         }
-        
-        try? pngData.write(to: cacheURL)
-        
-        // Сохраняем метаданные
+
+        // Save image
+        do {
+            try pngData.write(to: cacheURL)
+        } catch {
+            AppLogger.error("Failed to cache avatar for user \(userId) at \(cacheURL.path): \(error.localizedDescription)")
+            return
+        }
+
+        // Save metadata
         let metadata = CacheMetadata(
             cachedAt: Date(),
             originalURL: url.absoluteString
@@ -82,34 +134,52 @@ final class AvatarCacheManager {
         if let cachedImage = await getCachedImage(for: userId, from: url) {
             return cachedImage
         }
-        
+
+        // Rate limiting: wait for available slot
+        downloadSemaphore.wait()
+        defer { downloadSemaphore.signal() }
+
         // Load from network
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-            
+            let (data, response) = try await Self.urlSession.data(from: url)
+
             // Validate response
             guard let httpResponse = response as? HTTPURLResponse else {
                 AppLogger.error("Invalid response type for avatar URL: \(url.absoluteString)")
                 return nil
             }
-            
+
             guard httpResponse.statusCode == 200 else {
                 AppLogger.error("Avatar load failed with status \(httpResponse.statusCode) for URL: \(url.absoluteString)")
                 return nil
             }
-            
+
+            // Validate size from Content-Length header
+            if let contentLengthStr = httpResponse.value(forHTTPHeaderField: "Content-Length"),
+               let contentLength = Int64(contentLengthStr),
+               contentLength > Self.maxAvatarSize {
+                AppLogger.error("Avatar size (\(contentLength) bytes) exceeds limit (\(Self.maxAvatarSize) bytes) for user \(userId)")
+                return nil
+            }
+
+            // Validate actual data size
+            if Int64(data.count) > Self.maxAvatarSize {
+                AppLogger.error("Downloaded avatar size (\(data.count) bytes) exceeds limit (\(Self.maxAvatarSize) bytes) for user \(userId)")
+                return nil
+            }
+
             // Create image
             guard let image = NSImage(data: data) else {
                 AppLogger.error("Failed to create NSImage from data for URL: \(url.absoluteString)")
                 return nil
             }
-            
+
             // Cache the image
             await cacheImage(image, for: userId, from: url)
-            
+
             AppLogger.debug("Successfully loaded and cached avatar for user \(userId)")
             return image
-            
+
         } catch let error as URLError {
             switch error.code {
             case .cancelled:
@@ -117,12 +187,12 @@ final class AvatarCacheManager {
             case .notConnectedToInternet, .networkConnectionLost:
                 AppLogger.error("No internet connection while loading avatar for user \(userId)")
             case .timedOut:
-                AppLogger.error("Timeout while loading avatar for user \(userId)")
+                AppLogger.error("Timeout while loading avatar for user \(userId) from \(url.absoluteString)")
             default:
                 AppLogger.error("Network error loading avatar for user \(userId): \(error.localizedDescription)")
             }
             return nil
-            
+
         } catch {
             AppLogger.error("Unexpected error loading avatar for user \(userId): \(error.localizedDescription)")
             return nil
@@ -163,15 +233,23 @@ final class AvatarCacheManager {
     }
     
     private func saveMetadata(_ metadata: CacheMetadata, to url: URL) {
-        guard let data = try? Self.metadataEncoder.encode(metadata) else {
-            return
+        do {
+            let data = try Self.metadataEncoder.encode(metadata)
+            try data.write(to: url)
+        } catch {
+            AppLogger.error("Failed to save avatar metadata at \(url.path): \(error.localizedDescription)")
         }
-        try? data.write(to: url)
     }
-    
+
     func clearCache() {
-        try? fileManager.removeItem(at: cacheDirectory)
-        try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true, attributes: nil)
+        do {
+            try fileManager.removeItem(at: cacheDirectory)
+            AppLogger.info("Avatar cache cleared at \(cacheDirectory.path)")
+        } catch {
+            AppLogger.error("Failed to clear avatar cache at \(cacheDirectory.path): \(error.localizedDescription)")
+        }
+
+        createCacheDirectoryIfNeeded()
     }
 }
 

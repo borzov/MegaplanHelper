@@ -18,19 +18,20 @@ actor UserInfoCache {
     private init() {}
 
     func getUserInfo(for userId: String) -> CachedUserInfo? {
-        guard var cached = cache[userId] else { return nil }
+        guard let cached = cache[userId] else { return nil }
 
+        // Check expiration
         if Date().timeIntervalSince(cached.cachedAt) > cacheExpiration {
             cache.removeValue(forKey: userId)
             removeFromAccessOrder(userId)
             return nil
         }
 
-        cached.lastAccessedAt = Date()
-        cache[userId] = cached
+        // Update last accessed time in-place
+        cache[userId]?.lastAccessedAt = Date()
         updateAccessOrder(for: userId)
 
-        return cached
+        return cache[userId]
     }
 
     func cacheUserInfo(userId: String, name: String?, avatarURL: URL?) {

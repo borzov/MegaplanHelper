@@ -1239,6 +1239,16 @@ extension KeyedDecodingContainer where Key == DynamicCodingKey {
             }
 
             if let intValue = try? decode(Int.self, forKey: key) {
+                // Validate timestamp range to prevent integer overflow
+                // Valid range: 1970-01-01 (0) to 2100-01-01 (4102444800)
+                let minTimestamp = 0
+                let maxTimestamp = 4102444800
+
+                guard intValue >= minTimestamp && intValue <= maxTimestamp else {
+                    AppLogger.warning("Timestamp out of valid range: \(intValue)")
+                    continue
+                }
+
                 return Date(timeIntervalSince1970: TimeInterval(intValue))
             }
         }
