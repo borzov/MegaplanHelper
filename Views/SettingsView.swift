@@ -224,8 +224,8 @@ struct SettingsView: View {
     private func syncState() {
         credentials.domain = appState.domain
         credentials.login = appState.username
-        refreshIntervalValue = settingsViewModel.refreshInterval
-        autoLaunch = settingsViewModel.autoLaunchEnabled
+        refreshIntervalValue = appState.refreshInterval
+        autoLaunch = appState.autoLaunchEnabled
     }
 
     private func authenticate() {

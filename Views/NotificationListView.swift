@@ -86,7 +86,7 @@ struct NotificationListView: View {
                             await viewModel.refresh()
                         }
                     } label: {
-                        if viewModel.isLoading {
+                        if appState.isLoading {
                             ProgressView()
                                 .controlSize(.small)
                         } else {
@@ -247,7 +247,7 @@ struct NotificationListView: View {
     @ViewBuilder
     private var content: some View {
         if viewModel.notifications.isEmpty {
-            if viewModel.isLoading {
+            if appState.isLoading {
                 SkeletonListView(count: 3)
                     .transition(.opacity)
             } else {

@@ -35,7 +35,6 @@
 		C2EE49252EC3D1D1004AEF47 /* ErrorRecoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49222EC3D1D1004AEF47 /* ErrorRecoveryService.swift */; };
 		C2EE49262F100001004AEF47 /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49252F100001004AEF47 /* StatusBarController.swift */; };
 		C2EE49272EC3D1E3004AEF47 /* NotificationGrouper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49262EC3D1E3004AEF47 /* NotificationGrouper.swift */; };
-		C2EE492C2EC3D205004AEF47 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49282EC3D205004AEF47 /* AuthViewModel.swift */; };
 		C2EE492D2EC3D205004AEF47 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE492A2EC3D205004AEF47 /* SettingsViewModel.swift */; };
 		C2EE492E2EC3D205004AEF47 /* NotificationListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49292EC3D205004AEF47 /* NotificationListViewModel.swift */; };
 		C2EE49322EC3D21F004AEF47 /* LoadingStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE492F2EC3D21F004AEF47 /* LoadingStateView.swift */; };
@@ -72,7 +71,6 @@
 		C2EE49232EC3D1D1004AEF47 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		C2EE49252F100001004AEF47 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		C2EE49262EC3D1E3004AEF47 /* NotificationGrouper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationGrouper.swift; sourceTree = "<group>"; };
-		C2EE49282EC3D205004AEF47 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
 		C2EE49292EC3D205004AEF47 /* NotificationListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationListViewModel.swift; sourceTree = "<group>"; };
 		C2EE492A2EC3D205004AEF47 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		C2EE492F2EC3D21F004AEF47 /* LoadingStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingStateView.swift; sourceTree = "<group>"; };
@@ -199,7 +197,6 @@
 		C2EE492B2EC3D205004AEF47 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				C2EE49282EC3D205004AEF47 /* AuthViewModel.swift */,
 				C2EE49292EC3D205004AEF47 /* NotificationListViewModel.swift */,
 				C2EE492A2EC3D205004AEF47 /* SettingsViewModel.swift */,
 			);
@@ -313,7 +310,6 @@
 			files = (
 				AA000001 /* MegaplanMenuBarApp.swift in Sources */,
 				C262F85A2EBA978C00CDE7A0 /* AvatarCacheManager.swift in Sources */,
-				C2EE492C2EC3D205004AEF47 /* AuthViewModel.swift in Sources */,
 				C2EE492D2EC3D205004AEF47 /* SettingsViewModel.swift in Sources */,
 				C2EE492E2EC3D205004AEF47 /* NotificationListViewModel.swift in Sources */,
 				AA000002 /* AppState.swift in Sources */,

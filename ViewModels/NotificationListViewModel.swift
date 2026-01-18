@@ -6,15 +6,13 @@ import SwiftUI
 final class NotificationListViewModel: ObservableObject {
     @Published var notifications: [MegaplanNotification] = []
     @Published var groupedNotifications: [NotificationGroup] = []
-    @Published var isLoading: Bool = false
-    @Published var isOffline: Bool = false
     @Published var errorMessage: String?
     @Published var groupingEnabled: Bool = true
     @Published var showOnlyUnread: Bool = false
     @Published var searchQuery: String = ""
     @Published var isSearchActive: Bool = false
 
-    private let appState: AppState
+    let appState: AppState
     private let userDefaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
     private var lastSuccessfulNotifications: [MegaplanNotification] = []
@@ -44,16 +42,6 @@ final class NotificationListViewModel: ObservableObject {
                 self?.updateGroupedNotifications()
             }
             .store(in: &cancellables)
-        
-        // Подписываемся на состояние загрузки
-        appState.$isLoading
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$isLoading)
-        
-        // Подписываемся на оффлайн-режим
-        appState.$isOffline
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$isOffline)
         
         // Subscribe to search query changes with debounce for performance
         $searchQuery

@@ -4,43 +4,31 @@ import SwiftUI
 
 @MainActor
 final class SettingsViewModel: ObservableObject {
-    @Published var refreshInterval: Double = Constants.defaultRefreshInterval
-    @Published var autoLaunchEnabled: Bool = false
     @Published var notificationsEnabled: Bool = true
     @Published var groupingEnabled: Bool = true
     @Published var showOnlyUnread: Bool = false
     @Published var theme: AppTheme = .system
     @Published var fontSize: FontSize = .medium
-    
-    private let appState: AppState
+
+    let appState: AppState
     private let userDefaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
     
     init(appState: AppState, userDefaults: UserDefaults = .standard) {
         self.appState = appState
         self.userDefaults = userDefaults
-        
+
         // Загружаем настройки
         loadSettings()
-        
-        // Синхронизируем с AppState
-        appState.$refreshInterval
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$refreshInterval)
-
-        appState.$autoLaunchEnabled
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$autoLaunchEnabled)
     }
     
     func updateRefreshInterval(_ interval: Double) {
-        refreshInterval = max(15, interval)
-        userDefaults.set(refreshInterval, forKey: Constants.UserDefaultsKeys.refreshInterval)
-        appState.updateRefreshInterval(refreshInterval)
+        let validInterval = max(15, interval)
+        userDefaults.set(validInterval, forKey: Constants.UserDefaultsKeys.refreshInterval)
+        appState.updateRefreshInterval(validInterval)
     }
-    
+
     func updateAutoLaunch(enabled: Bool) {
-        autoLaunchEnabled = enabled
         userDefaults.set(enabled, forKey: Constants.UserDefaultsKeys.autoLaunch)
         appState.updateAutoLaunch(enabled: enabled)
     }
@@ -81,21 +69,15 @@ final class SettingsViewModel: ObservableObject {
     }
     
     private func loadSettings() {
-        refreshInterval = userDefaults.double(forKey: Constants.UserDefaultsKeys.refreshInterval)
-        if refreshInterval == 0 {
-            refreshInterval = Constants.defaultRefreshInterval
-        }
-        
-        autoLaunchEnabled = userDefaults.bool(forKey: Constants.UserDefaultsKeys.autoLaunch)
         notificationsEnabled = userDefaults.object(forKey: Constants.UserDefaultsKeys.notificationsEnabled) as? Bool ?? true
         groupingEnabled = userDefaults.object(forKey: Constants.UserDefaultsKeys.groupingEnabled) as? Bool ?? true
         showOnlyUnread = userDefaults.bool(forKey: Constants.UserDefaultsKeys.showOnlyUnread)
-        
+
         if let themeRaw = userDefaults.string(forKey: Constants.UserDefaultsKeys.theme),
            let themeValue = AppTheme(rawValue: themeRaw) {
             theme = themeValue
         }
-        
+
         if let fontSizeRaw = userDefaults.string(forKey: Constants.UserDefaultsKeys.fontSize),
            let fontSizeValue = FontSize(rawValue: fontSizeRaw) {
             fontSize = fontSizeValue
