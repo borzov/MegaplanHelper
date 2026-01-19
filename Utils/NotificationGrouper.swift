@@ -8,10 +8,12 @@ struct NotificationGroup: Identifiable {
 }
 
 enum NotificationGrouper {
+    /// Cached Calendar instance to avoid repeated creation
+    private static let calendar = Calendar.current
+
     static func group(_ notifications: [MegaplanNotification]) -> [NotificationGroup] {
         guard !notifications.isEmpty else { return [] }
 
-        let calendar = Calendar.current
         let now = Date()
 
         // Pre-compute date boundaries once with safe fallbacks

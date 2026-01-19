@@ -32,6 +32,8 @@ final class KeychainManager {
         }
 
         guard status == errSecSuccess else {
+            let errorMessage = SecCopyErrorMessageString(status, nil) as String? ?? "Unknown error"
+            AppLogger.error("Keychain save failed for service '\(service)', account '\(account)': status \(status) (\(errorMessage))")
             throw KeychainError.unexpectedStatus(status)
         }
     }
@@ -55,6 +57,8 @@ final class KeychainManager {
         guard status == errSecSuccess,
               let data = item as? Data,
               let value = String(data: data, encoding: .utf8) else {
+            let errorMessage = SecCopyErrorMessageString(status, nil) as String? ?? "Unknown error"
+            AppLogger.error("Keychain read failed for service '\(service)', account '\(account)': status \(status) (\(errorMessage))")
             throw KeychainError.unexpectedStatus(status)
         }
 
@@ -70,6 +74,8 @@ final class KeychainManager {
 
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
+            let errorMessage = SecCopyErrorMessageString(status, nil) as String? ?? "Unknown error"
+            AppLogger.error("Keychain delete failed for service '\(service)', account '\(account)': status \(status) (\(errorMessage))")
             throw KeychainError.unexpectedStatus(status)
         }
     }

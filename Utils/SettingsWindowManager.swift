@@ -5,7 +5,13 @@ class SettingsWindowManager: ObservableObject {
     static let shared = SettingsWindowManager()
     private var settingsWindow: NSWindow?
     private var windowObserver: NSObjectProtocol?
-    
+
+    // Window size constants
+    private enum WindowConstants {
+        static let width: CGFloat = 480
+        static let height: CGFloat = 500
+    }
+
     private init() {}
     
     func showSettings(appState: AppState, settingsViewModel: SettingsViewModel) {
@@ -24,7 +30,7 @@ class SettingsWindowManager: ObservableObject {
         let settingsView = SettingsView()
             .environmentObject(appState)
             .environmentObject(settingsViewModel)
-            .frame(width: 480, height: 500)
+            .frame(width: WindowConstants.width, height: WindowConstants.height)
         
         let hostingController = NSHostingController(rootView: settingsView)
         
@@ -35,12 +41,12 @@ class SettingsWindowManager: ObservableObject {
         window.isReleasedWhenClosed = false
         
         // Set window size first
-        window.setContentSize(NSSize(width: 480, height: 500))
+        window.setContentSize(NSSize(width: WindowConstants.width, height: WindowConstants.height))
         
         // Center window on screen
         if let screen = NSScreen.main {
             let screenFrame = screen.visibleFrame
-            let windowSize = NSSize(width: 480, height: 500)
+            let windowSize = NSSize(width: WindowConstants.width, height: WindowConstants.height)
             let x = (screenFrame.width - windowSize.width) / 2 + screenFrame.origin.x
             let y = (screenFrame.height - windowSize.height) / 2 + screenFrame.origin.y
             window.setFrameOrigin(NSPoint(x: x, y: y))

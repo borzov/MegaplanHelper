@@ -201,52 +201,53 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         }
     }
     
+    /// Extract Task owner and responsible user info
+    private func extractTaskUserInfo(from task: [String: Any], into userInfoMap: inout [String: (name: String?, avatarURL: URL?)], sourcePrefix: String) {
+        if let owner = task["owner"] as? [String: Any],
+           let ownerId = owner["id"] as? String {
+            extractAndStoreUserInfo(from: owner, userId: ownerId, into: &userInfoMap, source: "\(sourcePrefix).owner")
+        }
+
+        if let responsible = task["responsible"] as? [String: Any],
+           let responsibleId = responsible["id"] as? String {
+            extractAndStoreUserInfo(from: responsible, userId: responsibleId, into: &userInfoMap, source: "\(sourcePrefix).responsible")
+        }
+    }
+
+    /// Extract Deal manager user info
+    private func extractDealUserInfo(from deal: [String: Any], into userInfoMap: inout [String: (name: String?, avatarURL: URL?)], sourcePrefix: String) {
+        if let manager = deal["manager"] as? [String: Any],
+           let managerId = manager["id"] as? String {
+            extractAndStoreUserInfo(from: manager, userId: managerId, into: &userInfoMap, source: "\(sourcePrefix).manager")
+        }
+    }
+
     private func extractUserInfoFromSubject(_ subject: [String: Any], into userInfoMap: inout [String: (name: String?, avatarURL: URL?)]) {
         let subjectType = subject["contentType"] as? String
-        
+
         // Handle Task directly
         if subjectType == "Task" {
-            if let owner = subject["owner"] as? [String: Any],
-               let ownerId = owner["id"] as? String {
-                extractAndStoreUserInfo(from: owner, userId: ownerId, into: &userInfoMap, source: "subject.task.owner")
-            }
-            
-            if let responsible = subject["responsible"] as? [String: Any],
-               let responsibleId = responsible["id"] as? String {
-                extractAndStoreUserInfo(from: responsible, userId: responsibleId, into: &userInfoMap, source: "subject.task.responsible")
-            }
+            extractTaskUserInfo(from: subject, into: &userInfoMap, sourcePrefix: "subject.task")
         }
-        
+
         // Handle Deal directly
-        if subjectType == "Deal",
-           let manager = subject["manager"] as? [String: Any],
-           let managerId = manager["id"] as? String {
-            extractAndStoreUserInfo(from: manager, userId: managerId, into: &userInfoMap, source: "subject.deal.manager")
+        if subjectType == "Deal" {
+            extractDealUserInfo(from: subject, into: &userInfoMap, sourcePrefix: "subject.deal")
         }
-        
+
         // Handle Comment -> Task/Deal (nested structure)
         if subjectType == "Comment",
            let nestedSubject = subject["subject"] as? [String: Any] {
             let nestedSubjectType = nestedSubject["contentType"] as? String
-            
+
             // Comment -> Task -> owner/responsible
             if nestedSubjectType == "Task" {
-                if let owner = nestedSubject["owner"] as? [String: Any],
-                   let ownerId = owner["id"] as? String {
-                    extractAndStoreUserInfo(from: owner, userId: ownerId, into: &userInfoMap, source: "subject.comment.task.owner")
-                }
-                
-                if let responsible = nestedSubject["responsible"] as? [String: Any],
-                   let responsibleId = responsible["id"] as? String {
-                    extractAndStoreUserInfo(from: responsible, userId: responsibleId, into: &userInfoMap, source: "subject.comment.task.responsible")
-                }
+                extractTaskUserInfo(from: nestedSubject, into: &userInfoMap, sourcePrefix: "subject.comment.task")
             }
-            
+
             // Comment -> Deal -> manager
-            if nestedSubjectType == "Deal",
-               let manager = nestedSubject["manager"] as? [String: Any],
-               let managerId = manager["id"] as? String {
-                extractAndStoreUserInfo(from: manager, userId: managerId, into: &userInfoMap, source: "subject.comment.deal.manager")
+            if nestedSubjectType == "Deal" {
+                extractDealUserInfo(from: nestedSubject, into: &userInfoMap, sourcePrefix: "subject.comment.deal")
             }
         }
     }
@@ -481,6 +482,39 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
     }
 
     /// Checks if host matches any blocked pattern for SSRF protection
+    // MARK: - SSRF Protection Constants
+
+    /// Cached blocked IP prefixes for SSRF protection
+    private static let blockedIPPrefixes: [String] = [
+        "127.", "0.0.0.0", "0.",  // Loopback and zero addresses
+        "10.",                     // Class A private
+        "172.16.", "172.17.", "172.18.", "172.19.",
+        "172.20.", "172.21.", "172.22.", "172.23.",
+        "172.24.", "172.25.", "172.26.", "172.27.",
+        "172.28.", "172.29.", "172.30.", "172.31.",  // Class B private
+        "192.168.",                // Class C private
+        "169.254.",                // Link-local
+        "224.", "225.", "226.", "227.", "228.", "229.",
+        "230.", "231.", "232.", "233.", "234.", "235.",
+        "236.", "237.", "238.", "239.",  // Multicast
+        "255."                     // Broadcast
+    ]
+
+    /// Cached blocked IPv6 patterns for SSRF protection
+    private static let blockedIPv6Patterns: [String] = [
+        "::1", "[::1]",           // IPv6 loopback
+        "fe80:", "[fe80:",        // Link-local
+        "fc00:", "[fc00:",        // Unique local
+        "fd00:", "[fd00:"         // Unique local
+    ]
+
+    /// Cached metadata service hosts (using Set for O(1) lookup)
+    private static let metadataHosts: Set<String> = [
+        "169.254.169.254",        // AWS/GCP/Azure metadata
+        "metadata.google.internal",
+        "metadata.goog"
+    ]
+
     private static func isBlockedHost(_ host: String) -> Bool {
         let lowercasedHost = host.lowercased()
 
@@ -492,21 +526,6 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         }
 
         // Block IP address patterns
-        let blockedIPPrefixes = [
-            "127.", "0.0.0.0", "0.",  // Loopback and zero addresses
-            "10.",                     // Class A private
-            "172.16.", "172.17.", "172.18.", "172.19.",
-            "172.20.", "172.21.", "172.22.", "172.23.",
-            "172.24.", "172.25.", "172.26.", "172.27.",
-            "172.28.", "172.29.", "172.30.", "172.31.",  // Class B private
-            "192.168.",                // Class C private
-            "169.254.",                // Link-local
-            "224.", "225.", "226.", "227.", "228.", "229.",
-            "230.", "231.", "232.", "233.", "234.", "235.",
-            "236.", "237.", "238.", "239.",  // Multicast
-            "255."                     // Broadcast
-        ]
-
         for prefix in blockedIPPrefixes {
             if lowercasedHost.hasPrefix(prefix) {
                 return true
@@ -514,26 +533,13 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         }
 
         // Block IPv6 localhost and private addresses
-        let blockedIPv6Patterns = [
-            "::1", "[::1]",           // IPv6 loopback
-            "fe80:", "[fe80:",        // Link-local
-            "fc00:", "[fc00:",        // Unique local
-            "fd00:", "[fd00:"         // Unique local
-        ]
-
         for pattern in blockedIPv6Patterns {
             if lowercasedHost.hasPrefix(pattern) || lowercasedHost.contains(pattern) {
                 return true
             }
         }
 
-        // Block metadata service endpoints (cloud environments)
-        let metadataHosts = [
-            "169.254.169.254",        // AWS/GCP/Azure metadata
-            "metadata.google.internal",
-            "metadata.goog"
-        ]
-
+        // Block metadata service endpoints (O(1) lookup with Set)
         if metadataHosts.contains(lowercasedHost) {
             return true
         }

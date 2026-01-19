@@ -4,8 +4,9 @@ struct HTMLCleaner {
     // MARK: - Cached Regex Patterns
 
     /// Cached regex for removing HTML tags
+    /// Uses lazy quantifier (+?) to prevent potential ReDoS attacks
     private static let htmlTagsRegex: NSRegularExpression? = {
-        try? NSRegularExpression(pattern: #"<[^>]+>"#, options: [])
+        try? NSRegularExpression(pattern: #"<[^>]+?>"#, options: [])
     }()
 
     /// Cached regex for collapsing whitespace
@@ -14,13 +15,15 @@ struct HTMLCleaner {
     }()
 
     /// Cached regex for extracting text from links
+    /// Uses lazy quantifiers to prevent potential ReDoS attacks
     private static let linksRegex: NSRegularExpression? = {
-        try? NSRegularExpression(pattern: #"<a[^>]*>([^<]+)</a>"#, options: [])
+        try? NSRegularExpression(pattern: #"<a[^>]*?>([^<]+?)</a>"#, options: [])
     }()
 
     /// Cached regex for processing mentions
+    /// Uses lazy quantifiers to prevent potential ReDoS attacks
     private static let mentionsRegex: NSRegularExpression? = {
-        try? NSRegularExpression(pattern: #"<megaplan:mention[^>]*>([^<]+)</megaplan:mention>"#, options: [])
+        try? NSRegularExpression(pattern: #"<megaplan:mention[^>]*?>([^<]+?)</megaplan:mention>"#, options: [])
     }()
 
     // MARK: - HTML Entity Mapping

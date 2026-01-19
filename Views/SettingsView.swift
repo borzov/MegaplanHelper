@@ -207,7 +207,6 @@ struct SettingsView: View {
             }
             .formStyle(.grouped)
         }
-        .frame(width: 480, height: 500)
         .onAppear(perform: syncState)
         .alert(String(localized: "settings.logoutAlertTitle"), isPresented: $showingLogoutAlert) {
             Button(String(localized: "general.cancel"), role: .cancel) { }
