@@ -79,28 +79,5 @@ final class ErrorRecoveryService: Sendable {
         
         return false
     }
-
-    /// Проверяет, является ли ошибка сетевой
-    private func isNetworkError(_ error: Error) -> Bool {
-        if let networkError = error as? NetworkError {
-            switch networkError {
-            case .transport, .offline:
-                return true
-            default:
-                return false
-            }
-        }
-        
-        if let urlError = error as? URLError {
-            switch urlError.code {
-            case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost:
-                return true
-            default:
-                return false
-            }
-        }
-        
-        return false
-    }
 }
 

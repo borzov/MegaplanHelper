@@ -16,7 +16,6 @@ enum Constants {
             .appendingPathComponent("Logs", isDirectory: true) ?? URL(fileURLWithPath: NSTemporaryDirectory())
         return logsDirectory.appendingPathComponent("MegaplanApp.log", isDirectory: false)
     }()
-    static let sparkleFeedURL = URL(string: "https://example.com/megaplan/sparkle/appcast.xml")
 
     enum UserDefaultsKeys {
         static let domain = "megaplan.domain"
