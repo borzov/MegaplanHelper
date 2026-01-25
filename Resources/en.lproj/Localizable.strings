@@ -24,6 +24,8 @@
 "auth.button" = "Sign In";
 "auth.authenticating" = "Authenticating...";
 "auth.description" = "To continue using the app, please sign in with your Megaplan account";
+"auth.error.invalidDomain" = "Invalid domain format";
+"auth.error.blockedDomain" = "This domain is blocked for security reasons";
 
 "settings.title" = "Settings";
 "settings.account" = "Account";

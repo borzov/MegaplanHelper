@@ -4,9 +4,9 @@ actor UserInfoCache {
     static let shared = UserInfoCache()
 
     private var cache: [String: CachedUserInfo] = [:]
-    private var accessOrder: [String] = [] // Track access order for LRU
-    private let cacheExpiration: TimeInterval = 3600 // 1 hour
-    private let maxCacheSize: Int = 500 // Maximum number of entries
+    private var accessOrder: [String] = []  // LRU tracking
+    private let cacheExpiration: TimeInterval = Constants.CacheConfig.expirationInterval
+    private let maxCacheSize: Int = Constants.CacheConfig.maxUserInfoEntries
 
     struct CachedUserInfo {
         let name: String?

@@ -3,11 +3,28 @@ import SwiftUI
 struct AuthView: View {
     @EnvironmentObject private var appState: AppState
     @FocusState private var focusedField: Field?
+    @State private var domainError: String?
 
     enum Field: Hashable {
         case domain
         case login
         case password
+    }
+
+    /// Checks if the domain is valid for authentication
+    private var isDomainValid: Bool {
+        let domain = appState.tempCredentials.domain.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !domain.isEmpty else { return false }
+        return URLValidator.validateDomain(domain) != nil
+    }
+
+    /// Checks if the form is ready for submission
+    private var canAuthenticate: Bool {
+        let creds = appState.tempCredentials
+        return isDomainValid &&
+               !creds.login.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+               !creds.password.isEmpty &&
+               !appState.isLoading
     }
 
     var body: some View {
@@ -55,12 +72,19 @@ struct AuthView: View {
                                 var creds = appState.tempCredentials
                                 creds.domain = newValue
                                 appState.updateTempCredentials(creds)
+                                validateDomain(newValue)
                             }
                         ))
                         .focused($focusedField, equals: .domain)
-                        Text(String(localized: "settings.domainDescription"))
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                        if let error = domainError {
+                            Text(error)
+                                .font(.caption2)
+                                .foregroundColor(.red)
+                        } else {
+                            Text(String(localized: "settings.domainDescription"))
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
@@ -107,7 +131,7 @@ struct AuthView: View {
                         }
                         .frame(maxWidth: .infinity)
                     }
-                    .disabled(appState.isLoading)
+                    .disabled(!canAuthenticate)
                     .controlSize(.large)
                 }
             }
@@ -148,6 +172,29 @@ struct AuthView: View {
             default:
                 authenticate()
             }
+        }
+    }
+
+    /// Validates the domain and updates error state
+    private func validateDomain(_ domain: String) {
+        let trimmed = domain.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Пустой домен - нет ошибки, просто ждём ввода
+        guard !trimmed.isEmpty else {
+            domainError = nil
+            return
+        }
+
+        // Проверяем через URLValidator
+        if URLValidator.validateDomain(trimmed) == nil {
+            // Определяем тип ошибки для понятного сообщения
+            if URLValidator.isBlockedHost(trimmed) {
+                domainError = String(localized: "auth.error.blockedDomain")
+            } else {
+                domainError = String(localized: "auth.error.invalidDomain")
+            }
+        } else {
+            domainError = nil
         }
     }
 

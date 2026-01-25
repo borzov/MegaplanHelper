@@ -64,11 +64,6 @@ struct NotificationParser {
     
     // MARK: - Private Helpers
 
-    private static func normalizeURLString(_ urlString: String) -> URL? {
-        let normalized = urlString.hasPrefix("//") ? "https:\(urlString)" : urlString
-        return URL(string: normalized)
-    }
-
     private static func parseNameComponents(firstName: String?, lastName: String?) -> String? {
         if let firstName = firstName, !firstName.isEmpty,
            let lastName = lastName, !lastName.isEmpty {
@@ -105,7 +100,7 @@ struct NotificationParser {
                !thumbnail.isEmpty {
                 let avatarURLString = thumbnail.replacingOccurrences(of: "{width}x{height}", with: "64x64")
                 AppLogger.debug("Parsed avatar thumbnail: \(thumbnail) -> \(avatarURLString)")
-                if let url = normalizeURLString(avatarURLString) {
+                if let url = URLValidator.normalizeURL(avatarURLString) {
                     AppLogger.debug("Created avatar URL: \(url.absoluteString)")
                     return url
                 } else {
@@ -116,14 +111,14 @@ struct NotificationParser {
             // Try path or URL
             if let path = try? avatarContainer.decodeFlexibleString(keys: ["path", "url", "href"], defaultValue: nil),
                !path.isEmpty {
-                return normalizeURLString(path)
+                return URLValidator.normalizeURL(path)
             }
         }
 
         // Try direct avatar field
         if let avatarString = try? container.decodeFlexibleString(keys: ["avatar", "avatarUrl", "avatarURL", "photo", "picture", "image"], defaultValue: nil),
            !avatarString.isEmpty {
-            return normalizeURLString(avatarString)
+            return URLValidator.normalizeURL(avatarString)
         }
 
         return nil
@@ -165,7 +160,7 @@ struct NotificationParser {
             if let thumbnail = avatar["thumbnail"] as? String, !thumbnail.isEmpty {
                 let avatarURLString = thumbnail.replacingOccurrences(of: "{width}x{height}", with: "64x64")
                 AppLogger.debug("Parsed avatar thumbnail from dict: \(thumbnail) -> \(avatarURLString)")
-                if let url = normalizeURLString(avatarURLString) {
+                if let url = URLValidator.normalizeURL(avatarURLString) {
                     AppLogger.debug("Created avatar URL: \(url.absoluteString)")
                     return url
                 } else {
@@ -175,13 +170,13 @@ struct NotificationParser {
 
             // Try path or URL
             if let path = avatar["path"] as? String, !path.isEmpty {
-                return normalizeURLString(path)
+                return URLValidator.normalizeURL(path)
             }
         }
 
         // Try direct avatar field
         if let avatarString = dict["avatar"] as? String, !avatarString.isEmpty {
-            return normalizeURLString(avatarString)
+            return URLValidator.normalizeURL(avatarString)
         }
 
         return nil

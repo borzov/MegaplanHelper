@@ -41,6 +41,27 @@ enum Constants {
 
     static let loginItemIdentifier = "com.ruvents.MegaplanMenuBarApp.LoginItem"
 
+    /// Cache configuration for avatars and user info
+    enum CacheConfig {
+        /// Maximum number of user info entries in memory cache (LRU eviction)
+        static let maxUserInfoEntries = 500
+
+        /// Maximum size of a single avatar file (1 MB)
+        static let maxAvatarSize: Int64 = 1_024 * 1_024
+
+        /// Maximum total size of disk avatar cache (100 MB)
+        static let maxDiskCacheSize: Int64 = 100 * 1_024 * 1_024
+
+        /// Cache expiration interval (1 hour)
+        static let expirationInterval: TimeInterval = 3600
+    }
+
+    /// Security-related configuration
+    enum SecurityConfig {
+        /// Maximum depth of certificate chain for DoS protection
+        static let maxCertificateChainDepth = 32
+    }
+
     /// Certificate pinning configuration for Megaplan API
     /// Hashes obtained from demo.megaplan.ru certificate chain
     enum CertificatePinning {

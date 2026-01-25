@@ -12,7 +12,7 @@ final class StatusBarController: NSObject, ObservableObject {
     private weak var settingsViewModel: SettingsViewModel?
     private var cancellables = Set<AnyCancellable>()
 
-    private static var cachedMenuBarImage: NSImage?
+    nonisolated(unsafe) private static var cachedMenuBarImage: NSImage?
 
     override init() {
         super.init()

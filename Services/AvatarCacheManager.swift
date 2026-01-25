@@ -12,7 +12,7 @@ final class AvatarCacheManager {
     static let shared = AvatarCacheManager()
 
     private let cacheDirectory: URL
-    private let cacheExpirationInterval: TimeInterval = 3600 // 1 час
+    private let cacheExpirationInterval: TimeInterval = Constants.CacheConfig.expirationInterval
     private let fileManager = FileManager.default
 
     // Network session with configured timeouts
@@ -28,7 +28,8 @@ final class AvatarCacheManager {
     private let downloadSemaphore = DispatchSemaphore(value: 5)
 
     // Size limits
-    private static let maxAvatarSize: Int64 = 1024 * 1024  // 1MB
+    private static let maxAvatarSize: Int64 = Constants.CacheConfig.maxAvatarSize
+    private static let maxDiskCacheSize: Int64 = Constants.CacheConfig.maxDiskCacheSize
 
     private static let metadataDecoder = JSONDecoder()
     private static let metadataEncoder = JSONEncoder()
@@ -127,6 +128,9 @@ final class AvatarCacheManager {
             originalURL: url.absoluteString
         )
         saveMetadata(metadata, to: metadataURL)
+
+        // Очистка кэша при превышении лимита
+        cleanupIfNeeded()
     }
     
     func loadImage(from url: URL, for userId: String) async -> NSImage? {
@@ -250,6 +254,69 @@ final class AvatarCacheManager {
         }
 
         createCacheDirectoryIfNeeded()
+    }
+
+    // MARK: - Cache Size Management
+
+    /// Returns the total size of all files in the cache directory in bytes
+    private func getCacheSize() -> Int64 {
+        guard let contents = try? fileManager.contentsOfDirectory(
+            at: cacheDirectory,
+            includingPropertiesForKeys: [.fileSizeKey],
+            options: .skipsHiddenFiles
+        ) else {
+            return 0
+        }
+
+        return contents.reduce(0) { total, fileURL in
+            let size = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+            return total + Int64(size)
+        }
+    }
+
+    /// Cleans up the cache if it exceeds the maximum size limit using LRU policy
+    private func cleanupIfNeeded() {
+        let currentSize = getCacheSize()
+        guard currentSize > Self.maxDiskCacheSize else { return }
+
+        AppLogger.info("Cache size (\(currentSize) bytes) exceeds limit (\(Self.maxDiskCacheSize) bytes), starting cleanup")
+
+        // Получаем список файлов с датой доступа
+        guard let contents = try? fileManager.contentsOfDirectory(
+            at: cacheDirectory,
+            includingPropertiesForKeys: [.contentAccessDateKey, .fileSizeKey],
+            options: .skipsHiddenFiles
+        ) else {
+            return
+        }
+
+        // Сортируем по дате доступа (старые первыми)
+        let sortedFiles = contents.compactMap { fileURL -> (URL, Date, Int64)? in
+            guard let values = try? fileURL.resourceValues(forKeys: [.contentAccessDateKey, .fileSizeKey]),
+                  let accessDate = values.contentAccessDate,
+                  let size = values.fileSize else {
+                return nil
+            }
+            return (fileURL, accessDate, Int64(size))
+        }.sorted { $0.1 < $1.1 }
+
+        // Удаляем старейшие файлы пока не уложимся в лимит
+        var freedSpace: Int64 = 0
+        let targetFreeSpace = currentSize - Self.maxDiskCacheSize + (Self.maxDiskCacheSize / 10) // Освобождаем + 10% для гистерезиса
+
+        for (fileURL, _, fileSize) in sortedFiles {
+            guard freedSpace < targetFreeSpace else { break }
+
+            do {
+                try fileManager.removeItem(at: fileURL)
+                freedSpace += fileSize
+                AppLogger.debug("Removed cached file: \(fileURL.lastPathComponent)")
+            } catch {
+                AppLogger.error("Failed to remove cached file \(fileURL.lastPathComponent): \(error.localizedDescription)")
+            }
+        }
+
+        AppLogger.info("Cache cleanup complete, freed \(freedSpace) bytes")
     }
 }
 
