@@ -198,3 +198,8 @@
 "shortcuts.record" = "Record";
 "shortcuts.stop" = "Stop";
 "shortcuts.clear" = "Clear";
+
+// Settings — Storage
+"settings.storage.avatarsTitle" = "Avatar cache";
+"settings.storage.statsLine" = "%@ · %d entries";
+"settings.storage.clear" = "Clear";

@@ -199,4 +199,9 @@
 "shortcuts.notSet" = "Не задано";
 "shortcuts.record" = "Записать";
 "shortcuts.stop" = "Стоп";
+
+// Settings — Storage
+"settings.storage.avatarsTitle" = "Кэш аватаров";
+"settings.storage.statsLine" = "%@ · %d записей";
+"settings.storage.clear" = "Очистить";
 "shortcuts.clear" = "Сбросить";

@@ -51,6 +51,7 @@
 		C262F85D2EBAA49700CDE7A0 /* NotificationParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C262F85B2EBAA49700CDE7A0 /* NotificationParser.swift */; };
 		C262F85E2EBAA49700CDE7A0 /* UserInfoCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C262F85C2EBAA49700CDE7A0 /* UserInfoCache.swift */; };
 		C281F0F42EACED2F00B88503 /* SettingsWindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C281F0F32EACED2F00B88503 /* SettingsWindowManager.swift */; };
+		C2A29C67CFCA3D402F7AAD14 /* CacheStatsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A211A7B5E5BBFA23C56CBE7 /* CacheStatsRow.swift */; };
 		C2AA00012EC50001004AEF47 /* AsyncSemaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2AA00022EC50002004AEF47 /* AsyncSemaphore.swift */; };
 		C2EE49242EC3D1D1004AEF47 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49232EC3D1D1004AEF47 /* NotificationManager.swift */; };
 		C2EE49252EC3D1D1004AEF47 /* ErrorRecoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49222EC3D1D1004AEF47 /* ErrorRecoveryService.swift */; };
@@ -72,6 +73,7 @@
 		79D7EA83467C10A676111BE5 /* ShortcutRecorderRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShortcutRecorderRow.swift; sourceTree = "<group>"; };
 		7CC9D9A77F2E44D71FF5FFD8 /* AccountCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountCard.swift; sourceTree = "<group>"; };
 		98C8CF8C41E261881D79D5F8 /* SettingsSection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSection.swift; sourceTree = "<group>"; };
+		9A211A7B5E5BBFA23C56CBE7 /* CacheStatsRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CacheStatsRow.swift; sourceTree = "<group>"; };
 		AA00000F /* MegaplanHepler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MegaplanHepler.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA000010 /* MegaplanMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanMenuBarApp.swift; sourceTree = "<group>"; };
 		AA000011 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -162,6 +164,7 @@
 				7CC9D9A77F2E44D71FF5FFD8 /* AccountCard.swift */,
 				78F0B4899120F519F2910A31 /* RefreshIntervalSlider.swift */,
 				79D7EA83467C10A676111BE5 /* ShortcutRecorderRow.swift */,
+				9A211A7B5E5BBFA23C56CBE7 /* CacheStatsRow.swift */,
 			);
 			name = Components;
 			path = Components;
@@ -482,6 +485,7 @@
 				F466E3045C84824C45D7BF1C /* AccountCard.swift in Sources */,
 				B1F05B6A4F20A3DDC7F9DE4D /* RefreshIntervalSlider.swift in Sources */,
 				F8B705C905DF866831133302 /* ShortcutRecorderRow.swift in Sources */,
+				C2A29C67CFCA3D402F7AAD14 /* CacheStatsRow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
