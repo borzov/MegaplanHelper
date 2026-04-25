@@ -25,6 +25,7 @@
 		AA00000D /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AA00001C /* Localizable.strings */; };
 		AA00000E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AA00001D /* Localizable.strings */; };
 		AA000030 /* StringExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00002A /* StringExtensions.swift */; };
+		B1F05B6A4F20A3DDC7F9DE4D /* RefreshIntervalSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F0B4899120F519F2910A31 /* RefreshIntervalSlider.swift */; };
 		BB000020 /* MegaplanTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000010 /* MegaplanTask.swift */; };
 		BB000021 /* TaskDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000011 /* TaskDTO.swift */; };
 		BB000022 /* MegaplanTaskFilterBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000012 /* MegaplanTaskFilterBuilder.swift */; };
@@ -66,6 +67,7 @@
 
 /* Begin PBXFileReference section */
 		2AC0443720F33CCB46B17D99 /* SettingsSearchIndex.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSearchIndex.swift; sourceTree = "<group>"; };
+		78F0B4899120F519F2910A31 /* RefreshIntervalSlider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RefreshIntervalSlider.swift; sourceTree = "<group>"; };
 		7CC9D9A77F2E44D71FF5FFD8 /* AccountCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountCard.swift; sourceTree = "<group>"; };
 		98C8CF8C41E261881D79D5F8 /* SettingsSection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSection.swift; sourceTree = "<group>"; };
 		AA00000F /* MegaplanHepler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MegaplanHepler.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -156,6 +158,7 @@
 			isa = PBXGroup;
 			children = (
 				7CC9D9A77F2E44D71FF5FFD8 /* AccountCard.swift */,
+				78F0B4899120F519F2910A31 /* RefreshIntervalSlider.swift */,
 			);
 			name = Components;
 			path = Components;
@@ -474,6 +477,7 @@
 				8739F1D5F3EB5E1351BD4608 /* SettingsExporter.swift in Sources */,
 				208C00901227259EA1F986A4 /* HotkeyManager.swift in Sources */,
 				F466E3045C84824C45D7BF1C /* AccountCard.swift in Sources */,
+				B1F05B6A4F20A3DDC7F9DE4D /* RefreshIntervalSlider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

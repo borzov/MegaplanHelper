@@ -185,3 +185,9 @@
 "settings.account.connected" = "Connected";
 "settings.account.disconnected" = "Disconnected";
 "settings.account.connectedSyncedAgo" = "Connected · synced %@";
+
+// Settings — Sync & Refresh
+"settings.sync.refresh.hint" = "How often the app checks for new notifications";
+"settings.sync.refresh.everySec" = "Every %d sec";
+"settings.sync.refresh.everyMin" = "Every %d min";
+"settings.sync.refresh.everyMinSec" = "Every %d min %d sec";

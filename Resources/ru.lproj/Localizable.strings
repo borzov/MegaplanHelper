@@ -187,3 +187,9 @@
 "settings.account.connected" = "Подключено";
 "settings.account.disconnected" = "Отключено";
 "settings.account.connectedSyncedAgo" = "Подключено · синхронизировано %@";
+
+// Settings — Sync & Refresh
+"settings.sync.refresh.hint" = "Как часто приложение проверяет новые уведомления";
+"settings.sync.refresh.everySec" = "%d сек";
+"settings.sync.refresh.everyMin" = "%d мин";
+"settings.sync.refresh.everyMinSec" = "%d мин %d сек";
