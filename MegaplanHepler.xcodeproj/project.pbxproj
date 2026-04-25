@@ -11,6 +11,7 @@
 		208C00901227259EA1F986A4 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA881FB3C88262497EC1428C /* HotkeyManager.swift */; };
 		2AA943BF4E8CEB647DADDCA4 /* ShortcutsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DB06BE2CEA6060FF2C6D8C7 /* ShortcutsSettingsView.swift */; };
 		7ACCEEAD0F20CBDAB3E3DE36 /* SettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98C8CF8C41E261881D79D5F8 /* SettingsSection.swift */; };
+		7D14680480A40D1B04E3132B /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9A74F26D72DF02C69A4795 /* AboutView.swift */; };
 		8739F1D5F3EB5E1351BD4608 /* SettingsExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAECE12E74838A6114288FB4 /* SettingsExporter.swift */; };
 		89E3BB1FBD7E9BB38B68CB62 /* NotificationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0C79DB212102A83657D543 /* NotificationsSettingsView.swift */; };
 		8C6BE38840E49591E23A6335 /* StorageSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABEFD3F002AF5970575EE6EB /* StorageSettingsView.swift */; };
@@ -75,6 +76,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1D9A74F26D72DF02C69A4795 /* AboutView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		2AC0443720F33CCB46B17D99 /* SettingsSearchIndex.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSearchIndex.swift; sourceTree = "<group>"; };
 		3DB06BE2CEA6060FF2C6D8C7 /* ShortcutsSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShortcutsSettingsView.swift; sourceTree = "<group>"; };
 		4D07A7812F9E213FC48CA77E /* LivePreviewCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LivePreviewCard.swift; sourceTree = "<group>"; };
@@ -354,6 +356,7 @@
 				EA0C79DB212102A83657D543 /* NotificationsSettingsView.swift */,
 				3DB06BE2CEA6060FF2C6D8C7 /* ShortcutsSettingsView.swift */,
 				ABEFD3F002AF5970575EE6EB /* StorageSettingsView.swift */,
+				1D9A74F26D72DF02C69A4795 /* AboutView.swift */,
 			);
 			name = Settings;
 			path = Settings;
@@ -514,6 +517,7 @@
 				89E3BB1FBD7E9BB38B68CB62 /* NotificationsSettingsView.swift in Sources */,
 				2AA943BF4E8CEB647DADDCA4 /* ShortcutsSettingsView.swift in Sources */,
 				8C6BE38840E49591E23A6335 /* StorageSettingsView.swift in Sources */,
+				7D14680480A40D1B04E3132B /* AboutView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

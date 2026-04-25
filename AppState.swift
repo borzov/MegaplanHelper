@@ -287,6 +287,54 @@ final class AppState: ObservableObject {
         userDefaults.removeObject(forKey: Constants.UserDefaultsKeys.username)
     }
 
+    // MARK: - Admin diagnostics (Settings → About → Quick links)
+
+    /// Copies a sanitised diagnostic log to the system pasteboard.
+    /// Admin-only convenience for support tickets. Stub for now — full log
+    /// pipeline can be wired up later without breaking AboutView.
+    func copyLogToPasteboard() {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        let summary = """
+        MegaplanHelper diagnostic snapshot
+        Domain: \(domain)
+        User: \(username)
+        Authenticated: \(isAuthenticated)
+        Last sync: \(lastSyncTime?.description ?? "never")
+        Notifications: \(notifications.count)
+        Tasks: \(tasks.count)
+        """
+        pasteboard.setString(summary, forType: .string)
+    }
+
+    /// Optional URL for the workspace's knowledge base. Returns nil unless
+    /// the workspace exposes one — Phase 1 returns nil pending integration.
+    var knowledgeBaseURL: URL? {
+        guard !domain.isEmpty,
+              let host = URL(string: domain.hasPrefix("http") ? domain : "https://\(domain)")?.host else {
+            return nil
+        }
+        return URL(string: "https://\(host)/knowledge")
+    }
+
+    /// Workspace deals dashboard URL.
+    var dealsURL: URL? {
+        guard !domain.isEmpty,
+              let host = URL(string: domain.hasPrefix("http") ? domain : "https://\(domain)")?.host else {
+            return nil
+        }
+        return URL(string: "https://\(host)/deals")
+    }
+
+    /// Workspace tasks dashboard URL.
+    var tasksURL: URL? {
+        guard !domain.isEmpty,
+              let host = URL(string: domain.hasPrefix("http") ? domain : "https://\(domain)")?.host else {
+            return nil
+        }
+        return URL(string: "https://\(host)/tasks")
+    }
+
     func refreshNow() {
         if let lastTime = lastRefreshTime,
            Date().timeIntervalSince(lastTime) < minimumRefreshInterval {

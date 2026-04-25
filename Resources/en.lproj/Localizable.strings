@@ -246,3 +246,14 @@
 
 "settings.shortcuts.section" = "Global shortcuts";
 "settings.shortcuts.hint" = "Work while the app is running. Click Record, then press a combination.";
+
+// Settings — About
+"settings.about.linksSection" = "Useful links";
+"settings.about.github" = "GitHub repository";
+"settings.about.docs" = "Documentation";
+"settings.about.feedback" = "Report an issue";
+"settings.about.adminSection" = "Administrator";
+"settings.about.copyLog" = "Copy diagnostic log";
+"settings.about.knowledgeBase" = "Knowledge base";
+"settings.about.deals" = "Deals";
+"settings.about.tasks" = "Tasks";

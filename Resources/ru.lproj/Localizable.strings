@@ -248,3 +248,14 @@
 
 "settings.shortcuts.section" = "Глобальные горячие клавиши";
 "settings.shortcuts.hint" = "Работают пока приложение запущено. Нажмите «Записать» и затем нужную комбинацию.";
+
+// Settings — About
+"settings.about.linksSection" = "Полезные ссылки";
+"settings.about.github" = "Репозиторий на GitHub";
+"settings.about.docs" = "Документация";
+"settings.about.feedback" = "Сообщить о проблеме";
+"settings.about.adminSection" = "Администратор";
+"settings.about.copyLog" = "Скопировать диагностический лог";
+"settings.about.knowledgeBase" = "База знаний";
+"settings.about.deals" = "Сделки";
+"settings.about.tasks" = "Задачи";
