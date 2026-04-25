@@ -182,3 +182,8 @@
 "shortcuts.action.refreshNow" = "Обновить сейчас";
 "shortcuts.action.focusSearch" = "Перейти к поиску";
 "shortcuts.action.markAllRead" = "Прочитать всё";
+
+// Settings — Account card
+"settings.account.connected" = "Подключено";
+"settings.account.disconnected" = "Отключено";
+"settings.account.connectedSyncedAgo" = "Подключено · синхронизировано %@";

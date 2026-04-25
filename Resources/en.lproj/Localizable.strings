@@ -180,3 +180,8 @@
 "shortcuts.action.refreshNow" = "Refresh now";
 "shortcuts.action.focusSearch" = "Focus search";
 "shortcuts.action.markAllRead" = "Mark all read";
+
+// Settings — Account card
+"settings.account.connected" = "Connected";
+"settings.account.disconnected" = "Disconnected";
+"settings.account.connectedSyncedAgo" = "Connected · synced %@";

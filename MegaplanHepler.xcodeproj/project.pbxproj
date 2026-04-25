@@ -61,10 +61,12 @@
 		C2FF00022F559001001FD92E /* CertificatePinning.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FF00012F559001001FD92E /* CertificatePinning.swift */; };
 		C2FF00042F559001001FD92E /* NotificationDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FF00032F559001001FD92E /* NotificationDTO.swift */; };
 		C2FF00062F559001001FD92E /* URLValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FF00052F559001001FD92E /* URLValidator.swift */; };
+		F466E3045C84824C45D7BF1C /* AccountCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CC9D9A77F2E44D71FF5FFD8 /* AccountCard.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2AC0443720F33CCB46B17D99 /* SettingsSearchIndex.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSearchIndex.swift; sourceTree = "<group>"; };
+		7CC9D9A77F2E44D71FF5FFD8 /* AccountCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountCard.swift; sourceTree = "<group>"; };
 		98C8CF8C41E261881D79D5F8 /* SettingsSection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSection.swift; sourceTree = "<group>"; };
 		AA00000F /* MegaplanHepler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MegaplanHepler.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA000010 /* MegaplanMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanMenuBarApp.swift; sourceTree = "<group>"; };
@@ -132,6 +134,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1293AA6D585B519680DE7283 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FF3D72BE03FCD638D11C0BC9 /* Settings */,
+			);
+			name = Views;
+			path = Views;
+			sourceTree = "<group>";
+		};
 		54306C2D3B4E734C12B56B50 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -141,6 +152,15 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		6ED2AE268598A7460CC694C9 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				7CC9D9A77F2E44D71FF5FFD8 /* AccountCard.swift */,
+			);
+			name = Components;
+			path = Components;
+			sourceTree = "<group>";
+		};
 		AA00001F = {
 			isa = PBXGroup;
 			children = (
@@ -148,6 +168,7 @@
 				AA000021 /* Products */,
 				54306C2D3B4E734C12B56B50 /* Models */,
 				EB996611CD7A022957A2B9FD /* Services */,
+				1293AA6D585B519680DE7283 /* Views */,
 			);
 			sourceTree = "<group>";
 		};
@@ -299,6 +320,15 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		FF3D72BE03FCD638D11C0BC9 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				6ED2AE268598A7460CC694C9 /* Components */,
+			);
+			name = Settings;
+			path = Settings;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -443,6 +473,7 @@
 				A345707AF6425C6E2F1247DC /* SettingsSearchIndex.swift in Sources */,
 				8739F1D5F3EB5E1351BD4608 /* SettingsExporter.swift in Sources */,
 				208C00901227259EA1F986A4 /* HotkeyManager.swift in Sources */,
+				F466E3045C84824C45D7BF1C /* AccountCard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
