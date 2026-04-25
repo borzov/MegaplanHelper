@@ -143,6 +143,9 @@
 "tasks.time.justNow" = "just now";
 "tasks.time.minutesAgo" = "%d min ago";
 "tasks.time.yesterday" = "yesterday";
+"tasks.time.lastWeek" = "last week";
+"tasks.time.weeksAgo" = "%d wk ago";
+"tasks.time.monthsAgo" = "%d mo ago";
 
 // Tasks — statuses
 "tasks.status.created" = "Created";

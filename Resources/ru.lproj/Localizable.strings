@@ -145,6 +145,9 @@
 "tasks.time.justNow" = "только что";
 "tasks.time.minutesAgo" = "%d мин назад";
 "tasks.time.yesterday" = "вчера";
+"tasks.time.lastWeek" = "на прошлой неделе";
+"tasks.time.weeksAgo" = "%d нед. назад";
+"tasks.time.monthsAgo" = "%d мес. назад";
 
 // Tasks — statuses
 "tasks.status.created" = "Создана";
