@@ -90,6 +90,16 @@
 "settings.appearance.preview.body" = "Прошу проверить пункт 3.2 о сроках поставки и подтвердить";
 "settings.appearance.preview.senderName" = "Анна Петрова";
 "settings.appearance.preview.senderInitials" = "АП";
+"settings.appearance.themeSection" = "Тема";
+"settings.appearance.theme" = "Тема";
+"settings.appearance.theme.system" = "Системная";
+"settings.appearance.theme.light" = "Светлая";
+"settings.appearance.theme.dark" = "Тёмная";
+"settings.appearance.fontSection" = "Шрифт";
+"settings.appearance.fontSize" = "Размер шрифта";
+"settings.appearance.font.small" = "S";
+"settings.appearance.font.medium" = "M";
+"settings.appearance.font.large" = "L";
 "settings.behavior" = "Поведение";
 "settings.showOnlyUnread" = "Показывать только непрочитанные";
 "settings.showOnlyUnreadDescription" = "Скрывать прочитанные уведомления";

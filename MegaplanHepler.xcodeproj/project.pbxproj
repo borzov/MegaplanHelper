@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0A5D8BAAE4529C8A486D5CB1 /* AppearanceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFECD95730D4117F635F4525 /* AppearanceSettingsView.swift */; };
 		208C00901227259EA1F986A4 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA881FB3C88262497EC1428C /* HotkeyManager.swift */; };
 		7ACCEEAD0F20CBDAB3E3DE36 /* SettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98C8CF8C41E261881D79D5F8 /* SettingsSection.swift */; };
 		8739F1D5F3EB5E1351BD4608 /* SettingsExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAECE12E74838A6114288FB4 /* SettingsExporter.swift */; };
@@ -109,6 +110,7 @@
 		BB00001C /* Pluralization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pluralization.swift; sourceTree = "<group>"; };
 		BB00001D /* MegaplanComment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanComment.swift; sourceTree = "<group>"; };
 		BB00001E /* MarkdownCommentExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownCommentExporter.swift; sourceTree = "<group>"; };
+		BFECD95730D4117F635F4525 /* AppearanceSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppearanceSettingsView.swift; sourceTree = "<group>"; };
 		C23AC9B92F0E7FCA001FD92E /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		C23AC9BA2F0E7FCA001FD92E /* OfflineBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineBannerView.swift; sourceTree = "<group>"; };
 		C23AC9BB2F0E7FCA001FD92E /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
@@ -342,6 +344,7 @@
 				6ED2AE268598A7460CC694C9 /* Components */,
 				CA55AA33EF9474EBB89A98BE /* AccountSettingsView.swift */,
 				CFF14662E0A883FB2E5BAE4F /* SyncSettingsView.swift */,
+				BFECD95730D4117F635F4525 /* AppearanceSettingsView.swift */,
 			);
 			name = Settings;
 			path = Settings;
@@ -498,6 +501,7 @@
 				BE06E01365A3E32604C66A2C /* LivePreviewCard.swift in Sources */,
 				CC81A6B8FBEA5D47F5BB4B72 /* AccountSettingsView.swift in Sources */,
 				A38424CB7FCA1693E6B1DD29 /* SyncSettingsView.swift in Sources */,
+				0A5D8BAAE4529C8A486D5CB1 /* AppearanceSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

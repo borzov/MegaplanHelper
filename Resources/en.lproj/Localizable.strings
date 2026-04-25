@@ -90,6 +90,16 @@
 "settings.appearance.preview.body" = "Please review section 3.2 about delivery dates and confirm";
 "settings.appearance.preview.senderName" = "Sarah Connor";
 "settings.appearance.preview.senderInitials" = "SC";
+"settings.appearance.themeSection" = "Theme";
+"settings.appearance.theme" = "Theme";
+"settings.appearance.theme.system" = "System";
+"settings.appearance.theme.light" = "Light";
+"settings.appearance.theme.dark" = "Dark";
+"settings.appearance.fontSection" = "Font";
+"settings.appearance.fontSize" = "Font size";
+"settings.appearance.font.small" = "S";
+"settings.appearance.font.medium" = "M";
+"settings.appearance.font.large" = "L";
 "settings.behavior" = "Behavior";
 "settings.showOnlyUnread" = "Show only unread";
 "settings.showOnlyUnreadDescription" = "Hide read notifications";
