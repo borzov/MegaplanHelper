@@ -28,13 +28,19 @@ final class SettingsSearchIndex {
     private init() {}
 
     /// Returns sections whose index contains any token from the query.
-    /// Empty query returns all sections.
+    /// Empty query returns all sections. Tokens shorter than 2 characters are
+    /// ignored to prevent single-letter substring matches flooding results.
     func search(_ query: String) -> [SettingsSection] {
         let trimmed = query.trimmingCharacters(in: .whitespaces).lowercased()
         if trimmed.isEmpty {
             return SettingsSection.allCases
         }
-        let tokens = trimmed.split(separator: " ").map(String.init)
+        let tokens = trimmed.split(separator: " ")
+            .map(String.init)
+            .filter { $0.count >= 2 }
+        if tokens.isEmpty {
+            return SettingsSection.allCases
+        }
         return SettingsSection.allCases.filter { section in
             guard let keywords = index[section] else { return false }
             return tokens.contains { token in

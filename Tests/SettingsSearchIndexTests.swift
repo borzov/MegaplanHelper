@@ -27,4 +27,26 @@ final class SettingsSearchIndexTests: XCTestCase {
         let results = SettingsSearchIndex.shared.search("xyzzyplugh")
         XCTAssertTrue(results.isEmpty)
     }
+
+    func testSearch_SingleCharacterToken_DoesNotMatchEverything() {
+        let results = SettingsSearchIndex.shared.search("о")
+        XCTAssertNotEqual(Set(results), Set(SettingsSection.allCases),
+                          "Single-character tokens must not flood results")
+    }
+
+    func testSearch_MultiToken_UnionOfMatches() {
+        let results = SettingsSearchIndex.shared.search("password reset")
+        XCTAssertTrue(results.contains(.account), "'password' must match Account")
+        XCTAssertTrue(results.contains(.storage), "'reset' must match Storage")
+    }
+
+    func testSearch_UpperCaseQuery_StillMatches() {
+        let results = SettingsSearchIndex.shared.search("REFRESH")
+        XCTAssertTrue(results.contains(.sync), "Upper-case query must match thanks to lowercased() normalisation")
+    }
+
+    func testSearch_WhitespaceOnlyQuery_ReturnsAllSections() {
+        let results = SettingsSearchIndex.shared.search("   ")
+        XCTAssertEqual(Set(results), Set(SettingsSection.allCases))
+    }
 }
