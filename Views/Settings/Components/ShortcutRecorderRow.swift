@@ -51,6 +51,7 @@ struct ShortcutRecorderRow: View {
                 .help(String(localized: "shortcuts.clear"))
             }
         }
+        .onDisappear { stopRecording() }
     }
 
     private func toggleRecording() {
@@ -60,6 +61,11 @@ struct ShortcutRecorderRow: View {
     private func startRecording() {
         isRecording = true
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            // Esc cancels recording without binding.
+            if event.keyCode == Self.escapeKeyCode {
+                stopRecording()
+                return nil
+            }
             let pressedMods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
             guard !pressedMods.isEmpty else { return event }
             let shortcut = HotkeyShortcut(keyCode: event.keyCode, modifiers: pressedMods)
@@ -68,6 +74,8 @@ struct ShortcutRecorderRow: View {
             return nil
         }
     }
+
+    private static let escapeKeyCode: UInt16 = 53
 
     private func stopRecording() {
         if let monitor { NSEvent.removeMonitor(monitor) }
