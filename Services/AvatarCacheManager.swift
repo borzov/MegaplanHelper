@@ -258,8 +258,9 @@ final class AvatarCacheManager {
 
     // MARK: - Cache Size Management
 
-    /// Returns the total size of all files in the cache directory in bytes
-    private func getCacheSize() -> Int64 {
+    /// Synchronous helper used by hot paths (e.g. cleanup after caching).
+    /// Returns the total size of all files in the cache directory in bytes.
+    private func cacheSizeSync() -> Int64 {
         guard let contents = try? fileManager.contentsOfDirectory(
             at: cacheDirectory,
             includingPropertiesForKeys: [.fileSizeKey],
@@ -274,9 +275,41 @@ final class AvatarCacheManager {
         }
     }
 
+    /// Public: returns total disk size of all cached avatars in bytes.
+    func cacheSize() async -> Int64 {
+        let cacheDirectory = self.cacheDirectory
+        let fileManager = self.fileManager
+        return await Task.detached(priority: .utility) {
+            guard let files = try? fileManager.contentsOfDirectory(
+                at: cacheDirectory,
+                includingPropertiesForKeys: [.fileSizeKey],
+                options: [.skipsHiddenFiles]
+            ) else { return Int64(0) }
+
+            return files.reduce(Int64(0)) { acc, url in
+                let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+                return acc + Int64(size)
+            }
+        }.value
+    }
+
+    /// Public: returns count of cached avatar files (excluding metadata sidecars).
+    func entryCount() async -> Int {
+        let cacheDirectory = self.cacheDirectory
+        let fileManager = self.fileManager
+        return await Task.detached(priority: .utility) {
+            guard let files = try? fileManager.contentsOfDirectory(
+                at: cacheDirectory,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            ) else { return 0 }
+            return files.filter { $0.pathExtension != "json" }.count
+        }.value
+    }
+
     /// Cleans up the cache if it exceeds the maximum size limit using LRU policy
     private func cleanupIfNeeded() {
-        let currentSize = getCacheSize()
+        let currentSize = cacheSizeSync()
         guard currentSize > Self.maxDiskCacheSize else { return }
 
         AppLogger.info("Cache size (\(currentSize) bytes) exceeds limit (\(Self.maxDiskCacheSize) bytes), starting cleanup")
