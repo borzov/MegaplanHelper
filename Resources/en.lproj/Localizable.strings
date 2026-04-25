@@ -191,6 +191,15 @@
 "settings.account.disconnected" = "Disconnected";
 "settings.account.connectedSyncedAgo" = "Connected · synced %@";
 
+// Settings — Account section
+"settings.account.server" = "Server";
+"settings.account.domainLabel" = "Domain";
+"settings.account.loginLabel" = "Login";
+"settings.account.passwordLabel" = "Password";
+"settings.account.reauthenticate" = "Re-authenticate";
+"settings.account.signOut" = "Sign out";
+"settings.account.signOutConfirm" = "Sign out?";
+
 // Settings — Sync & Refresh
 "settings.sync.refresh.hint" = "How often the app checks for new notifications";
 "settings.sync.refresh.everySec" = "Every %d sec";

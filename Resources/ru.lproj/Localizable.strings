@@ -193,6 +193,15 @@
 "settings.account.disconnected" = "Отключено";
 "settings.account.connectedSyncedAgo" = "Подключено · синхронизировано %@";
 
+// Settings — Account section
+"settings.account.server" = "Сервер";
+"settings.account.domainLabel" = "Домен";
+"settings.account.loginLabel" = "Логин";
+"settings.account.passwordLabel" = "Пароль";
+"settings.account.reauthenticate" = "Войти повторно";
+"settings.account.signOut" = "Выйти";
+"settings.account.signOutConfirm" = "Точно выйти?";
+
 // Settings — Sync & Refresh
 "settings.sync.refresh.hint" = "Как часто приложение проверяет новые уведомления";
 "settings.sync.refresh.everySec" = "%d сек";

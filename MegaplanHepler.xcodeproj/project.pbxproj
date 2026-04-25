@@ -64,6 +64,7 @@
 		C2FF00022F559001001FD92E /* CertificatePinning.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FF00012F559001001FD92E /* CertificatePinning.swift */; };
 		C2FF00042F559001001FD92E /* NotificationDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FF00032F559001001FD92E /* NotificationDTO.swift */; };
 		C2FF00062F559001001FD92E /* URLValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FF00052F559001001FD92E /* URLValidator.swift */; };
+		CC81A6B8FBEA5D47F5BB4B72 /* AccountSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA55AA33EF9474EBB89A98BE /* AccountSettingsView.swift */; };
 		F466E3045C84824C45D7BF1C /* AccountCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CC9D9A77F2E44D71FF5FFD8 /* AccountCard.swift */; };
 		F8B705C905DF866831133302 /* ShortcutRecorderRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79D7EA83467C10A676111BE5 /* ShortcutRecorderRow.swift */; };
 /* End PBXBuildFile section */
@@ -128,6 +129,7 @@
 		C2FF00012F559001001FD92E /* CertificatePinning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificatePinning.swift; sourceTree = "<group>"; };
 		C2FF00032F559001001FD92E /* NotificationDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDTO.swift; sourceTree = "<group>"; };
 		C2FF00052F559001001FD92E /* URLValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLValidator.swift; sourceTree = "<group>"; };
+		CA55AA33EF9474EBB89A98BE /* AccountSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountSettingsView.swift; sourceTree = "<group>"; };
 		CA881FB3C88262497EC1428C /* HotkeyManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -336,6 +338,7 @@
 			isa = PBXGroup;
 			children = (
 				6ED2AE268598A7460CC694C9 /* Components */,
+				CA55AA33EF9474EBB89A98BE /* AccountSettingsView.swift */,
 			);
 			name = Settings;
 			path = Settings;
@@ -490,6 +493,7 @@
 				F8B705C905DF866831133302 /* ShortcutRecorderRow.swift in Sources */,
 				C2A29C67CFCA3D402F7AAD14 /* CacheStatsRow.swift in Sources */,
 				BE06E01365A3E32604C66A2C /* LivePreviewCard.swift in Sources */,
+				CC81A6B8FBEA5D47F5BB4B72 /* AccountSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
