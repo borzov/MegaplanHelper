@@ -3,7 +3,11 @@ import XCTest
 
 final class DateFormattersExtTests: XCTestCase {
 
-    private let now = Calendar.current.date(from: DateComponents(year: 2026, month: 4, day: 25, hour: 12))!
+    private let now: Date = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar.date(from: DateComponents(year: 2026, month: 4, day: 25, hour: 12))!
+    }()
 
     func testRelative_8DaysAgo_ReturnsLastWeek() {
         let date = now.addingTimeInterval(-8 * 86400)
