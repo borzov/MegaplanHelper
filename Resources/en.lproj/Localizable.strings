@@ -247,6 +247,9 @@
 "settings.storage.import" = "Import settings";
 "settings.storage.reset" = "Reset to defaults";
 "settings.storage.resetConfirm" = "Reset all settings to defaults?";
+"settings.storage.importFailedTitle" = "Couldn't import settings";
+"settings.storage.importInvalidJSON" = "The file is corrupted or contains invalid JSON.";
+"settings.storage.importTypeError" = "Wrong value type for \"%@\" — expected %@.";
 
 "settings.shortcuts.section" = "Global shortcuts";
 "settings.shortcuts.hint" = "Work while the app is running. Click Record, then press a combination.";

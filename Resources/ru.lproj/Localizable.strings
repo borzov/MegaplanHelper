@@ -248,6 +248,9 @@
 "settings.storage.import" = "Импортировать настройки";
 "settings.storage.reset" = "Сбросить к умолчаниям";
 "settings.storage.resetConfirm" = "Сбросить все настройки к значениям по умолчанию?";
+"settings.storage.importFailedTitle" = "Не удалось импортировать настройки";
+"settings.storage.importInvalidJSON" = "Файл повреждён или содержит невалидный JSON.";
+"settings.storage.importTypeError" = "Неверный тип значения для «%@» — ожидался %@.";
 "shortcuts.clear" = "Сбросить";
 
 "settings.shortcuts.section" = "Глобальные горячие клавиши";
