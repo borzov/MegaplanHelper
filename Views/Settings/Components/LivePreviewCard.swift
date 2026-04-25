@@ -18,21 +18,26 @@ struct LivePreviewCard: View {
                                          startPoint: .topLeading,
                                          endPoint: .bottomTrailing))
                     .frame(width: 30, height: 30)
-                    .overlay(Text("АП").font(.caption.weight(.semibold)).foregroundStyle(.white))
+                    .overlay(Text(String(localized: "settings.appearance.preview.senderInitials"))
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.white))
+                    .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 1) {
                     HStack {
-                        Text("Анна Петрова").fontWeight(.semibold)
+                        Text(String(localized: "settings.appearance.preview.senderName"))
+                            .fontWeight(.semibold)
                         Spacer()
                         Text("14:32").foregroundStyle(.secondary)
                     }
-                    .font(scaledFont(.caption))
+                    .font(.caption)
 
                     Text(String(localized: "settings.appearance.preview.title2"))
-                        .font(scaledFont(.subheadline))
+                        .font(.subheadline)
+                        .lineLimit(1)
 
                     Text(String(localized: "settings.appearance.preview.body"))
-                        .font(scaledFont(.caption))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
@@ -40,6 +45,7 @@ struct LivePreviewCard: View {
             .padding(10)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator, lineWidth: 0.5))
+            .dynamicTypeSize(typeSize)
         }
         .preferredColorScheme(scheme)
     }
@@ -52,11 +58,11 @@ struct LivePreviewCard: View {
         }
     }
 
-    private func scaledFont(_ base: Font) -> Font {
+    private var typeSize: DynamicTypeSize {
         switch fontSize {
-        case "small":  return base
-        case "large":  return base.weight(.semibold)
-        default:       return base
+        case "small":  return .small
+        case "large":  return .xLarge
+        default:       return .large
         }
     }
 }
