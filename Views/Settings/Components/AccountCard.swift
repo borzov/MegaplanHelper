@@ -16,6 +16,7 @@ struct AccountCard: View {
                 .frame(width: 56, height: 56)
                 .clipShape(Circle())
                 .overlay(Circle().stroke(.separator, lineWidth: 0.5))
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(displayName)
@@ -31,6 +32,7 @@ struct AccountCard: View {
                     Circle()
                         .fill(isConnected ? .green : .secondary)
                         .frame(width: 7, height: 7)
+                        .accessibilityHidden(true)
                     Text(statusText)
                         .font(.caption)
                         .foregroundStyle(isConnected ? .green : .secondary)
