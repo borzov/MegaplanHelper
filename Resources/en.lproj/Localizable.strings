@@ -85,6 +85,9 @@
 "settings.fontSize.small" = "Small";
 "settings.fontSize.medium" = "Medium";
 "settings.fontSize.large" = "Large";
+"settings.appearance.preview.title" = "Preview";
+"settings.appearance.preview.title2" = "Approval request";
+"settings.appearance.preview.body" = "Please review section 3.2 about delivery dates and confirm";
 "settings.behavior" = "Behavior";
 "settings.showOnlyUnread" = "Show only unread";
 "settings.showOnlyUnreadDescription" = "Hide read notifications";

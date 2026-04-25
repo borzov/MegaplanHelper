@@ -41,6 +41,7 @@
 		BB00002C /* Pluralization.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00001C /* Pluralization.swift */; };
 		BB00002D /* MegaplanComment.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00001D /* MegaplanComment.swift */; };
 		BB00002E /* MarkdownCommentExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00001E /* MarkdownCommentExporter.swift */; };
+		BE06E01365A3E32604C66A2C /* LivePreviewCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D07A7812F9E213FC48CA77E /* LivePreviewCard.swift */; };
 		C23AC9BC2F0E7FCA001FD92E /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23AC9B92F0E7FCA001FD92E /* EmptyStateView.swift */; };
 		C23AC9BD2F0E7FCA001FD92E /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23AC9BB2F0E7FCA001FD92E /* ToastView.swift */; };
 		C23AC9BE2F0E7FCA001FD92E /* OfflineBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23AC9BA2F0E7FCA001FD92E /* OfflineBannerView.swift */; };
@@ -69,6 +70,7 @@
 
 /* Begin PBXFileReference section */
 		2AC0443720F33CCB46B17D99 /* SettingsSearchIndex.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSearchIndex.swift; sourceTree = "<group>"; };
+		4D07A7812F9E213FC48CA77E /* LivePreviewCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LivePreviewCard.swift; sourceTree = "<group>"; };
 		78F0B4899120F519F2910A31 /* RefreshIntervalSlider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RefreshIntervalSlider.swift; sourceTree = "<group>"; };
 		79D7EA83467C10A676111BE5 /* ShortcutRecorderRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShortcutRecorderRow.swift; sourceTree = "<group>"; };
 		7CC9D9A77F2E44D71FF5FFD8 /* AccountCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountCard.swift; sourceTree = "<group>"; };
@@ -165,6 +167,7 @@
 				78F0B4899120F519F2910A31 /* RefreshIntervalSlider.swift */,
 				79D7EA83467C10A676111BE5 /* ShortcutRecorderRow.swift */,
 				9A211A7B5E5BBFA23C56CBE7 /* CacheStatsRow.swift */,
+				4D07A7812F9E213FC48CA77E /* LivePreviewCard.swift */,
 			);
 			name = Components;
 			path = Components;
@@ -486,6 +489,7 @@
 				B1F05B6A4F20A3DDC7F9DE4D /* RefreshIntervalSlider.swift in Sources */,
 				F8B705C905DF866831133302 /* ShortcutRecorderRow.swift in Sources */,
 				C2A29C67CFCA3D402F7AAD14 /* CacheStatsRow.swift in Sources */,
+				BE06E01365A3E32604C66A2C /* LivePreviewCard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

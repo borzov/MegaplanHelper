@@ -85,6 +85,9 @@
 "settings.fontSize.small" = "Маленький";
 "settings.fontSize.medium" = "Средний";
 "settings.fontSize.large" = "Большой";
+"settings.appearance.preview.title" = "Предпросмотр";
+"settings.appearance.preview.title2" = "Запрос на согласование";
+"settings.appearance.preview.body" = "Прошу проверить пункт 3.2 о сроках поставки и подтвердить";
 "settings.behavior" = "Поведение";
 "settings.showOnlyUnread" = "Показывать только непрочитанные";
 "settings.showOnlyUnreadDescription" = "Скрывать прочитанные уведомления";
