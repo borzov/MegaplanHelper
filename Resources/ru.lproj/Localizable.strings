@@ -239,3 +239,6 @@
 "settings.storage.statsLine" = "%@ · %d записей";
 "settings.storage.clear" = "Очистить";
 "shortcuts.clear" = "Сбросить";
+
+"settings.shortcuts.section" = "Глобальные горячие клавиши";
+"settings.shortcuts.hint" = "Работают пока приложение запущено. Нажмите «Записать» и затем нужную комбинацию.";

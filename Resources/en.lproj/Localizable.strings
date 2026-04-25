@@ -237,3 +237,6 @@
 "settings.storage.avatarsTitle" = "Avatar cache";
 "settings.storage.statsLine" = "%@ · %d entries";
 "settings.storage.clear" = "Clear";
+
+"settings.shortcuts.section" = "Global shortcuts";
+"settings.shortcuts.hint" = "Work while the app is running. Click Record, then press a combination.";
