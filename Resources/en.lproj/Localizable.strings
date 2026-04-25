@@ -174,3 +174,9 @@
 "settings.section.shortcuts" = "Shortcuts";
 "settings.section.storage" = "Storage & Cache";
 "settings.section.about" = "Version & Help";
+
+// Shortcuts — actions
+"shortcuts.action.openPopover" = "Open notifications popover";
+"shortcuts.action.refreshNow" = "Refresh now";
+"shortcuts.action.focusSearch" = "Focus search";
+"shortcuts.action.markAllRead" = "Mark all read";

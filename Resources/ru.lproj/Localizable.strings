@@ -176,3 +176,9 @@
 "settings.section.shortcuts" = "Горячие клавиши";
 "settings.section.storage" = "Хранилище и кэш";
 "settings.section.about" = "Версия и помощь";
+
+// Shortcuts — actions
+"shortcuts.action.openPopover" = "Открыть окно уведомлений";
+"shortcuts.action.refreshNow" = "Обновить сейчас";
+"shortcuts.action.focusSearch" = "Перейти к поиску";
+"shortcuts.action.markAllRead" = "Прочитать всё";
