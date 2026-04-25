@@ -267,6 +267,13 @@ final class AvatarCacheManager {
         createCacheDirectoryIfNeeded()
     }
 
+    /// Async overload — file removal runs off the main actor. Use from UI code.
+    func clearCache() async {
+        await Task.detached(priority: .utility) { [weak self] in
+            self?.clearCache()
+        }.value
+    }
+
     // MARK: - Cache Size Management
 
     /// Sums file sizes inside `directory`. Returns 0 on I/O error and logs the

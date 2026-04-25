@@ -6,7 +6,7 @@ struct CacheStatsRow: View {
     @State private var count: Int = 0
     @State private var isClearing = false
 
-    private let limit: Int64 = 50 * 1024 * 1024 // 50 MB soft limit
+    private let limit: Int64 = Constants.CacheConfig.maxDiskCacheSize
 
     private static let sizeFormatter: ByteCountFormatter = {
         let f = ByteCountFormatter()
@@ -14,6 +14,9 @@ struct CacheStatsRow: View {
         f.countStyle = .file
         return f
     }()
+
+    /// Minimum spinner display so the Clear action feels acknowledged.
+    private static let perceptualClearDelay: UInt64 = 250_000_000
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -42,7 +45,11 @@ struct CacheStatsRow: View {
                 .disabled(isClearing || count == 0)
             }
             StorageBar(used: sizeBytes, limit: limit)
+                .accessibilityHidden(true)
         }
+        // Refresh runs once on appear; users see live updates after the next time they
+        // re-open Storage settings. A periodic Timer would address concurrent cache
+        // growth, but is deferred — Phase 1 doesn't require it.
         .task { await refresh() }
     }
 
@@ -53,9 +60,8 @@ struct CacheStatsRow: View {
 
     private func clear() async {
         isClearing = true
-        AvatarCacheManager.shared.clearCache()
-        // small delay so the user perceives the action
-        try? await Task.sleep(nanoseconds: 250_000_000)
+        await AvatarCacheManager.shared.clearCache()
+        try? await Task.sleep(nanoseconds: Self.perceptualClearDelay)
         await refresh()
         isClearing = false
     }
