@@ -161,3 +161,18 @@
 "tasks.status.delayed" = "Отложена";
 "tasks.status.template" = "Шаблон";
 "tasks.status.overdue" = "Просрочена";
+
+// Settings — sidebar groups
+"settings.group.general" = "Основное";
+"settings.group.personalization" = "Персонализация";
+"settings.group.advanced" = "Расширенные";
+"settings.group.about" = "О программе";
+
+// Settings — sidebar sections
+"settings.section.account" = "Аккаунт";
+"settings.section.sync" = "Синхронизация";
+"settings.section.appearance" = "Внешний вид";
+"settings.section.notifications" = "Уведомления";
+"settings.section.shortcuts" = "Горячие клавиши";
+"settings.section.storage" = "Хранилище и кэш";
+"settings.section.about" = "Версия и помощь";

@@ -159,3 +159,18 @@
 "tasks.status.delayed" = "Delayed";
 "tasks.status.template" = "Template";
 "tasks.status.overdue" = "Overdue";
+
+// Settings — sidebar groups
+"settings.group.general" = "General";
+"settings.group.personalization" = "Personalization";
+"settings.group.advanced" = "Advanced";
+"settings.group.about" = "About";
+
+// Settings — sidebar sections
+"settings.section.account" = "Account";
+"settings.section.sync" = "Sync & Refresh";
+"settings.section.appearance" = "Appearance";
+"settings.section.notifications" = "Notifications";
+"settings.section.shortcuts" = "Shortcuts";
+"settings.section.storage" = "Storage & Cache";
+"settings.section.about" = "Version & Help";
