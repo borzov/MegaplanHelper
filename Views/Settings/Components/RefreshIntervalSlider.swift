@@ -16,7 +16,7 @@ struct RefreshIntervalSlider: View {
                 Text(readout)
                     .font(.callout.monospacedDigit())
                     .foregroundStyle(.secondary)
-                    .frame(width: 90, alignment: .trailing)
+                    .frame(minWidth: 140, alignment: .trailing)
                     .contentTransition(.numericText())
                     .animation(.snappy, value: seconds)
                     .accessibilityHidden(true)
@@ -29,8 +29,9 @@ struct RefreshIntervalSlider: View {
     }
 
     private var readout: String {
-        let minutes = Int(seconds) / 60
-        let secs = Int(seconds) % 60
+        let total = Int(seconds.rounded())
+        let minutes = total / 60
+        let secs = total % 60
         if minutes == 0 {
             return String(format: String(localized: "settings.sync.refresh.everySec"), secs)
         }
