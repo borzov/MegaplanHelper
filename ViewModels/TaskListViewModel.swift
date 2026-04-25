@@ -15,11 +15,16 @@ final class TaskListViewModel: ObservableObject {
     @Published private(set) var groupedTasks: [TaskGroup] = []
     @Published var searchQuery: String = ""
     @Published var isSearchActive: Bool = false
+    @Published private(set) var isServerSearching: Bool = false
 
     let appState: AppState
     private let userDefaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
     private var visitedTaskIds: Set<String> = []
+    private var serverSearchResults: [MegaplanTask] = []
+    private var lastServerSearchQuery: String = ""
+    private var serverSearchTask: Task<Void, Never>?
+    private static let minSearchLength = 2
 
     init(appState: AppState, userDefaults: UserDefaults = .standard) {
         self.appState = appState
@@ -45,10 +50,20 @@ final class TaskListViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        // Local filter is instant — every keystroke recomputes against the cache.
         $searchQuery
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.recomputeGroups()
+            }
+            .store(in: &cancellables)
+
+        // Server search runs in parallel with a debounce so we don't fire a request
+        // for every keystroke; latest result wins thanks to per-query Task cancellation.
+        $searchQuery
+            .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
+            .sink { [weak self] query in
+                self?.scheduleServerSearch(for: query)
             }
             .store(in: &cancellables)
 
@@ -71,11 +86,19 @@ final class TaskListViewModel: ObservableObject {
         isSearchActive.toggle()
         if !isSearchActive {
             searchQuery = ""
+            cancelServerSearch()
         }
     }
 
     func clearSearch() {
         searchQuery = ""
+        cancelServerSearch()
+    }
+
+    /// Triggered by Shift+Cmd-click on a task card. Pulls comments and copies a
+    /// markdown export. Best-effort — failures are logged.
+    func copyCommentsAsMarkdown(for task: MegaplanTask) async {
+        _ = await appState.copyTaskCommentsAsMarkdown(for: task)
     }
 
     func isVisited(_ task: MegaplanTask) -> Bool {
@@ -88,15 +111,66 @@ final class TaskListViewModel: ObservableObject {
         objectWillChange.send()
     }
 
+    // MARK: - Server search
+
+    private func scheduleServerSearch(for rawQuery: String) {
+        let trimmed = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard isSearchActive, trimmed.count >= Self.minSearchLength else {
+            cancelServerSearch()
+            return
+        }
+        guard trimmed != lastServerSearchQuery else { return }
+
+        serverSearchTask?.cancel()
+        lastServerSearchQuery = trimmed
+        isServerSearching = true
+
+        let task = Task { [weak self, trimmed] in
+            guard let self else { return }
+            let results = await self.appState.searchTasks(query: trimmed)
+            if Task.isCancelled { return }
+            await MainActor.run {
+                // Drop late results from stale queries.
+                guard self.lastServerSearchQuery == trimmed, self.isSearchActive else { return }
+                self.serverSearchResults = results
+                self.isServerSearching = false
+                self.recomputeGroups()
+            }
+        }
+        serverSearchTask = task
+    }
+
+    private func cancelServerSearch() {
+        serverSearchTask?.cancel()
+        serverSearchTask = nil
+        if !serverSearchResults.isEmpty {
+            serverSearchResults = []
+        }
+        lastServerSearchQuery = ""
+        isServerSearching = false
+    }
+
+    private func mergeForSearch(query: String) -> [MegaplanTask] {
+        let lowered = query.lowercased()
+        let cached = tasks.filter { task in
+            task.name.lowercased().contains(lowered)
+                || (task.responsible?.name.lowercased().contains(lowered) ?? false)
+                || (task.owner?.name.lowercased().contains(lowered) ?? false)
+        }
+        // Append server-only matches (de-dup by id) so cache hits stay on top.
+        var seen = Set(cached.map(\.id))
+        var merged = cached
+        for task in serverSearchResults where !seen.contains(task.id) {
+            merged.append(task)
+            seen.insert(task.id)
+        }
+        return merged
+    }
+
     private func recomputeGroups() {
         let filtered: [MegaplanTask]
-        if isSearchActive, searchQuery.count >= 2 {
-            let query = searchQuery.lowercased()
-            filtered = tasks.filter { task in
-                task.name.lowercased().contains(query)
-                    || (task.responsible?.name.lowercased().contains(query) ?? false)
-                    || (task.owner?.name.lowercased().contains(query) ?? false)
-            }
+        if isSearchActive, searchQuery.count >= Self.minSearchLength {
+            filtered = mergeForSearch(query: searchQuery)
         } else {
             filtered = tasks
         }
@@ -108,7 +182,7 @@ final class TaskListViewModel: ObservableObject {
         var buckets: [(DateFormatters.Bucket, [MegaplanTask])] = [
             (.today, []), (.yesterday, []), (.thisWeek, []), (.earlier, [])
         ]
-        var indexByBucket: [DateFormatters.Bucket: Int] = [.today: 0, .yesterday: 1, .thisWeek: 2, .earlier: 3]
+        let indexByBucket: [DateFormatters.Bucket: Int] = [.today: 0, .yesterday: 1, .thisWeek: 2, .earlier: 3]
 
         for task in filtered {
             let bucket = DateFormatters.bucket(for: task.timestamp(for: sortKey), now: now)

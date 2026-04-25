@@ -18,6 +18,7 @@ struct RootPopoverView: View {
                     selectedTab: $selectedTab,
                     firstName: appState.firstName,
                     unreadCount: appState.unreadCount,
+                    tasksUnreadCount: appState.tasksUnreadCount,
                     isLoading: appState.isLoading || appState.isTasksLoading,
                     onRefresh: { appState.refreshNow() }
                 )
@@ -45,12 +46,41 @@ struct RootPopoverView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .overlay(alignment: .bottom) {
+            transientToast
+                .padding(.bottom, 12)
+        }
         .alert(item: $appState.alertItem) { alert in
             Alert(
                 title: Text("error.title"),
                 message: Text(alert.message),
                 dismissButton: .default(Text("general.ok"))
             )
+        }
+    }
+
+    @ViewBuilder
+    private var transientToast: some View {
+        if let message = appState.transientToast {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white)
+                Text(message)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(Color.black.opacity(0.82))
+                    .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 4)
+            )
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+            .animation(.spring(response: 0.32, dampingFraction: 0.85), value: appState.transientToast)
         }
     }
 

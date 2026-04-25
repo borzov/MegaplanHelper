@@ -54,6 +54,9 @@
 		BB000029 /* DateFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000019 /* DateFormatters.swift */; };
 		BB00002A /* UserInfoResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00001A /* UserInfoResolver.swift */; };
 		BB00002B /* EntityCardRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00001B /* EntityCardRow.swift */; };
+		BB00002C /* Pluralization.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00001C /* Pluralization.swift */; };
+		BB00002D /* MegaplanComment.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00001D /* MegaplanComment.swift */; };
+		BB00002E /* MarkdownCommentExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00001E /* MarkdownCommentExporter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -105,6 +108,9 @@
 		BB000019 /* DateFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatters.swift; sourceTree = "<group>"; };
 		BB00001A /* UserInfoResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInfoResolver.swift; sourceTree = "<group>"; };
 		BB00001B /* EntityCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityCardRow.swift; sourceTree = "<group>"; };
+		BB00001C /* Pluralization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pluralization.swift; sourceTree = "<group>"; };
+		BB00001D /* MegaplanComment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanComment.swift; sourceTree = "<group>"; };
+		BB00001E /* MarkdownCommentExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownCommentExporter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,6 +161,7 @@
 				AA000012 /* MegaplanCredentials.swift */,
 				AA000013 /* MegaplanNotification.swift */,
 				BB000010 /* MegaplanTask.swift */,
+				BB00001D /* MegaplanComment.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -192,6 +199,8 @@
 				AA000017 /* NetworkError.swift */,
 				AA00002A /* StringExtensions.swift */,
 				BB000019 /* DateFormatters.swift */,
+				BB00001C /* Pluralization.swift */,
+				BB00001E /* MarkdownCommentExporter.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -397,6 +406,9 @@
 				BB000029 /* DateFormatters.swift in Sources */,
 				BB00002A /* UserInfoResolver.swift in Sources */,
 				BB00002B /* EntityCardRow.swift in Sources */,
+				BB00002C /* Pluralization.swift in Sources */,
+				BB00002D /* MegaplanComment.swift in Sources */,
+				BB00002E /* MarkdownCommentExporter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

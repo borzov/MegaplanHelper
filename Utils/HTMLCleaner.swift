@@ -47,6 +47,12 @@ struct HTMLCleaner {
         return regex.stringByReplacingMatches(in: string, options: [], range: range, withTemplate: replacement)
     }
 
+    /// Public entry point so other utilities (e.g. `MarkdownCommentExporter`)
+    /// can decode entities without re-running the full strip pipeline.
+    static func cleanEntities(_ string: String) -> String {
+        decodeHTMLEntities(string)
+    }
+
     /// Decode HTML entities efficiently
     private static func decodeHTMLEntities(_ string: String) -> String {
         // Quick check if any entities exist

@@ -49,11 +49,6 @@
 "settings.notAuthenticated" = "Not signed in";
 "settings.version" = "Version %@ (Build %@)";
 
-"notifications.comments" = "%d %@";
-"notifications.comment.one" = "comment";
-"notifications.comment.few" = "comments";
-"notifications.comment.many" = "comments";
-
 "error.title" = "Error";
 "general.ok" = "OK";
 "general.cancel" = "Cancel";
@@ -117,8 +112,21 @@
 
 // Tasks tab
 "tasks.untitled" = "Untitled";
-"tasks.responsible.none" = "Unassigned";
+"tasks.creator.none" = "Unknown creator";
 "tasks.row.created" = "created %@";
+"tasks.row.actorAndCreated" = "%@ · created %@";
+
+"comments.one" = "comment";
+"comments.few" = "comments";
+"comments.many" = "comments";
+"comments.format" = "%d %@";
+"tasks.search.cache" = "Local results";
+"tasks.search.server" = "Server results";
+
+"tasks.markdown.copied" = "Task comments copied";
+"tasks.markdown.copied.format" = "Copied · %d %@";
+"tasks.markdown.empty" = "No comments to copy";
+"tasks.markdown.failed" = "Failed to fetch comments";
 "tasks.empty.title" = "No tasks";
 "tasks.empty.subtitle" = "Tasks you participate in will appear here.";
 "tasks.search.placeholder" = "Search tasks...";

@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 import ServiceManagement
@@ -22,6 +23,9 @@ final class AppState: ObservableObject {
     @Published private(set) var isSessionExpired: Bool = false
     @Published private(set) var lastSyncTime: Date?
     @Published var alertItem: AlertItem?
+    /// Transient banner message shown briefly in the popover (e.g. "comments
+    /// copied"). Auto-clears on its own; nil hides the banner.
+    @Published var transientToast: String?
     @Published private(set) var certificatePinningFailed: Bool = false
     @Published private(set) var domain: String
     @Published private(set) var username: String
@@ -35,6 +39,7 @@ final class AppState: ObservableObject {
     @Published private(set) var taskSortKey: TaskSortKey = .activity
     @Published private(set) var taskStatusFilter: TaskStatusFilter = .active
     @Published private(set) var lastTasksSyncTime: Date?
+    @Published private(set) var tasksUnreadCount: Int = 0
 
     let api: AuthenticationService & NotificationService & TaskService & EmployeeService
     private var currentUserId: String?
@@ -226,6 +231,7 @@ final class AppState: ObservableObject {
         lastSuccessfulNotifications = []
         lastSuccessfulUnreadCount = 0
         tasks = []
+        tasksUnreadCount = 0
         currentUserId = nil
         lastTasksSyncTime = nil
         stopRefreshTimer()
@@ -298,6 +304,83 @@ final class AppState: ObservableObject {
         taskSortKey = key
         userDefaults.set(key.rawValue, forKey: Constants.UserDefaultsKeys.taskSortKey)
         refreshNow()
+    }
+
+    /// Pulls all comments for `task` and copies a markdown export to the
+    /// clipboard. Returns the comment count on success, `nil` on transport
+    /// failure, and `0` when the task has no comments at all. Shows a
+    /// transient banner so the user gets visible feedback either way.
+    @discardableResult
+    func copyTaskCommentsAsMarkdown(for task: MegaplanTask) async -> Int? {
+        guard let token = accessToken else {
+            showTransientToast(String(localized: "tasks.markdown.failed"))
+            return nil
+        }
+        do {
+            let bundle = try await api.fetchTaskComments(token: token, taskId: task.id)
+            guard !bundle.comments.isEmpty else {
+                showTransientToast(String(localized: "tasks.markdown.empty"))
+                return 0
+            }
+            let markdown = MarkdownCommentExporter.export(
+                bundle: bundle,
+                taskURL: task.webURL(host: domain)
+            )
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(markdown, forType: .string)
+            AppLogger.info("Copied markdown for task \(task.id): \(bundle.comments.count) comments, \(markdown.count) chars")
+            let summary = String(format: String(localized: "tasks.markdown.copied.format"),
+                                 bundle.comments.count,
+                                 Pluralization.form(count: bundle.comments.count,
+                                                    one: String(localized: "comments.one"),
+                                                    few: String(localized: "comments.few"),
+                                                    many: String(localized: "comments.many")))
+            showTransientToast(summary)
+            return bundle.comments.count
+        } catch {
+            AppLogger.warning("copyTaskCommentsAsMarkdown failed for \(task.id): \(error.localizedDescription)")
+            showTransientToast(String(localized: "tasks.markdown.failed"))
+            return nil
+        }
+    }
+
+    private var transientToastResetTask: Task<Void, Never>?
+
+    func showTransientToast(_ message: String, duration: TimeInterval = 2.4) {
+        transientToast = message
+        transientToastResetTask?.cancel()
+        transientToastResetTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            if Task.isCancelled { return }
+            await MainActor.run {
+                guard let self else { return }
+                if self.transientToast == message {
+                    self.transientToast = nil
+                }
+            }
+        }
+    }
+
+    /// Server-side task search. Returns an empty array on missing session or any
+    /// transport error — callers fall back to whatever is in the local cache.
+    func searchTasks(query: String, limit: Int = 30) async -> [MegaplanTask] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let token = accessToken,
+              let userId = currentUserId,
+              !userId.isEmpty,
+              !trimmed.isEmpty else {
+            return []
+        }
+        do {
+            return try await api.searchTasks(token: token,
+                                             currentUserId: userId,
+                                             query: trimmed,
+                                             limit: limit)
+        } catch {
+            AppLogger.warning("searchTasks failed: \(error.localizedDescription)")
+            return []
+        }
     }
 
     func updateTaskStatusFilter(_ filter: TaskStatusFilter) {
@@ -517,8 +600,9 @@ final class AppState: ObservableObject {
                 withAnimation(.easeInOut) {
                     tasks = fetchedTasks
                 }
+                tasksUnreadCount = fetchedTasks.reduce(0) { $0 + $1.unreadCommentsCount }
                 lastTasksSyncTime = Date()
-                AppLogger.debug("Refreshed: \(fetchedTasks.count) tasks")
+                AppLogger.debug("Refreshed: \(fetchedTasks.count) tasks, \(tasksUnreadCount) unread comments")
             }
         } catch NetworkError.offline {
             // Переход в оффлайн-режим без показа ошибки

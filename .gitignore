@@ -49,3 +49,6 @@ CLAUDE.md
 # Environment / credentials
 .env
 .env.local
+
+# Test
+TestPython/

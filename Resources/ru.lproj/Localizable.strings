@@ -49,11 +49,6 @@
 "settings.notAuthenticated" = "Не авторизовано";
 "settings.version" = "Версия %@ (Build %@)";
 
-"notifications.comments" = "%d %@";
-"notifications.comment.one" = "комментарий";
-"notifications.comment.few" = "комментария";
-"notifications.comment.many" = "комментариев";
-
 "error.title" = "Ошибка";
 "general.ok" = "OK";
 "general.cancel" = "Отмена";
@@ -117,8 +112,23 @@
 
 // Tasks tab
 "tasks.untitled" = "Без названия";
-"tasks.responsible.none" = "Без ответственного";
+"tasks.creator.none" = "Создатель неизвестен";
 "tasks.row.created" = "создано %@";
+"tasks.row.actorAndCreated" = "%@ · создано %@";
+
+// Shared comments noun (russian plural rule)
+"comments.one" = "комментарий";
+"comments.few" = "комментария";
+"comments.many" = "комментариев";
+"comments.format" = "%d %@";
+"tasks.search.cache" = "Найдено локально";
+"tasks.search.server" = "Найдено на сервере";
+
+// Markdown export status
+"tasks.markdown.copied" = "Комментарии задачи скопированы";
+"tasks.markdown.copied.format" = "Скопировано · %d %@";
+"tasks.markdown.empty" = "Нет комментариев для копирования";
+"tasks.markdown.failed" = "Не удалось получить комментарии";
 "tasks.empty.title" = "Нет задач";
 "tasks.empty.subtitle" = "Здесь появятся задачи, в которых вы участвуете.";
 "tasks.search.placeholder" = "Поиск задач...";

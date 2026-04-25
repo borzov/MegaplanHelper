@@ -493,7 +493,15 @@ extension MegaplanAPI: TaskService, EmployeeService {
                 // base TaskFilter request doesn't ask for nested avatar fields).
                 Self.seedUserInfoCacheFromTasks(data: data)
 
-                return envelope.items
+                // Megaplan v3 returns `responsible` / `owner` as a `{id, contentType}`
+                // ContentLink for most tasks (only a handful expose the full Employee
+                // object inline). Backfill missing names by hitting `/api/v3/employee/{id}`
+                // in parallel before publishing — keeps the UI free of placeholder
+                // "Создатель неизвестен" rows that never get resolved by the lazy task-row
+                // path.
+                let enriched = await self.enrichParticipants(in: envelope.items, token: token)
+
+                return enriched
             } catch {
                 AppLogger.error("Failed to decode tasks: \(error.localizedDescription)")
                 throw NetworkError.decodingFailed
@@ -501,6 +509,271 @@ extension MegaplanAPI: TaskService, EmployeeService {
         } catch {
             throw NetworkError(error)
         }
+    }
+
+    /// Resolves the names + avatars of every `responsible` / `owner` participant
+    /// whose `name` is missing in the list response. Hits each unique employee id
+    /// at most once via `withTaskGroup`, also seeding `UserInfoCache` so the
+    /// in-row resolver has cache hits later.
+    private func enrichParticipants(in tasks: [MegaplanTask], token: String) async -> [MegaplanTask] {
+        var idsNeeded = Set<String>()
+        for task in tasks {
+            if let p = task.responsible, !p.id.isEmpty, p.name.isEmpty { idsNeeded.insert(p.id) }
+            if let p = task.owner, !p.id.isEmpty, p.name.isEmpty { idsNeeded.insert(p.id) }
+        }
+        guard !idsNeeded.isEmpty else { return tasks }
+
+        let resolved: [String: (name: String?, avatarURL: URL?)] = await withTaskGroup(
+            of: (String, String?, URL?).self
+        ) { group in
+            for id in idsNeeded {
+                group.addTask { [self] in
+                    do {
+                        let result = try await self.fetchEmployee(id: id, token: token)
+                        return (id, result.name, result.avatarURL)
+                    } catch {
+                        AppLogger.warning("enrichParticipants fetchEmployee(\(id)) failed: \(error.localizedDescription)")
+                        return (id, nil, nil)
+                    }
+                }
+            }
+            var out: [String: (String?, URL?)] = [:]
+            for await (id, name, avatar) in group where (name != nil) || (avatar != nil) {
+                out[id] = (name, avatar)
+            }
+            return out
+        }
+
+        for (id, value) in resolved {
+            await UserInfoCache.shared.cacheUserInfo(userId: id, name: value.name, avatarURL: value.avatarURL)
+        }
+        AppLogger.debug("enrichParticipants resolved \(resolved.count)/\(idsNeeded.count) employees")
+
+        func merge(_ p: TaskParticipant?) -> TaskParticipant? {
+            guard let p else { return nil }
+            if !p.name.isEmpty { return p }
+            guard let extra = resolved[p.id] else { return p }
+            return TaskParticipant(
+                id: p.id,
+                contentType: p.contentType,
+                name: extra.name ?? p.name,
+                avatarURL: extra.avatarURL ?? p.avatarURL
+            )
+        }
+
+        return tasks.map { task in
+            MegaplanTask(
+                id: task.id,
+                name: task.name,
+                status: task.status,
+                responsible: merge(task.responsible),
+                owner: merge(task.owner),
+                auditors: task.auditors,
+                executors: task.executors,
+                timeCreated: task.timeCreated,
+                activity: task.activity,
+                lastCommentTimeCreated: task.lastCommentTimeCreated,
+                unreadCommentsCount: task.unreadCommentsCount,
+                humanNumber: task.humanNumber
+            )
+        }
+    }
+
+    func searchTasks(token: String,
+                     currentUserId: String,
+                     query: String,
+                     limit: Int = 30) async throws -> [MegaplanTask] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !currentUserId.isEmpty else {
+            throw NetworkError.missingToken
+        }
+
+        let filterTree = MegaplanTaskFilterBuilder.buildMyTasksFilter(currentUserId: currentUserId)
+        var queryDict: [String: Any] = [
+            "filter": filterTree,
+            "limit": limit,
+            "fields": [
+                "responsible",
+                "owner",
+                "auditors",
+                "executors",
+                "activity",
+                "timeCreated",
+                "lastCommentTimeCreated",
+                "unreadCommentsCount",
+                "humanNumber",
+                "status",
+                "name"
+            ],
+            "q": trimmed
+        ]
+        // No sortBy on search — let the server return relevance-ranked matches.
+        _ = queryDict.removeValue(forKey: "sortBy")
+
+        let path: String
+        do {
+            path = try Self.buildJSONQueryPath("/api/v3/task", query: queryDict)
+        } catch {
+            AppLogger.error("Failed to build task search query JSON: \(error.localizedDescription)")
+            throw NetworkError.decodingFailed
+        }
+
+        let request = try makeRequest(path: path, method: "GET", body: nil, token: token)
+        do {
+            let data = try await perform(request)
+            do {
+                let envelope = try decoder.decode(TaskListEnvelope.self, from: data)
+                Self.seedUserInfoCacheFromTasks(data: data)
+                AppLogger.debug("Server search '\(trimmed)' returned \(envelope.items.count) tasks")
+                let enriched = await self.enrichParticipants(in: envelope.items, token: token)
+                return enriched
+            } catch {
+                AppLogger.error("Failed to decode search response: \(error.localizedDescription)")
+                throw NetworkError.decodingFailed
+            }
+        } catch {
+            throw NetworkError(error)
+        }
+    }
+
+    func fetchTaskComments(token: String, taskId: String) async throws -> TaskCommentsBundle {
+        guard !taskId.isEmpty else { throw NetworkError.missingToken }
+
+        // Step 1 — fetch the task with the inline comments array. We ask for
+        // the fields we know come back populated; the per-comment fan-out below
+        // backfills `owner` / `timeCreated` / `attaches` which the inline form
+        // omits.
+        let taskQuery: [String: Any] = [
+            "fields": ["id", "name", "humanNumber", "comments"]
+        ]
+        let taskPath: String
+        do {
+            taskPath = try Self.buildJSONQueryPath("/api/v3/task/\(taskId)", query: taskQuery)
+        } catch {
+            throw NetworkError.decodingFailed
+        }
+        let taskRequest = try makeRequest(path: taskPath, method: "GET", body: nil, token: token)
+        let taskData: Data
+        do {
+            taskData = try await perform(taskRequest)
+        } catch {
+            throw NetworkError(error)
+        }
+
+        guard let json = try? JSONSerialization.jsonObject(with: taskData) as? [String: Any],
+              let dataDict = json["data"] as? [String: Any] else {
+            throw NetworkError.decodingFailed
+        }
+        let taskName = (dataDict["name"] as? String) ?? ""
+        let humanNumber = Self.intValue(dataDict["humanNumber"])
+        let commentArray = (dataDict["comments"] as? [[String: Any]]) ?? []
+        let commentIds = commentArray.compactMap { $0["id"] as? String }
+
+        // Step 2 — fan out one /comment/{id} request per id so we get owner,
+        // timeCreated, attachments, etc. Megaplan inline `comments` returns
+        // only id + isUnread + (sometimes) content.
+        let comments = await withTaskGroup(of: (Int, MegaplanComment?).self) { group -> [MegaplanComment] in
+            for (idx, commentId) in commentIds.enumerated() {
+                group.addTask { [self] in
+                    do {
+                        let comment = try await self.fetchSingleComment(id: commentId, token: token)
+                        return (idx, comment)
+                    } catch {
+                        AppLogger.warning("fetchSingleComment(\(commentId)) failed: \(error.localizedDescription)")
+                        return (idx, nil)
+                    }
+                }
+            }
+            var ordered = Array<MegaplanComment?>(repeating: nil, count: commentIds.count)
+            for await (idx, comment) in group {
+                ordered[idx] = comment
+            }
+            return ordered.compactMap { $0 }
+        }
+
+        // Stable sort: oldest first if we have timestamps, otherwise keep server order.
+        let sorted = comments.sorted { lhs, rhs in
+            switch (lhs.timeCreated, rhs.timeCreated) {
+            case let (l?, r?): return l < r
+            case (nil, _?): return true
+            case (_?, nil): return false
+            default: return false
+            }
+        }
+        return TaskCommentsBundle(taskName: taskName, humanNumber: humanNumber, comments: sorted)
+    }
+
+    private func fetchSingleComment(id: String, token: String) async throws -> MegaplanComment {
+        let path = try Self.buildJSONQueryPath("/api/v3/comment/\(id)", query: ["fields": [
+            "id", "content", "owner", "timeCreated", "attaches", "forwardFrom"
+        ]])
+        let request = try makeRequest(path: path, method: "GET", body: nil, token: token)
+        let data = try await perform(request)
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let dict = json["data"] as? [String: Any] else {
+            throw NetworkError.decodingFailed
+        }
+        return Self.parseComment(dict)
+    }
+
+    private static func parseComment(_ dict: [String: Any]) -> MegaplanComment {
+        let id = (dict["id"] as? String) ?? UUID().uuidString
+        let content = (dict["content"] as? String) ?? ""
+        let timeCreated = parseDateTime(dict["timeCreated"])
+
+        let ownerDict = dict["owner"] as? [String: Any]
+        let authorName = ownerDict.flatMap { NotificationParser.extractName(from: $0) }
+        let authorId = ownerDict?["id"] as? String
+
+        let attachments = ((dict["attaches"] as? [[String: Any]]) ?? []).map { entry -> MegaplanComment.Attachment in
+            let name = (entry["name"] as? String) ?? "—"
+            let url = parseAttachmentURL(entry)
+            return .init(name: name, url: url)
+        }
+
+        let forwarded: MegaplanComment.ForwardedComment? = (dict["forwardFrom"] as? [String: Any]).map { fwd in
+            let fwdContent = (fwd["content"] as? String) ?? ""
+            let fwdTime = parseDateTime(fwd["timeCreated"])
+            let fwdOwner = fwd["owner"] as? [String: Any]
+            let fwdAuthor = fwdOwner.flatMap { NotificationParser.extractName(from: $0) }
+            return .init(authorName: fwdAuthor, timeCreated: fwdTime, contentHTML: fwdContent)
+        }
+
+        return MegaplanComment(id: id,
+                               authorName: authorName,
+                               authorId: authorId,
+                               timeCreated: timeCreated,
+                               contentHTML: content,
+                               attachments: attachments,
+                               forwardedFrom: forwarded)
+    }
+
+    private static func parseDateTime(_ raw: Any?) -> Date? {
+        guard let dict = raw as? [String: Any], let iso = dict["value"] as? String else {
+            return nil
+        }
+        return DateParser.parse(iso)
+    }
+
+    private static func parseAttachmentURL(_ entry: [String: Any]) -> URL? {
+        if let path = entry["path"] as? String, !path.isEmpty {
+            // Path is server-relative; the markdown export keeps it as-is so
+            // the receiver can reconstruct the full URL via the configured host.
+            if path.hasPrefix("http://") || path.hasPrefix("https://") {
+                return URL(string: path)
+            }
+            // Leave relative paths un-prefixed; URL(string:) returns nil for
+            // server-relative paths without a base, which the exporter handles.
+            return URL(string: path)
+        }
+        return nil
+    }
+
+    private static func intValue(_ raw: Any?) -> Int? {
+        if let i = raw as? Int { return i }
+        if let s = raw as? String, let i = Int(s) { return i }
+        if let d = raw as? Double { return Int(d) }
+        return nil
     }
 
     func fetchEmployee(id: String, token: String) async throws -> (name: String?, avatarURL: URL?) {

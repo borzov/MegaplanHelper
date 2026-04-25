@@ -220,13 +220,9 @@ private struct NotificationRow: View {
             ? (notification.unreadCommentsCount > 0 ? notification.unreadCommentsCount : notification.size)
             : 0
         guard commentsCount > 0 else { return nil }
-        let plural = commentsCount.pluralized((
-            one: String(localized: "notifications.comment.one"),
-            few: String(localized: "notifications.comment.few"),
-            many: String(localized: "notifications.comment.many")
-        ))
-        let text = String(format: String(localized: "notifications.comments"), commentsCount, plural)
-        return .init(systemName: "bubble.right.fill", text: text, color: categoryColor)
+        return .init(systemName: "bubble.right.fill",
+                     text: Pluralization.commentsLabel(commentsCount),
+                     color: categoryColor)
     }
 
     private var avatarSource: EntityCardAvatar {

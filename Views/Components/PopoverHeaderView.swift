@@ -18,6 +18,7 @@ struct PopoverHeaderView: View {
     @Binding var selectedTab: AppTab
     let firstName: String
     let unreadCount: Int
+    let tasksUnreadCount: Int
     let isLoading: Bool
     let onRefresh: () -> Void
 
@@ -56,7 +57,7 @@ struct PopoverHeaderView: View {
 
             Picker("", selection: $selectedTab) {
                 Text(notificationsLabel).tag(AppTab.notifications)
-                Text(AppTab.tasks.displayName).tag(AppTab.tasks)
+                Text(tasksLabel).tag(AppTab.tasks)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -69,6 +70,13 @@ struct PopoverHeaderView: View {
         }
         return AppTab.notifications.displayName
     }
+
+    private var tasksLabel: String {
+        if tasksUnreadCount > 0 {
+            return "\(AppTab.tasks.displayName) · \(tasksUnreadCount)"
+        }
+        return AppTab.tasks.displayName
+    }
 }
 
 #if DEBUG
@@ -79,6 +87,7 @@ struct PopoverHeaderView_Previews: PreviewProvider {
             selectedTab: .constant(.notifications),
             firstName: "Максим",
             unreadCount: 12,
+            tasksUnreadCount: 7,
             isLoading: false,
             onRefresh: {}
         )

@@ -170,7 +170,10 @@ struct TaskListView: View {
                                 task: task,
                                 sortKey: appState.taskSortKey,
                                 isVisited: viewModel.isVisited(task),
-                                onOpen: { openTask(task) }
+                                onOpen: { openTask(task) },
+                                onCopyMarkdown: {
+                                    Task { await viewModel.copyCommentsAsMarkdown(for: task) }
+                                }
                             )
                             .transition(.asymmetric(
                                 insertion: .opacity.combined(with: .move(edge: .top)),

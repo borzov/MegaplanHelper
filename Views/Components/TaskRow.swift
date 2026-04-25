@@ -6,37 +6,68 @@ struct TaskRow: View {
     let sortKey: TaskSortKey
     let isVisited: Bool
     let onOpen: () -> Void
+    let onCopyMarkdown: () -> Void
 
-    @State private var resolvedName: String?
-    @State private var resolvedAvatarURL: URL?
+    @State private var resolvedCreatorName: String?
+    @State private var resolvedCreatorAvatarURL: URL?
+    @State private var resolvedResponsibleName: String?
     @State private var avatarImage: NSImage?
 
-    private var primaryParticipant: TaskParticipant? {
-        task.responsible ?? task.owner
+    // MARK: - Participants
+
+    /// "Creator" of the task — Megaplan calls this `owner`. Drives the avatar
+    /// and name in the card header.
+    private var creator: TaskParticipant? {
+        guard let p = task.owner, !p.id.isEmpty else { return nil }
+        return p
     }
 
-    private var participantId: String? {
-        let id = primaryParticipant?.id
-        return (id?.isEmpty == false) ? id : nil
+    /// "Assignee" — Megaplan `responsible`. Surfaced in the card footer next to
+    /// the creation date so it's visually distinct from the creator above.
+    private var responsible: TaskParticipant? {
+        guard let p = task.responsible, !p.id.isEmpty else { return nil }
+        return p
     }
 
-    private var displayName: String? {
-        if let name = primaryParticipant?.name, !name.isEmpty { return name }
-        if let resolvedName, !resolvedName.isEmpty { return resolvedName }
-        return nil
+    /// Header avatar prefers creator (`owner`); falls back to responsible if
+    /// the task has no creator (rare but possible for system-generated tasks).
+    private var headerParticipant: TaskParticipant? {
+        creator ?? responsible
     }
 
-    private var isActorPlaceholder: Bool { displayName == nil }
-
-    private var actorName: String {
-        displayName ?? String(localized: "tasks.responsible.none")
+    private var headerParticipantId: String? {
+        headerParticipant?.id
     }
+
+    // MARK: - Display strings
+
+    private var creatorDisplayName: String? {
+        if let name = creator?.name, !name.isEmpty { return name }
+        return resolvedCreatorName
+    }
+
+    private var responsibleDisplayName: String? {
+        if let name = responsible?.name, !name.isEmpty { return name }
+        return resolvedResponsibleName
+    }
+
+    private var headerDisplayName: String? {
+        creator != nil ? creatorDisplayName : responsibleDisplayName
+    }
+
+    private var isHeaderActorPlaceholder: Bool { headerDisplayName == nil }
+
+    private var headerActorName: String {
+        headerDisplayName ?? String(localized: "tasks.creator.none")
+    }
+
+    // MARK: - Visual props
 
     private var avatarSource: EntityCardAvatar {
         if let image = avatarImage {
             return .image(image)
         }
-        if !isActorPlaceholder, let participant = primaryParticipant, !participant.initials.isEmpty {
+        if !isHeaderActorPlaceholder, let participant = headerParticipant, !participant.initials.isEmpty {
             return .initials(participant.initials)
         }
         return .icon("person.fill")
@@ -51,7 +82,7 @@ struct TaskRow: View {
     private var badge: EntityCardBadge? {
         guard task.unreadCommentsCount > 0 else { return nil }
         return .init(systemName: "bubble.right.fill",
-                     text: String(task.unreadCommentsCount),
+                     text: Pluralization.commentsLabel(task.unreadCommentsCount),
                      color: .blue)
     }
 
@@ -59,15 +90,25 @@ struct TaskRow: View {
         DateFormatters.relative(task.timestamp(for: sortKey))
     }
 
+    /// Footer:
+    /// - if responsible is known and different from the creator — "ИФ · создано 23 апр"
+    /// - if responsible is the same person as the creator — just "создано 23 апр"
+    ///   (no duplication since the name is already in the header)
+    /// - if responsible is unknown — also just "создано 23 апр"
     private var subBody: String {
-        String(format: String(localized: "tasks.row.created"), DateFormatters.absoluteShort(task.timeCreated))
+        let createdAt = DateFormatters.absoluteShort(task.timeCreated)
+        let responsibleSameAsCreator = (responsible?.id != nil) && (responsible?.id == creator?.id)
+        if let name = responsibleDisplayName, !name.isEmpty, !responsibleSameAsCreator {
+            return String(format: String(localized: "tasks.row.actorAndCreated"), name, createdAt)
+        }
+        return String(format: String(localized: "tasks.row.created"), createdAt)
     }
 
     var body: some View {
         EntityCardRow(
             avatar: avatarSource,
-            actorName: actorName,
-            isActorPlaceholder: isActorPlaceholder,
+            actorName: headerActorName,
+            isActorPlaceholder: isHeaderActorPlaceholder,
             categoryIcon: nil,
             time: timeText,
             title: task.name.isEmpty ? String(localized: "tasks.untitled") : task.name,
@@ -76,33 +117,46 @@ struct TaskRow: View {
             badge: badge,
             tint: tint,
             isVisited: isVisited,
-            onTap: onOpen
+            onTap: handleTap
         )
-        .task(id: participantId ?? "") {
-            await resolveActor()
+        .task(id: headerParticipantId ?? "") {
+            await resolveHeader()
         }
-        .task(id: resolvedAvatarURL) {
+        .task(id: responsible?.id ?? "") {
+            await resolveResponsibleName()
+        }
+        .task(id: resolvedCreatorAvatarURL) {
             await loadAvatar()
         }
     }
 
-    // MARK: - Actor resolution
+    // MARK: - Tap routing
 
-    private func resolveActor() async {
-        // Start from whatever the DTO already exposes.
-        let dtoName = primaryParticipant?.name
-        let dtoURL = primaryParticipant?.avatarURL
+    /// Shift+Cmd → copy a markdown summary of all comments to the pasteboard.
+    /// Plain click → open the task in the browser.
+    private func handleTap() {
+        let mods = NSEvent.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if mods.contains([.command, .shift]) {
+            onCopyMarkdown()
+        } else {
+            onOpen()
+        }
+    }
+
+    // MARK: - Async resolution
+
+    private func resolveHeader() async {
+        let dtoName = headerParticipant?.name
+        let dtoURL = headerParticipant?.avatarURL
 
         if let dtoName, !dtoName.isEmpty {
-            await MainActor.run { resolvedName = dtoName }
+            await MainActor.run { resolvedCreatorName = dtoName }
         }
         if let dtoURL {
-            await MainActor.run { resolvedAvatarURL = dtoURL }
+            await MainActor.run { resolvedCreatorAvatarURL = dtoURL }
         }
 
-        // Anything missing? Ask the shared resolver — it walks UserInfoCache first
-        // and only falls back to /api/v3/employee/{id} when necessary.
-        guard let id = participantId else { return }
+        guard let id = headerParticipantId else { return }
         let needsName = (dtoName?.isEmpty ?? true)
         let needsAvatar = (dtoURL == nil)
         guard needsName || needsAvatar else { return }
@@ -110,18 +164,42 @@ struct TaskRow: View {
         if let info = await UserInfoResolver.shared.resolve(id: id) {
             await MainActor.run {
                 if needsName, let name = info.name, !name.isEmpty {
-                    resolvedName = name
+                    resolvedCreatorName = name
                 }
                 if needsAvatar, let url = info.avatarURL {
-                    resolvedAvatarURL = url
+                    resolvedCreatorAvatarURL = url
                 }
             }
         }
     }
 
+    private func resolveResponsibleName() async {
+        guard let participant = responsible else {
+            await MainActor.run { resolvedResponsibleName = nil }
+            return
+        }
+
+        if !participant.name.isEmpty {
+            await MainActor.run { resolvedResponsibleName = participant.name }
+            return
+        }
+
+        // Same person as creator? Skip a redundant resolve — header logic
+        // already triggers the fetch under the same id.
+        if participant.id == creator?.id, let cached = resolvedCreatorName {
+            await MainActor.run { resolvedResponsibleName = cached }
+            return
+        }
+
+        if let info = await UserInfoResolver.shared.resolve(id: participant.id),
+           let name = info.name, !name.isEmpty {
+            await MainActor.run { resolvedResponsibleName = name }
+        }
+    }
+
     private func loadAvatar() async {
-        guard let url = resolvedAvatarURL,
-              let id = participantId else {
+        guard let url = resolvedCreatorAvatarURL,
+              let id = headerParticipantId else {
             await MainActor.run { avatarImage = nil }
             return
         }
