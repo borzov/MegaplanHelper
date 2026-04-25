@@ -72,10 +72,16 @@
 "notifications.group.earlier" = "Ранее";
 
 "settings.notifications" = "Уведомления";
+"settings.notifications.section" = "Уведомления";
 "settings.notifications.enabled" = "Включить системные уведомления";
 "settings.notifications.enabledDescription" = "Показывать уведомления в Центре уведомлений";
 "settings.notifications.grouping" = "Группировать уведомления";
 "settings.notifications.groupingDescription" = "Группировать уведомления по датам";
+"settings.notifications.test" = "Отправить тестовое";
+"settings.notifications.testTitle" = "Тестовое уведомление";
+"settings.notifications.testBody" = "Если вы это видите — всё работает";
+"settings.notifications.testSent" = "Отправлено";
+"settings.notifications.testDenied" = "Доступ к уведомлениям запрещён";
 "settings.appearance" = "Внешний вид";
 "settings.theme" = "Тема";
 "settings.theme.light" = "Светлая";

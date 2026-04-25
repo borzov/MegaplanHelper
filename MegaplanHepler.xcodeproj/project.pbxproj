@@ -11,6 +11,7 @@
 		208C00901227259EA1F986A4 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA881FB3C88262497EC1428C /* HotkeyManager.swift */; };
 		7ACCEEAD0F20CBDAB3E3DE36 /* SettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98C8CF8C41E261881D79D5F8 /* SettingsSection.swift */; };
 		8739F1D5F3EB5E1351BD4608 /* SettingsExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAECE12E74838A6114288FB4 /* SettingsExporter.swift */; };
+		89E3BB1FBD7E9BB38B68CB62 /* NotificationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0C79DB212102A83657D543 /* NotificationsSettingsView.swift */; };
 		A345707AF6425C6E2F1247DC /* SettingsSearchIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AC0443720F33CCB46B17D99 /* SettingsSearchIndex.swift */; };
 		A38424CB7FCA1693E6B1DD29 /* SyncSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF14662E0A883FB2E5BAE4F /* SyncSettingsView.swift */; };
 		AA000001 /* MegaplanMenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000010 /* MegaplanMenuBarApp.swift */; };
@@ -135,6 +136,7 @@
 		CA55AA33EF9474EBB89A98BE /* AccountSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountSettingsView.swift; sourceTree = "<group>"; };
 		CA881FB3C88262497EC1428C /* HotkeyManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		CFF14662E0A883FB2E5BAE4F /* SyncSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SyncSettingsView.swift; sourceTree = "<group>"; };
+		EA0C79DB212102A83657D543 /* NotificationsSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsSettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -345,6 +347,7 @@
 				CA55AA33EF9474EBB89A98BE /* AccountSettingsView.swift */,
 				CFF14662E0A883FB2E5BAE4F /* SyncSettingsView.swift */,
 				BFECD95730D4117F635F4525 /* AppearanceSettingsView.swift */,
+				EA0C79DB212102A83657D543 /* NotificationsSettingsView.swift */,
 			);
 			name = Settings;
 			path = Settings;
@@ -502,6 +505,7 @@
 				CC81A6B8FBEA5D47F5BB4B72 /* AccountSettingsView.swift in Sources */,
 				A38424CB7FCA1693E6B1DD29 /* SyncSettingsView.swift in Sources */,
 				0A5D8BAAE4529C8A486D5CB1 /* AppearanceSettingsView.swift in Sources */,
+				89E3BB1FBD7E9BB38B68CB62 /* NotificationsSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

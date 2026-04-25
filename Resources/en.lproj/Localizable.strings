@@ -72,10 +72,16 @@
 "notifications.group.earlier" = "Earlier";
 
 "settings.notifications" = "Notifications";
+"settings.notifications.section" = "Notifications";
 "settings.notifications.enabled" = "Enable system notifications";
 "settings.notifications.enabledDescription" = "Show notifications in Notification Center";
 "settings.notifications.grouping" = "Group notifications";
 "settings.notifications.groupingDescription" = "Group notifications by date";
+"settings.notifications.test" = "Send test";
+"settings.notifications.testTitle" = "Test notification";
+"settings.notifications.testBody" = "If you see this, it works";
+"settings.notifications.testSent" = "Sent";
+"settings.notifications.testDenied" = "Notifications access denied";
 "settings.appearance" = "Appearance";
 "settings.theme" = "Theme";
 "settings.theme.light" = "Light";
