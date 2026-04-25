@@ -36,12 +36,24 @@ struct AccountSettingsView: View {
 
             Section {
                 HStack {
-                    Button(String(localized: "settings.account.reauthenticate")) {
-                        Task { await appState.signIn(domain: domain, login: login, password: password) }
+                    Button {
+                        Task {
+                            await appState.signIn(domain: domain, login: login, password: password)
+                            if appState.isAuthenticated { password = "" }
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            if appState.isLoading {
+                                ProgressView().controlSize(.small)
+                            }
+                            Text(String(localized: "settings.account.reauthenticate"))
+                        }
                     }
                     .controlSize(.large)
                     .buttonStyle(.borderedProminent)
                     .disabled(domain.isEmpty || login.isEmpty || password.isEmpty || appState.isLoading)
+
+                    Spacer()
 
                     Button(role: .destructive) {
                         showingLogoutAlert = true
@@ -58,6 +70,8 @@ struct AccountSettingsView: View {
             domain = appState.domain
             login = appState.username
         }
+        .onChange(of: appState.domain) { _, new in domain = new }
+        .onChange(of: appState.username) { _, new in login = new }
         .alert(String(localized: "settings.account.signOutConfirm"), isPresented: $showingLogoutAlert) {
             Button(String(localized: "settings.account.signOut"), role: .destructive) {
                 appState.logout()
