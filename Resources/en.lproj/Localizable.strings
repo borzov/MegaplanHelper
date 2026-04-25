@@ -8,7 +8,6 @@
 "notifications.open" = "Open";
 "notifications.markRead" = "Mark as read";
 "notifications.untitled" = "Notification";
-"notifications.greeting" = "%@, you have %lld unread notifications:";
 "notifications.search" = "Search";
 "notifications.search.placeholder" = "Search notifications...";
 "notifications.search.clear" = "Clear";

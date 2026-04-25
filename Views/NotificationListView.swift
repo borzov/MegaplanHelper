@@ -4,7 +4,6 @@ import SwiftUI
 struct NotificationListView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var viewModel: NotificationListViewModel
-    @EnvironmentObject private var settingsViewModel: SettingsViewModel
     @State private var showToast = false
     @FocusState private var isSearchFieldFocused: Bool
 
@@ -35,11 +34,6 @@ struct NotificationListView: View {
                 Text(String(format: String(localized: "notifications.search.results"), viewModel.searchResultsCount))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-            } else if appState.unreadCount > 0 {
-                Text(String(format: String(localized: "notifications.greeting"), appState.firstName, appState.unreadCount))
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
             }
 
             Spacer()

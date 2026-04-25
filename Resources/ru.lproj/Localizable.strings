@@ -8,7 +8,6 @@
 "notifications.open" = "Открыть";
 "notifications.markRead" = "Отметить прочитанным";
 "notifications.untitled" = "Уведомление";
-"notifications.greeting" = "%@, у вас %lld непрочитанных уведомлений:";
 "notifications.search" = "Поиск";
 "notifications.search.placeholder" = "Поиск уведомлений...";
 "notifications.search.clear" = "Очистить";

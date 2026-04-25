@@ -1,5 +1,6 @@
 import CommonCrypto
 import Foundation
+import os
 
 // MARK: - Certificate Pinning State
 
@@ -8,38 +9,29 @@ extension Notification.Name {
     static let certificatePinningFailed = Notification.Name("MegaplanCertificatePinningFailed")
 }
 
-/// Thread-safe wrapper for certificate pinning failure state
-final class PinningState {
-    private var _pinningFailureNotified = false
-    private let lock = NSLock()
+/// Thread-safe state for certificate pinning failure tracking.
+///
+/// Used from `URLSessionDelegate` callback (synchronous context), so we can't
+/// switch to an actor. Backed by `OSAllocatedUnfairLock` for Sendable-safe
+/// atomic mutation under Swift 6 strict concurrency.
+final class PinningState: Sendable {
+    private let state = OSAllocatedUnfairLock<Bool>(initialState: false)
 
     var pinningFailureNotified: Bool {
-        get {
-            lock.lock()
-            defer { lock.unlock() }
-            return _pinningFailureNotified
-        }
-        set {
-            lock.lock()
-            defer { lock.unlock() }
-            _pinningFailureNotified = newValue
-        }
+        state.withLock { $0 }
     }
 
+    /// Атомарно: если уведомление ещё не отправлено — помечает и возвращает `true`.
     func setNotifiedIfNeeded() -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        if _pinningFailureNotified {
-            return false
+        state.withLock { notified in
+            guard !notified else { return false }
+            notified = true
+            return true
         }
-        _pinningFailureNotified = true
-        return true
     }
 
     func reset() {
-        lock.lock()
-        defer { lock.unlock() }
-        _pinningFailureNotified = false
+        state.withLock { $0 = false }
     }
 }
 
@@ -114,11 +106,12 @@ extension MegaplanAPI: URLSessionDelegate {
 
             // Уведомляем UI только один раз за сессию
             if Self.pinningState.setNotifiedIfNeeded() {
-                DispatchQueue.main.async {
+                let host = challenge.protectionSpace.host
+                Task { @MainActor in
                     NotificationCenter.default.post(
                         name: .certificatePinningFailed,
                         object: nil,
-                        userInfo: ["host": challenge.protectionSpace.host]
+                        userInfo: ["host": host]
                     )
                 }
             }

@@ -9,7 +9,7 @@ final class StatusBarController: NSObject, ObservableObject {
     private var popover: NSPopover?
     private var eventMonitor: Any?
     private weak var appState: AppState?
-    private weak var settingsViewModel: SettingsViewModel?
+    private weak var notificationListViewModel: NotificationListViewModel?
     private var cancellables = Set<AnyCancellable>()
 
     nonisolated(unsafe) private static var cachedMenuBarImage: NSImage?
@@ -21,15 +21,15 @@ final class StatusBarController: NSObject, ObservableObject {
     /// Sets up the status bar item with the given app state and content view.
     /// - Parameters:
     ///   - appState: The app state to observe for changes
-    ///   - settingsViewModel: The settings view model for opening settings
+    ///   - notificationListViewModel: View model passed into the Settings window
     ///   - contentView: The SwiftUI view to display in the popover
     func setup<Content: View>(
         appState: AppState,
-        settingsViewModel: SettingsViewModel,
+        notificationListViewModel: NotificationListViewModel,
         contentView: Content
     ) {
         self.appState = appState
-        self.settingsViewModel = settingsViewModel
+        self.notificationListViewModel = notificationListViewModel
 
         setupStatusItem()
         setupPopover(with: contentView)
@@ -58,11 +58,19 @@ final class StatusBarController: NSObject, ObservableObject {
     }
 
     private func setupPopover<Content: View>(with contentView: Content) {
-        popover = NSPopover()
-        popover?.contentSize = NSSize(width: 370, height: 700)
-        popover?.behavior = .transient
-        popover?.animates = true
-        popover?.contentViewController = NSHostingController(rootView: contentView)
+        let popover = NSPopover()
+        popover.contentSize = NSSize(width: 370, height: 700)
+        popover.behavior = .transient
+        popover.animates = true
+
+        // Pre-warm the SwiftUI host so the first show is fully painted instead of
+        // briefly showing the translucent/uninitialized NSPopover background.
+        let hosting = NSHostingController(rootView: contentView)
+        hosting.view.frame = NSRect(origin: .zero, size: popover.contentSize)
+        hosting.view.layoutSubtreeIfNeeded()
+        popover.contentViewController = hosting
+
+        self.popover = popover
     }
 
     private func setupEventMonitor() {
@@ -100,11 +108,14 @@ final class StatusBarController: NSObject, ObservableObject {
         if let cached = Self.cachedMenuBarImage {
             image = cached
         } else if let nsImage = NSImage(named: "MenuBarIcon") {
-            let targetSize = NSSize(width: 18, height: 18)
-            let resizedImage = NSImage(size: targetSize)
+            // Render the 18x18 icon onto a wider canvas so the unread badge has
+            // room on the right without clipping at the menu bar edge.
+            let iconSize = NSSize(width: 18, height: 18)
+            let canvasSize = NSSize(width: 26, height: 18)
+            let resizedImage = NSImage(size: canvasSize)
             resizedImage.lockFocus()
-            nsImage.size = targetSize
-            nsImage.draw(at: .zero, from: .zero, operation: .copy, fraction: 1.0)
+            nsImage.size = iconSize
+            nsImage.draw(at: NSPoint(x: 0, y: 0), from: .zero, operation: .copy, fraction: 1.0)
             resizedImage.unlockFocus()
             resizedImage.isTemplate = true
             Self.cachedMenuBarImage = resizedImage
@@ -133,8 +144,8 @@ final class StatusBarController: NSObject, ObservableObject {
         button.addSubview(badgeView)
 
         NSLayoutConstraint.activate([
-            badgeView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: 2),
-            badgeView.topAnchor.constraint(equalTo: button.topAnchor, constant: -2)
+            badgeView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: 0),
+            badgeView.topAnchor.constraint(equalTo: button.topAnchor, constant: -3)
         ])
     }
 
@@ -237,8 +248,11 @@ final class StatusBarController: NSObject, ObservableObject {
 
     @objc private func menuSettingsClicked() {
         hidePopover()
-        guard let appState = appState, let settingsViewModel = settingsViewModel else { return }
-        SettingsWindowManager.shared.showSettings(appState: appState, settingsViewModel: settingsViewModel)
+        guard let appState, let notificationListViewModel else { return }
+        SettingsWindowManager.shared.showSettings(
+            appState: appState,
+            notificationListViewModel: notificationListViewModel
+        )
     }
 
     @objc private func menuLogoutClicked() {

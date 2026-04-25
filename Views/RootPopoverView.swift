@@ -7,7 +7,6 @@ struct RootPopoverView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var notificationListViewModel: NotificationListViewModel
     @EnvironmentObject private var taskListViewModel: TaskListViewModel
-    @EnvironmentObject private var settingsViewModel: SettingsViewModel
 
     @State private var selectedTab: AppTab = .notifications
 
@@ -46,6 +45,7 @@ struct RootPopoverView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color(nsColor: .windowBackgroundColor))
         .overlay(alignment: .bottom) {
             transientToast
                 .padding(.bottom, 12)
@@ -82,6 +82,13 @@ struct RootPopoverView: View {
             .transition(.move(edge: .bottom).combined(with: .opacity))
             .animation(.spring(response: 0.32, dampingFraction: 0.85), value: appState.transientToast)
         }
+    }
+
+    private func openAppSettings() {
+        SettingsWindowManager.shared.showSettings(
+            appState: appState,
+            notificationListViewModel: notificationListViewModel
+        )
     }
 
     private var footerButtons: some View {
@@ -136,7 +143,7 @@ struct RootPopoverView: View {
             Spacer()
 
             Button {
-                SettingsWindowManager.shared.showSettings(appState: appState, settingsViewModel: settingsViewModel)
+                openAppSettings()
             } label: {
                 Image(systemName: "gearshape")
                     .font(.system(size: 14))

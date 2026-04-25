@@ -28,14 +28,14 @@
 		C23E0D3D2EACCBE4007DD135 /* APILogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23E0D3B2EACCBE4007DD135 /* APILogger.swift */; };
 		C25379142EAD82D4009552B4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C25379132EAD82D4009552B4 /* Assets.xcassets */; };
 		C262F85A2EBA978C00CDE7A0 /* AvatarCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C262F8592EBA978C00CDE7A0 /* AvatarCacheManager.swift */; };
+		C2AA00012EC50001004AEF47 /* AsyncSemaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2AA00022EC50002004AEF47 /* AsyncSemaphore.swift */; };
 		C262F85D2EBAA49700CDE7A0 /* NotificationParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = C262F85B2EBAA49700CDE7A0 /* NotificationParser.swift */; };
-		C262F85E2EBAA49700CDE7A0 /* UserInfoCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C262F85C2EBAA49700CDE7A0 /* UserInfoCache.swift */; };
 		C281F0F42EACED2F00B88503 /* SettingsWindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C281F0F32EACED2F00B88503 /* SettingsWindowManager.swift */; };
+		C2EE49262F100001004AEF47 /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49252F100001004AEF47 /* StatusBarController.swift */; };
+		C262F85E2EBAA49700CDE7A0 /* UserInfoCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C262F85C2EBAA49700CDE7A0 /* UserInfoCache.swift */; };
 		C2EE49242EC3D1D1004AEF47 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49232EC3D1D1004AEF47 /* NotificationManager.swift */; };
 		C2EE49252EC3D1D1004AEF47 /* ErrorRecoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49222EC3D1D1004AEF47 /* ErrorRecoveryService.swift */; };
-		C2EE49262F100001004AEF47 /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49252F100001004AEF47 /* StatusBarController.swift */; };
 		C2EE49272EC3D1E3004AEF47 /* NotificationGrouper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49262EC3D1E3004AEF47 /* NotificationGrouper.swift */; };
-		C2EE492D2EC3D205004AEF47 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE492A2EC3D205004AEF47 /* SettingsViewModel.swift */; };
 		C2EE492E2EC3D205004AEF47 /* NotificationListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49292EC3D205004AEF47 /* NotificationListViewModel.swift */; };
 		C2EE49322EC3D21F004AEF47 /* LoadingStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE492F2EC3D21F004AEF47 /* LoadingStateView.swift */; };
 		C2EE49332EC3D21F004AEF47 /* SkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EE49302EC3D21F004AEF47 /* SkeletonView.swift */; };
@@ -82,15 +82,15 @@
 		C23E0D3B2EACCBE4007DD135 /* APILogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APILogger.swift; sourceTree = "<group>"; };
 		C25379132EAD82D4009552B4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C262F8592EBA978C00CDE7A0 /* AvatarCacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarCacheManager.swift; sourceTree = "<group>"; };
+		C2AA00022EC50002004AEF47 /* AsyncSemaphore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncSemaphore.swift; sourceTree = "<group>"; };
 		C262F85B2EBAA49700CDE7A0 /* NotificationParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationParser.swift; sourceTree = "<group>"; };
-		C262F85C2EBAA49700CDE7A0 /* UserInfoCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInfoCache.swift; sourceTree = "<group>"; };
 		C281F0F32EACED2F00B88503 /* SettingsWindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowManager.swift; sourceTree = "<group>"; };
+		C2EE49252F100001004AEF47 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
+		C262F85C2EBAA49700CDE7A0 /* UserInfoCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInfoCache.swift; sourceTree = "<group>"; };
 		C2EE49222EC3D1D1004AEF47 /* ErrorRecoveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorRecoveryService.swift; sourceTree = "<group>"; };
 		C2EE49232EC3D1D1004AEF47 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
-		C2EE49252F100001004AEF47 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		C2EE49262EC3D1E3004AEF47 /* NotificationGrouper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationGrouper.swift; sourceTree = "<group>"; };
 		C2EE49292EC3D205004AEF47 /* NotificationListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationListViewModel.swift; sourceTree = "<group>"; };
-		C2EE492A2EC3D205004AEF47 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		C2EE492F2EC3D21F004AEF47 /* LoadingStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingStateView.swift; sourceTree = "<group>"; };
 		C2EE49302EC3D21F004AEF47 /* SkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonView.swift; sourceTree = "<group>"; };
 		C2FF00012F559001001FD92E /* CertificatePinning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificatePinning.swift; sourceTree = "<group>"; };
@@ -177,6 +177,7 @@
 				C2EE49252F100001004AEF47 /* StatusBarController.swift */,
 				C262F85C2EBAA49700CDE7A0 /* UserInfoCache.swift */,
 				C262F8592EBA978C00CDE7A0 /* AvatarCacheManager.swift */,
+				C2AA00022EC50002004AEF47 /* AsyncSemaphore.swift */,
 				AA000014 /* KeychainManager.swift */,
 				AA000015 /* MegaplanAPI.swift */,
 				BB000013 /* MegaplanAPI+Tasks.swift */,
@@ -248,7 +249,6 @@
 			isa = PBXGroup;
 			children = (
 				C2EE49292EC3D205004AEF47 /* NotificationListViewModel.swift */,
-				C2EE492A2EC3D205004AEF47 /* SettingsViewModel.swift */,
 				BB000014 /* TaskListViewModel.swift */,
 			);
 			path = ViewModels;
@@ -367,13 +367,14 @@
 				C2FF00062F559001001FD92E /* URLValidator.swift in Sources */,
 				AA000001 /* MegaplanMenuBarApp.swift in Sources */,
 				C262F85A2EBA978C00CDE7A0 /* AvatarCacheManager.swift in Sources */,
-				C2EE492D2EC3D205004AEF47 /* SettingsViewModel.swift in Sources */,
+				C2AA00012EC50001004AEF47 /* AsyncSemaphore.swift in Sources */,
 				C2EE492E2EC3D205004AEF47 /* NotificationListViewModel.swift in Sources */,
 				AA000002 /* AppState.swift in Sources */,
 				AA000003 /* MegaplanCredentials.swift in Sources */,
 				C2EE49242EC3D1D1004AEF47 /* NotificationManager.swift in Sources */,
 				C2EE49252EC3D1D1004AEF47 /* ErrorRecoveryService.swift in Sources */,
 				C2EE49262F100001004AEF47 /* StatusBarController.swift in Sources */,
+				C281F0F42EACED2F00B88503 /* SettingsWindowManager.swift in Sources */,
 				C23E0D3C2EACCBE4007DD134 /* HTMLCleaner.swift in Sources */,
 				C23E0D3D2EACCBE4007DD135 /* APILogger.swift in Sources */,
 				C262F85D2EBAA49700CDE7A0 /* NotificationParser.swift in Sources */,
@@ -392,7 +393,6 @@
 				AA00000A /* NotificationListView.swift in Sources */,
 				C2EE49322EC3D21F004AEF47 /* LoadingStateView.swift in Sources */,
 				C2EE49332EC3D21F004AEF47 /* SkeletonView.swift in Sources */,
-				C281F0F42EACED2F00B88503 /* SettingsWindowManager.swift in Sources */,
 				AA00000B /* SettingsView.swift in Sources */,
 				BB000020 /* MegaplanTask.swift in Sources */,
 				BB000021 /* TaskDTO.swift in Sources */,
@@ -461,7 +461,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
-				ENABLE_APP_SANDBOX = NO;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
@@ -485,7 +485,6 @@
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Megaplan Menu Bar";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -504,7 +503,7 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 5.9;
 			};
 			name = Debug;
 		};
@@ -575,7 +574,6 @@
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Megaplan Menu Bar";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -592,7 +590,7 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 5.9;
 			};
 			name = Release;
 		};

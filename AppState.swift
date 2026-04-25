@@ -49,6 +49,7 @@ final class AppState: ObservableObject {
     private let errorRecoveryService = ErrorRecoveryService.shared
     private let refreshScheduler: RefreshScheduler
     private var refreshTask: Task<Void, Never>?
+    private var certificatePinningObserver: (any NSObjectProtocol)?
     private var accessToken: String?
     private var cachedPasswordData: Data?
     private var lastRefreshTime: Date?
@@ -107,8 +108,9 @@ final class AppState: ObservableObject {
         $apiUnreadCount
             .assign(to: &$unreadCount)
 
-        // Запрашиваем разрешение на уведомления при запуске
-        Task {
+        // Запрашиваем разрешение на уведомления при запуске.
+        // Захватываем notificationManager локально — он singleton, weak self не нужен.
+        Task { [notificationManager] in
             _ = await notificationManager.requestAuthorization()
         }
 
@@ -124,23 +126,27 @@ final class AppState: ObservableObject {
             )
         }
 
-        // Subscribe to certificate pinning failure notifications
-        NotificationCenter.default.addObserver(
+        // Subscribe to certificate pinning failure notifications.
+        // Сохраняем токен наблюдателя, чтобы корректно снять подписку в deinit.
+        // Closure доставляется на main queue → используем assumeIsolated для @MainActor мутаций.
+        certificatePinningObserver = NotificationCenter.default.addObserver(
             forName: .certificatePinningFailed,
             object: nil,
             queue: .main
         ) { [weak self] notification in
             guard let self = self else { return }
-            self.certificatePinningFailed = true
             let host = notification.userInfo?["host"] as? String ?? "unknown"
             AppLogger.warning("Certificate pinning failed for \(host) — showing warning to user")
-            self.alertItem = AlertItem(
-                message: String(localized: "security.pinning.warning")
-            )
+            MainActor.assumeIsolated {
+                self.certificatePinningFailed = true
+                self.alertItem = AlertItem(
+                    message: String(localized: "security.pinning.warning")
+                )
+            }
         }
 
-        Task {
-            await restoreSession()
+        Task { [weak self] in
+            await self?.restoreSession()
         }
     }
 
@@ -277,8 +283,8 @@ final class AppState: ObservableObject {
         
         lastRefreshTime = Date()
         refreshTask?.cancel()
-        refreshTask = Task {
-            await refresh()
+        refreshTask = Task { [weak self] in
+            await self?.refresh()
         }
     }
 
@@ -419,28 +425,33 @@ final class AppState: ObservableObject {
         
         // Save notification for potential rollback
         let notificationCopy = notification
-        Task {
+        Task { [weak self] in
+            guard let self else { return }
             // Optimistic UI update
-            await MainActor.run {
+            await MainActor.run { [weak self] in
+                guard let self else { return }
                 withAnimation {
-                    notifications.removeAll { $0.id == notification.id }
-                    unreadCount = max(unreadCount - 1, 0)
+                    self.notifications.removeAll { $0.id == notification.id }
+                    self.unreadCount = max(self.unreadCount - 1, 0)
                 }
             }
-            
+
             do {
-                try await api.markAsRead(id: notification.id, token: token)
+                try await self.api.markAsRead(id: notification.id, token: token)
                 AppLogger.debug("Notification \(notification.id) marked as read")
             } catch {
                 // Rollback on error
-                await MainActor.run {
+                await MainActor.run { [weak self] in
+                    guard let self else { return }
                     withAnimation {
-                        notifications.insert(notificationCopy, at: 0)
-                        unreadCount += 1
+                        self.notifications.insert(notificationCopy, at: 0)
+                        self.unreadCount += 1
                     }
                 }
                 AppLogger.error("Failed to mark notification as read: \(error.localizedDescription)")
-                presentError(NetworkError(error))
+                await MainActor.run { [weak self] in
+                    self?.presentError(NetworkError(error))
+                }
             }
         }
     }
@@ -708,10 +719,16 @@ final class AppState: ObservableObject {
     deinit {
         // Примечание: isShuttingDown нельзя установить в deinit из-за @MainActor изоляции,
         // но задачи будут отменены немедленно
+        if let certificatePinningObserver {
+            NotificationCenter.default.removeObserver(certificatePinningObserver)
+        }
+        // Захватываем actor-ссылку локально, чтобы closure не удерживала self после deinit.
+        let scheduler = refreshScheduler
         Task {
-            await refreshScheduler.stop()
+            await scheduler.stop()
         }
         refreshTask?.cancel()
+        transientToastResetTask?.cancel()
     }
 }
 

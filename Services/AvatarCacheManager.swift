@@ -25,7 +25,7 @@ final class AvatarCacheManager {
     }()
 
     // Rate limiting: max 5 concurrent downloads
-    private let downloadSemaphore = DispatchSemaphore(value: 5)
+    private let downloadSemaphore = AsyncSemaphore(limit: 5)
 
     // Size limits
     private static let maxAvatarSize: Int64 = Constants.CacheConfig.maxAvatarSize
@@ -139,9 +139,9 @@ final class AvatarCacheManager {
             return cachedImage
         }
 
-        // Rate limiting: wait for available slot
-        downloadSemaphore.wait()
-        defer { downloadSemaphore.signal() }
+        // Rate limiting: ждём свободный слот без блокировки cooperative pool
+        await downloadSemaphore.acquire()
+        defer { Task { await downloadSemaphore.release() } }
 
         // Load from network
         do {
