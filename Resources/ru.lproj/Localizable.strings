@@ -193,3 +193,10 @@
 "settings.sync.refresh.everySec" = "%d сек";
 "settings.sync.refresh.everyMin" = "%d мин";
 "settings.sync.refresh.everyMinSec" = "%d мин %d сек";
+
+// Shortcuts — recorder UI
+"shortcuts.recording" = "Нажмите комбинацию…";
+"shortcuts.notSet" = "Не задано";
+"shortcuts.record" = "Записать";
+"shortcuts.stop" = "Стоп";
+"shortcuts.clear" = "Сбросить";

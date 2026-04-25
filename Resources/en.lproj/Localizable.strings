@@ -191,3 +191,10 @@
 "settings.sync.refresh.everySec" = "Every %d sec";
 "settings.sync.refresh.everyMin" = "Every %d min";
 "settings.sync.refresh.everyMinSec" = "Every %d min %d sec";
+
+// Shortcuts — recorder UI
+"shortcuts.recording" = "Press a combination…";
+"shortcuts.notSet" = "Not set";
+"shortcuts.record" = "Record";
+"shortcuts.stop" = "Stop";
+"shortcuts.clear" = "Clear";
