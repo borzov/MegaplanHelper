@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7ACCEEAD0F20CBDAB3E3DE36 /* SettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98C8CF8C41E261881D79D5F8 /* SettingsSection.swift */; };
+		A345707AF6425C6E2F1247DC /* SettingsSearchIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AC0443720F33CCB46B17D99 /* SettingsSearchIndex.swift */; };
 		AA000001 /* MegaplanMenuBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000010 /* MegaplanMenuBarApp.swift */; };
 		AA000002 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000011 /* AppState.swift */; };
 		AA000003 /* MegaplanCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000012 /* MegaplanCredentials.swift */; };
@@ -61,6 +62,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2AC0443720F33CCB46B17D99 /* SettingsSearchIndex.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSearchIndex.swift; sourceTree = "<group>"; };
 		98C8CF8C41E261881D79D5F8 /* SettingsSection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSection.swift; sourceTree = "<group>"; };
 		AA00000F /* MegaplanHepler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MegaplanHepler.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA000010 /* MegaplanMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanMenuBarApp.swift; sourceTree = "<group>"; };
@@ -141,6 +143,7 @@
 				AA000020 /* . */,
 				AA000021 /* Products */,
 				54306C2D3B4E734C12B56B50 /* Models */,
+				EB996611CD7A022957A2B9FD /* Services */,
 			);
 			sourceTree = "<group>";
 		};
@@ -279,6 +282,15 @@
 				BB00001B /* EntityCardRow.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		EB996611CD7A022957A2B9FD /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				2AC0443720F33CCB46B17D99 /* SettingsSearchIndex.swift */,
+			);
+			name = Services;
+			path = Services;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -422,6 +434,7 @@
 				BB00002D /* MegaplanComment.swift in Sources */,
 				BB00002E /* MarkdownCommentExporter.swift in Sources */,
 				7ACCEEAD0F20CBDAB3E3DE36 /* SettingsSection.swift in Sources */,
+				A345707AF6425C6E2F1247DC /* SettingsSearchIndex.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
