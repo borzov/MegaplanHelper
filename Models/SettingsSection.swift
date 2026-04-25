@@ -20,6 +20,7 @@ enum SettingsGroup: String, CaseIterable, Identifiable {
 }
 
 /// All available settings sections, in display order within their group.
+/// IMPORTANT: declaration order = display order within each `group`. Do not reorder cases.
 enum SettingsSection: String, CaseIterable, Identifiable, Hashable {
     case account
     case sync
