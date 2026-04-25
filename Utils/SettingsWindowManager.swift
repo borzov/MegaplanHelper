@@ -9,8 +9,11 @@ final class SettingsWindowManager {
     private var windowObserver: (any NSObjectProtocol)?
 
     private enum WindowConstants {
-        static let width: CGFloat = 480
-        static let height: CGFloat = 500
+        static let width: CGFloat = 760
+        static let height: CGFloat = 560
+        static let minWidth: CGFloat = 720
+        static let minHeight: CGFloat = 520
+        static let autosaveName = "MegaplanSettings"
     }
 
     private init() {}
@@ -27,17 +30,21 @@ final class SettingsWindowManager {
         let settingsView = SettingsView()
             .environmentObject(appState)
             .environmentObject(notificationListViewModel)
-            .frame(width: WindowConstants.width, height: WindowConstants.height)
 
         let hostingController = NSHostingController(rootView: settingsView)
         let window = NSWindow(contentViewController: hostingController)
         window.title = String(localized: "settings.title")
-        window.styleMask = [.titled, .closable]
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.collectionBehavior = [.fullScreenAuxiliary]
         window.level = .normal
         window.isReleasedWhenClosed = false
+        window.contentMinSize = NSSize(width: WindowConstants.minWidth, height: WindowConstants.minHeight)
         window.setContentSize(NSSize(width: WindowConstants.width, height: WindowConstants.height))
 
-        if let screen = NSScreen.main {
+        // Restore previous size and position from autosave; fall back to centered.
+        let restoredFromAutosave = window.setFrameUsingName(WindowConstants.autosaveName)
+        window.setFrameAutosaveName(WindowConstants.autosaveName)
+        if !restoredFromAutosave, let screen = NSScreen.main {
             let screenFrame = screen.visibleFrame
             let windowSize = NSSize(width: WindowConstants.width, height: WindowConstants.height)
             let x = (screenFrame.width - windowSize.width) / 2 + screenFrame.origin.x
