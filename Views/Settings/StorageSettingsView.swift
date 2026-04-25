@@ -6,6 +6,7 @@ struct StorageSettingsView: View {
     @State private var importingFromFile = false
     @State private var exportingToFile = false
     @State private var exportText: String = ""
+    @State private var importErrorMessage: String?
 
     private let exporter = SettingsExporter()
 
@@ -51,10 +52,33 @@ struct StorageSettingsView: View {
             isPresented: $importingFromFile,
             allowedContentTypes: [.json]
         ) { result in
-            if case .success(let url) = result,
-               let text = try? String(contentsOf: url, encoding: .utf8) {
-                try? exporter.importing(json: text)
+            switch result {
+            case .success(let url):
+                do {
+                    let text = try String(contentsOf: url, encoding: .utf8)
+                    try exporter.importing(json: text)
+                } catch SettingsExporter.ExportError.invalidValueType(let key, let expected) {
+                    importErrorMessage = String(format: String(localized: "settings.storage.importTypeError"), key, expected)
+                } catch SettingsExporter.ExportError.invalidJSON {
+                    importErrorMessage = String(localized: "settings.storage.importInvalidJSON")
+                } catch {
+                    importErrorMessage = error.localizedDescription
+                }
+            case .failure(let error):
+                importErrorMessage = error.localizedDescription
             }
+        }
+        .alert(
+            String(localized: "settings.storage.importFailedTitle"),
+            isPresented: Binding(
+                get: { importErrorMessage != nil },
+                set: { if !$0 { importErrorMessage = nil } }
+            ),
+            presenting: importErrorMessage
+        ) { _ in
+            Button(String(localized: "general.ok"), role: .cancel) { importErrorMessage = nil }
+        } message: { msg in
+            Text(msg)
         }
     }
 

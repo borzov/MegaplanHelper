@@ -52,6 +52,10 @@ final class AppState: ObservableObject {
 
     /// Cached avatar of the currently signed-in user. Owned by AppState
     /// (set by the avatar loader). AccountCard observes this for display.
+    /// TODO(Phase 2): wire up the loader once `EmployeeService` exposes the
+    /// avatar URL for the authenticated user. Until then, `AccountCard` shows
+    /// the initials gradient fallback — there is no functional regression
+    /// because the previous SettingsView never displayed an avatar either.
     @Published private(set) var currentUserAvatar: NSImage?
 
     let api: AuthenticationService & NotificationService & TaskService & EmployeeService
