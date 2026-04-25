@@ -205,6 +205,10 @@
 "settings.sync.refresh.everySec" = "Every %d sec";
 "settings.sync.refresh.everyMin" = "Every %d min";
 "settings.sync.refresh.everyMinSec" = "Every %d min %d sec";
+"settings.sync.refreshSection" = "Refresh";
+"settings.sync.startupSection" = "Behavior";
+"settings.sync.autoLaunch" = "Launch at login";
+"settings.sync.showOnlyUnread" = "Show only unread";
 
 // Shortcuts — recorder UI
 "shortcuts.recording" = "Press a combination…";

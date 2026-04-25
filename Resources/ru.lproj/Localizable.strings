@@ -207,6 +207,10 @@
 "settings.sync.refresh.everySec" = "%d сек";
 "settings.sync.refresh.everyMin" = "%d мин";
 "settings.sync.refresh.everyMinSec" = "%d мин %d сек";
+"settings.sync.refreshSection" = "Обновление";
+"settings.sync.startupSection" = "Поведение";
+"settings.sync.autoLaunch" = "Запускать при входе";
+"settings.sync.showOnlyUnread" = "Показывать только непрочитанные";
 
 // Shortcuts — recorder UI
 "shortcuts.recording" = "Нажмите комбинацию…";
