@@ -183,6 +183,10 @@
 "tasks.status.template" = "Шаблон";
 "tasks.status.overdue" = "Просрочена";
 
+// Settings — window
+"settings.windowTitle" = "Настройки";
+"settings.searchPrompt" = "Поиск настроек";
+
 // Settings — sidebar groups
 "settings.group.general" = "Основное";
 "settings.group.personalization" = "Персонализация";

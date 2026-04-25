@@ -181,6 +181,10 @@
 "tasks.status.template" = "Template";
 "tasks.status.overdue" = "Overdue";
 
+// Settings — window
+"settings.windowTitle" = "Settings";
+"settings.searchPrompt" = "Search settings";
+
 // Settings — sidebar groups
 "settings.group.general" = "General";
 "settings.group.personalization" = "Personalization";
