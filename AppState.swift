@@ -41,6 +41,19 @@ final class AppState: ObservableObject {
     @Published private(set) var lastTasksSyncTime: Date?
     @Published private(set) var tasksUnreadCount: Int = 0
 
+    // MARK: - Settings UI helpers
+
+    /// Human-readable representation of the last successful notifications sync,
+    /// suitable for AccountCard. Returns nil when no sync has occurred yet.
+    var formattedLastSync: String? {
+        guard let lastSyncTime else { return nil }
+        return DateFormatters.relative(lastSyncTime)
+    }
+
+    /// Cached avatar of the currently signed-in user.
+    /// AccountCard reads this; loading is wired up in a later task.
+    @Published var currentUserAvatar: NSImage?
+
     let api: AuthenticationService & NotificationService & TaskService & EmployeeService
     private var currentUserId: String?
     private let keychain = KeychainManager()
