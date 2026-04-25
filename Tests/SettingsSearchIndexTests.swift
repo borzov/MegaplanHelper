@@ -28,10 +28,19 @@ final class SettingsSearchIndexTests: XCTestCase {
         XCTAssertTrue(results.isEmpty)
     }
 
-    func testSearch_SingleCharacterToken_DoesNotMatchEverything() {
+    func testSearch_SingleCharacterToken_DegeneratesToNoOp() {
+        // Single-char tokens are filtered before substring matching;
+        // when nothing remains, search returns all sections (search-as-you-type).
         let results = SettingsSearchIndex.shared.search("о")
-        XCTAssertNotEqual(Set(results), Set(SettingsSection.allCases),
-                          "Single-character tokens must not flood results")
+        XCTAssertEqual(Set(results), Set(SettingsSection.allCases),
+                       "Single-character tokens must be ignored, not flood results via substring match")
+    }
+
+    func testSearch_MixedShortAndValidTokens_FiltersShortOnly() {
+        // The actual I-1 regression: short token "о" must not flood when paired with a real query.
+        let results = SettingsSearchIndex.shared.search("о password")
+        XCTAssertEqual(Set(results), Set([.account]),
+                       "'о' is filtered out; only 'password' contributes — Account only")
     }
 
     func testSearch_MultiToken_UnionOfMatches() {
