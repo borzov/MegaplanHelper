@@ -50,9 +50,9 @@ final class AppState: ObservableObject {
         return DateFormatters.relative(lastSyncTime)
     }
 
-    /// Cached avatar of the currently signed-in user.
-    /// AccountCard reads this; loading is wired up in a later task.
-    @Published var currentUserAvatar: NSImage?
+    /// Cached avatar of the currently signed-in user. Owned by AppState
+    /// (set by the avatar loader). AccountCard observes this for display.
+    @Published private(set) var currentUserAvatar: NSImage?
 
     let api: AuthenticationService & NotificationService & TaskService & EmployeeService
     private var currentUserId: String?
