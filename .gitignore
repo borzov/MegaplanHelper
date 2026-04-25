@@ -45,3 +45,7 @@ fastlane/screenshots
 # AI
 .claude/
 CLAUDE.md
+
+# Environment / credentials
+.env
+.env.local

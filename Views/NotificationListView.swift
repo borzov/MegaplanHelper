@@ -9,30 +9,12 @@ struct NotificationListView: View {
     @FocusState private var isSearchFieldFocused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            header
+        VStack(alignment: .leading, spacing: 10) {
+            contextualHeader
 
-            if appState.isAuthenticated {
-                content
-            } else {
-                AuthView()
-            }
-            
-            Spacer()
-            
-            if appState.isAuthenticated {
-                bottomButtons
-            }
+            content
         }
-        .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .alert(item: $appState.alertItem) { alert in
-            Alert(
-                title: Text("error.title"),
-                message: Text(alert.message),
-                dismissButton: .default(Text("general.ok"))
-            )
-        }
         .onAppear {
             if appState.isAuthenticated {
                 Task {
@@ -45,161 +27,43 @@ struct NotificationListView: View {
         .toast(isShowing: $showToast, message: String(localized: "toast.markedAsRead"))
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if appState.isAuthenticated {
-                HStack {
-                    Text("notifications.title")
-                        .font(.headline)
-                    
-                    Spacer()
-                    
-                    Button {
-                        withAnimation {
-                            viewModel.isSearchActive.toggle()
-                            if viewModel.isSearchActive {
-                                // Установка фокуса с небольшой задержкой для завершения анимации
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    isSearchFieldFocused = true
-                                }
-                            } else {
-                                viewModel.clearSearch()
-                                isSearchFieldFocused = false
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(viewModel.isSearchActive ? .accentColor : .primary)
-                            .font(.system(size: 14))
-                    }
-                    .buttonStyle(.borderless)
-                    .accessibilityLabel(Text("notifications.search"))
-                    .background(
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(viewModel.isSearchActive ? Color.accentColor.opacity(0.15) : Color.clear)
-                            .frame(width: 24, height: 24)
-                    )
-                    .buttonPressEffect()
-                    
-                    Button {
-                        Task {
-                            await viewModel.refresh()
-                        }
-                    } label: {
-                        if appState.isLoading {
-                            ProgressView()
-                                .controlSize(.small)
-                        } else {
-                            Image(systemName: "arrow.clockwise")
-                        }
-                    }
-                    .buttonStyle(.borderless)
-                    .accessibilityLabel(Text("notifications.refresh"))
-                    .buttonPressEffect()
-                }
-                
-                // Персональное приветствие
-                if !appState.firstName.isEmpty {
-                    if viewModel.isSearchActive && viewModel.searchQuery.count >= 2 {
-                        Text(String(format: String(localized: "notifications.search.results"), viewModel.searchResultsCount))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    } else {
-                        Text(String(format: String(localized: "notifications.greeting"), appState.firstName, appState.unreadCount))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            } else {
-                HStack {
-                    Text("notifications.title")
-                        .font(.headline)
-                    
-                    Spacer()
-                }
+    /// Tab-local header: subtitle + search toggle. The greeting + global refresh
+    /// are owned by `PopoverHeaderView` in `RootPopoverView`.
+    private var contextualHeader: some View {
+        HStack(spacing: 8) {
+            if viewModel.isSearchActive && viewModel.searchQuery.count >= 2 {
+                Text(String(format: String(localized: "notifications.search.results"), viewModel.searchResultsCount))
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            } else if appState.unreadCount > 0 {
+                Text(String(format: String(localized: "notifications.greeting"), appState.firstName, appState.unreadCount))
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
             }
-        }
-    }
-    
-    private var bottomButtons: some View {
-        HStack(spacing: 14) {
-            // Кнопка API логов только для администратора
-            if appState.isAdmin {
-                Button {
-                    let logContent = APILogger.getLogContent()
-                    let pasteboard = NSPasteboard.general
-                    pasteboard.clearContents()
-                    pasteboard.setString(logContent, forType: .string)
-                } label: {
-                    Image(systemName: "doc.on.clipboard")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.borderless)
-                .accessibilityLabel(Text("Copy API Log"))
-                .buttonPressEffect()
-                
-                // Кнопки быстрого доступа
-                Button {
-                    if let url = URL(string: "https://\(appState.domain)/knowledge/") {
-                        NSWorkspace.shared.open(url)
-                    }
-                } label: {
-                    Image(systemName: "book.closed")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.borderless)
-                .accessibilityLabel(Text("Knowledge Base"))
-                .buttonPressEffect()
-                
-                Button {
-                    if let url = URL(string: "https://\(appState.domain)/deals/list/") {
-                        NSWorkspace.shared.open(url)
-                    }
-                } label: {
-                    Image(systemName: "briefcase")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.borderless)
-                .accessibilityLabel(Text("Deals"))
-                .buttonPressEffect()
-                
-                Button {
-                    if let url = URL(string: "https://\(appState.domain)/task/") {
-                        NSWorkspace.shared.open(url)
-                    }
-                } label: {
-                    Image(systemName: "checklist")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.borderless)
-                .accessibilityLabel(Text("Tasks"))
-                .buttonPressEffect()
-            }
-            
+
             Spacer()
-            
+
             Button {
-                SettingsWindowManager.shared.showSettings(appState: appState, settingsViewModel: settingsViewModel)
+                withAnimation {
+                    viewModel.isSearchActive.toggle()
+                    if viewModel.isSearchActive {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isSearchFieldFocused = true
+                        }
+                    } else {
+                        viewModel.clearSearch()
+                        isSearchFieldFocused = false
+                    }
+                }
             } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 14))
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(viewModel.isSearchActive ? .accentColor : .primary)
+                    .font(.system(size: 13, weight: .medium))
             }
             .buttonStyle(.borderless)
-            .accessibilityLabel(Text("Settings"))
-            .buttonPressEffect()
-            
-            Button {
-                NSApplication.shared.terminate(nil)
-            } label: {
-                Image(systemName: "power")
-                    .font(.system(size: 14))
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel(Text("Quit Application"))
-            .buttonPressEffect()
+            .accessibilityLabel(Text("notifications.search"))
         }
-        .padding(.vertical, 0)
-        .padding(.horizontal, 4)
     }
 
     private var searchBar: some View {
@@ -319,32 +183,7 @@ private struct NotificationRow: View {
     @State private var avatarImage: NSImage?
     @State private var isLoadingAvatar = false
     @State private var cachedSenderName: String?
-    @State private var isPressed = false
-    
-    private var cardBackgroundColor: Color {
-        if notification.isMention {
-            return Color.orange.opacity(0.08)
-        } else if notification.isCommentNotification {
-            return Color.blue.opacity(0.05)
-        } else if notification.isStatusChangeNotification {
-            return Color.green.opacity(0.05)
-        } else {
-            return Color(.windowBackgroundColor)
-        }
-    }
-    
-    private var cardBorderColor: Color {
-        if notification.isMention {
-            return Color.orange.opacity(0.3)
-        } else if notification.isCommentNotification {
-            return Color.blue.opacity(0.2)
-        } else if notification.isStatusChangeNotification {
-            return Color.green.opacity(0.2)
-        } else {
-            return Color.clear
-        }
-    }
-    
+
     private var categoryIcon: String {
         if notification.isMention {
             return "at.circle.fill"
@@ -369,164 +208,102 @@ private struct NotificationRow: View {
         }
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top, spacing: 10) {
-                // Аватарка
-                Group {
-                    if isLoadingAvatar {
-                        Circle()
-                            .fill(Color.gray.opacity(0.2))
-                            .overlay(
-                                ProgressView()
-                                    .controlSize(.small)
-                                    .scaleEffect(0.7)
-                            )
-                    } else if let image = avatarImage {
-                        Image(nsImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } else {
-                        Circle()
-                            .fill(Color.gray.opacity(0.2))
-                            .overlay(
-                                Image(systemName: "person.fill")
-                                    .foregroundColor(.gray)
-                                    .font(.system(size: 14))
-                            )
-                    }
-                }
-                .frame(width: 32, height: 32)
-                .clipShape(Circle())
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    // ФИО с иконкой категории
-                    HStack(spacing: 6) {
-                        Image(systemName: categoryIcon)
-                            .foregroundColor(categoryColor)
-                            .font(.caption2)
-                        
-                        if let senderName = notification.senderName ?? cachedSenderName {
-                            Text(senderName)
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primary)
-                        }
-                    }
-                    
-                    // Время под ФИО
-                    HStack(alignment: .center, spacing: 6) {
-                        Text(notification.displayDate)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                    }
-                }
-            }
-            
-            // Контент без отступа (выровнен по левому краю)
-            VStack(alignment: .leading, spacing: notification.title.isEmpty ? 0 : 6) {
-                if !notification.title.isEmpty {
-                    Text(notification.title)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                
-                if !notification.body.isEmpty {
-                    Text(notification.body)
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
+    private var tint: EntityCardTint {
+        if notification.isMention { return .mention }
+        if notification.isCommentNotification { return .comment }
+        if notification.isStatusChangeNotification { return .statusChange }
+        return .neutral
+    }
 
-            HStack(spacing: 12) {
-                // Показываем количество комментариев только для уведомлений о комментариях
-                // Используем unreadCommentsCount если есть, иначе size только для комментариев
-                let commentsCount = notification.isCommentNotification ? (notification.unreadCommentsCount > 0 ? notification.unreadCommentsCount : notification.size) : 0
-                if commentsCount > 0 {
-                    HStack(spacing: 6) {
-                        Image(systemName: "bubble.right.fill")
-                            .font(.caption2)
-                        Text(String(format: String(localized: "notifications.comments"), commentsCount, commentsCount.pluralized((one: String(localized: "notifications.comment.one"), few: String(localized: "notifications.comment.few"), many: String(localized: "notifications.comment.many")))))
-                            .font(.caption)
-                            .fontWeight(.medium)
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(categoryColor)
-                    .clipShape(Capsule())
-                }
-                
-                Spacer()
-                
-                Button {
-                    onMarkRead()
-                } label: {
-                    HStack(spacing: 4) {
-                        if isMarkingAsRead {
-                            ProgressView()
-                                .controlSize(.small)
-                                .tint(.green)
-                                .scaleEffect(0.8)
-                        } else {
-                            Image(systemName: "checkmark")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                        }
-                    }
-                    .foregroundColor(.green)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.green.opacity(0.15))
-                    .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                .disabled(isMarkingAsRead)
-                .accessibilityLabel(Text("notifications.markRead"))
-            }
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(cardBackgroundColor)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(cardBorderColor, lineWidth: 1)
-                )
-                .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
+    private var commentBadge: EntityCardBadge? {
+        let commentsCount = notification.isCommentNotification
+            ? (notification.unreadCommentsCount > 0 ? notification.unreadCommentsCount : notification.size)
+            : 0
+        guard commentsCount > 0 else { return nil }
+        let plural = commentsCount.pluralized((
+            one: String(localized: "notifications.comment.one"),
+            few: String(localized: "notifications.comment.few"),
+            many: String(localized: "notifications.comment.many")
+        ))
+        let text = String(format: String(localized: "notifications.comments"), commentsCount, plural)
+        return .init(systemName: "bubble.right.fill", text: text, color: categoryColor)
+    }
+
+    private var avatarSource: EntityCardAvatar {
+        if let image = avatarImage { return .image(image) }
+        return .icon("person.fill")
+    }
+
+    var body: some View {
+        EntityCardRow(
+            avatar: avatarSource,
+            actorName: notification.senderName ?? cachedSenderName,
+            isActorPlaceholder: false,
+            categoryIcon: .init(systemName: categoryIcon, color: categoryColor),
+            time: notification.displayDate,
+            title: notification.title,
+            bodyText: notification.body.isEmpty ? nil : notification.body,
+            subBody: nil,
+            badge: commentBadge,
+            tint: tint,
+            isVisited: viewModel.isVisited(notification),
+            onTap: openNotificationLink,
+            trailing: { AnyView(markAsReadButton) }
         )
-        .contentShape(Rectangle())
-        .scaleEffect(isPressed ? 0.96 : 1.0)
-        .brightness(isPressed ? -0.05 : 0)
-        .opacity(viewModel.isVisited(notification) ? 0.65 : 1.0)
-        .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isPressed)
+        .overlay(loadingAvatarOverlay)
         .animation(.easeInOut(duration: 0.3), value: isMarkingAsRead)
-        .animation(.easeInOut(duration: 0.3), value: viewModel.isVisited(notification))
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    if !isPressed {
-                        isPressed = true
-                    }
-                }
-                .onEnded { _ in
-                    isPressed = false
-                    // Открываем ссылку после завершения жеста
-                    openNotificationLink()
-                }
-        )
         .onChange(of: notification.isRead) { _ in
             isMarkingAsRead = false
         }
         .task(id: notification.senderId) {
             await loadAvatar()
+        }
+    }
+
+    @ViewBuilder
+    private var markAsReadButton: some View {
+        Button(action: onMarkRead) {
+            HStack(spacing: 4) {
+                if isMarkingAsRead {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(.green)
+                        .scaleEffect(0.8)
+                } else {
+                    Image(systemName: "checkmark")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                }
+            }
+            .foregroundColor(.green)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.green.opacity(0.15))
+            .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(isMarkingAsRead)
+        .accessibilityLabel(Text("notifications.markRead"))
+    }
+
+    /// While the avatar is loading we want a small spinner — the overlay sits exactly
+    /// where the avatar lives in `EntityCardRow`. Only shown while in-flight; the row
+    /// renders the resolved image / fallback icon as soon as `avatarImage` is set.
+    @ViewBuilder
+    private var loadingAvatarOverlay: some View {
+        if isLoadingAvatar && avatarImage == nil {
+            VStack {
+                HStack {
+                    ProgressView()
+                        .controlSize(.small)
+                        .scaleEffect(0.7)
+                        .padding(.leading, 20)
+                        .padding(.top, 18)
+                    Spacer()
+                }
+                Spacer()
+            }
+            .allowsHitTesting(false)
         }
     }
     

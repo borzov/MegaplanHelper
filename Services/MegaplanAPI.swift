@@ -426,3 +426,171 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         session.invalidateAndCancel()
     }
 }
+
+// MARK: - Task endpoints (TaskService conformance)
+
+extension MegaplanAPI: TaskService, EmployeeService {
+    func fetchTasks(token: String,
+                    currentUserId: String,
+                    sortBy: TaskSortKey,
+                    statusFilter: TaskStatusFilter,
+                    limit: Int = 100) async throws -> [MegaplanTask] {
+        guard !currentUserId.isEmpty else {
+            throw NetworkError.missingToken
+        }
+
+        // Megaplan v3 expects the WHOLE query string to be a single JSON object,
+        // not URL-encoded `?key=value` pairs. Server explicitly enforces this:
+        //   "Query string should be json. For example /api/v3/uri?{\"key\": \"value\"}"
+        let filterTree = MegaplanTaskFilterBuilder.buildMyTasksFilter(currentUserId: currentUserId)
+        let sortField: [String: Any] = [
+            "contentType": "SortField",
+            "fieldName": sortBy.apiFieldName,
+            "desc": true
+        ]
+
+        var queryDict: [String: Any] = [
+            "filter": filterTree,
+            "sortBy": [sortField],
+            "limit": limit,
+            "fields": [
+                "responsible",
+                "owner",
+                "auditors",
+                "executors",
+                "activity",
+                "timeCreated",
+                "lastCommentTimeCreated",
+                "unreadCommentsCount",
+                "humanNumber",
+                "status",
+                "name"
+            ]
+        ]
+        if let statuses = statusFilter.apiStatuses {
+            queryDict["statuses"] = statuses
+        }
+
+        let path: String
+        do {
+            path = try Self.buildJSONQueryPath("/api/v3/task", query: queryDict)
+        } catch {
+            AppLogger.error("Failed to build task query JSON: \(error.localizedDescription)")
+            throw NetworkError.decodingFailed
+        }
+
+        let request = try makeRequest(path: path, method: "GET", body: nil, token: token)
+
+        do {
+            let data = try await perform(request)
+            AppLogger.debug("Raw tasks response (\(data.count) bytes)")
+            do {
+                let envelope = try decoder.decode(TaskListEnvelope.self, from: data)
+                AppLogger.debug("Parsed \(envelope.items.count) tasks")
+
+                // Seed UserInfoCache with whatever participant data the response did include —
+                // partial info is still useful (some tasks expose name+avatar even when the
+                // base TaskFilter request doesn't ask for nested avatar fields).
+                Self.seedUserInfoCacheFromTasks(data: data)
+
+                return envelope.items
+            } catch {
+                AppLogger.error("Failed to decode tasks: \(error.localizedDescription)")
+                throw NetworkError.decodingFailed
+            }
+        } catch {
+            throw NetworkError(error)
+        }
+    }
+
+    func fetchEmployee(id: String, token: String) async throws -> (name: String?, avatarURL: URL?) {
+        let request = try makeRequest(path: "/api/v3/employee/\(id)", method: "GET", body: nil, token: token)
+        let data = try await perform(request)
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let dataDict = json["data"] as? [String: Any] else {
+            throw NetworkError.decodingFailed
+        }
+        let name = NotificationParser.extractName(from: dataDict)
+        let avatarURL = NotificationParser.extractAvatarURL(from: dataDict)
+        return (name, avatarURL)
+    }
+
+    /// Walks the raw task-list JSON and pushes any usable {name + avatar} pairs
+    /// into the shared `UserInfoCache`. Mirrors `extractUserInfoFromNotifications`
+    /// — same cache, same key (employee id), so a user observed in either tab
+    /// instantly has avatars in the other.
+    private static func seedUserInfoCacheFromTasks(data: Data) {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let array = json["data"] as? [[String: Any]] else { return }
+
+        Task {
+            for taskDict in array {
+                let participantKeys = ["responsible", "owner"]
+                for key in participantKeys {
+                    if let dict = taskDict[key] as? [String: Any],
+                       let id = dict["id"] as? String,
+                       let name = NotificationParser.extractName(from: dict),
+                       let avatarURL = NotificationParser.extractAvatarURL(from: dict) {
+                        if await UserInfoCache.shared.getUserInfo(for: id) == nil {
+                            await UserInfoCache.shared.cacheUserInfo(userId: id, name: name, avatarURL: avatarURL)
+                        }
+                    }
+                }
+                // arrays
+                let arrayKeys = ["auditors", "executors", "participants"]
+                for key in arrayKeys {
+                    if let participants = taskDict[key] as? [[String: Any]] {
+                        for dict in participants {
+                            if let id = dict["id"] as? String,
+                               let name = NotificationParser.extractName(from: dict),
+                               let avatarURL = NotificationParser.extractAvatarURL(from: dict),
+                               await UserInfoCache.shared.getUserInfo(for: id) == nil {
+                                await UserInfoCache.shared.cacheUserInfo(userId: id, name: name, avatarURL: avatarURL)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    func fetchCurrentUserId(token: String) async throws -> String {
+        let request = try makeRequest(path: "/api/v3/currentUser", method: "GET", body: nil, token: token)
+        do {
+            let data = try await perform(request)
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let dataDict = json["data"] as? [String: Any] else {
+                AppLogger.error("currentUser response missing 'data' object")
+                throw NetworkError.decodingFailed
+            }
+
+            if let id = dataDict["id"] as? String, !id.isEmpty {
+                return id
+            }
+            if let intId = dataDict["id"] as? Int {
+                return String(intId)
+            }
+
+            AppLogger.error("currentUser response missing 'id' field")
+            throw NetworkError.decodingFailed
+        } catch {
+            throw NetworkError(error)
+        }
+    }
+
+    /// Builds a `/path?<percent-encoded JSON>` string, the format Megaplan v3 expects.
+    private static func buildJSONQueryPath(_ basePath: String, query: [String: Any]) throws -> String {
+        let data = try JSONSerialization.data(withJSONObject: query, options: [.sortedKeys])
+        guard let jsonString = String(data: data, encoding: .utf8) else {
+            throw NetworkError.decodingFailed
+        }
+        // Encode characters that aren't valid in URL queries — primarily { } [ ] " < > and backslash.
+        // RFC 3986 sub-delims (: , ; etc.) stay unescaped, which JSON parses cleanly.
+        var allowed = CharacterSet.urlQueryAllowed
+        allowed.remove(charactersIn: "+&=#?")  // also escape these to avoid query-key confusion
+        guard let encoded = jsonString.addingPercentEncoding(withAllowedCharacters: allowed) else {
+            throw NetworkError.decodingFailed
+        }
+        return "\(basePath)?\(encoded)"
+    }
+}

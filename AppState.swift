@@ -29,7 +29,15 @@ final class AppState: ObservableObject {
     @Published private(set) var autoLaunchEnabled: Bool
     @Published var tempCredentials: MegaplanCredentials
 
-    let api: AuthenticationService & NotificationService
+    // MARK: - Tasks tab state
+    @Published private(set) var tasks: [MegaplanTask] = []
+    @Published private(set) var isTasksLoading: Bool = false
+    @Published private(set) var taskSortKey: TaskSortKey = .activity
+    @Published private(set) var taskStatusFilter: TaskStatusFilter = .active
+    @Published private(set) var lastTasksSyncTime: Date?
+
+    let api: AuthenticationService & NotificationService & TaskService & EmployeeService
+    private var currentUserId: String?
     private let keychain = KeychainManager()
     private let userDefaults: UserDefaults
     private let notificationManager = NotificationManager.shared
@@ -48,7 +56,7 @@ final class AppState: ObservableObject {
     private var isSessionRestored = false
 
     init(
-        api: AuthenticationService & NotificationService = MegaplanAPI(),
+        api: AuthenticationService & NotificationService & TaskService & EmployeeService = MegaplanAPI(),
         userDefaults: UserDefaults = .standard
     ) {
         self.api = api
@@ -68,6 +76,15 @@ final class AppState: ObservableObject {
         }
         self.autoLaunchEnabled = userDefaults.bool(forKey: Constants.UserDefaultsKeys.autoLaunch)
         self.refreshScheduler = RefreshScheduler(interval: intervalValue)
+
+        if let storedSort = userDefaults.string(forKey: Constants.UserDefaultsKeys.taskSortKey),
+           let sortKey = TaskSortKey(rawValue: storedSort) {
+            self.taskSortKey = sortKey
+        }
+        if let storedFilter = userDefaults.string(forKey: Constants.UserDefaultsKeys.taskStatusFilter),
+           let filter = TaskStatusFilter(rawValue: storedFilter) {
+            self.taskStatusFilter = filter
+        }
         
         // Инициализация tempCredentials используя локальные переменные
         self.tempCredentials = MegaplanCredentials(
@@ -88,6 +105,18 @@ final class AppState: ObservableObject {
         // Запрашиваем разрешение на уведомления при запуске
         Task {
             _ = await notificationManager.requestAuthorization()
+        }
+
+        // Wire UserInfoResolver so any view can lazily look up an employee by id
+        // without holding a direct reference to the API or the access token.
+        let resolverApi = api
+        Task { [weak self] in
+            await UserInfoResolver.shared.configure(
+                api: resolverApi,
+                tokenProvider: { [weak self] in
+                    await MainActor.run { self?.accessToken }
+                }
+            )
         }
 
         // Subscribe to certificate pinning failure notifications
@@ -196,6 +225,9 @@ final class AppState: ObservableObject {
         certificatePinningFailed = false
         lastSuccessfulNotifications = []
         lastSuccessfulUnreadCount = 0
+        tasks = []
+        currentUserId = nil
+        lastTasksSyncTime = nil
         stopRefreshTimer()
 
         isShuttingDown = false
@@ -261,6 +293,20 @@ final class AppState: ObservableObject {
         tempCredentials = credentials
     }
     
+    func updateTaskSortKey(_ key: TaskSortKey) {
+        guard key != taskSortKey else { return }
+        taskSortKey = key
+        userDefaults.set(key.rawValue, forKey: Constants.UserDefaultsKeys.taskSortKey)
+        refreshNow()
+    }
+
+    func updateTaskStatusFilter(_ filter: TaskStatusFilter) {
+        guard filter != taskStatusFilter else { return }
+        taskStatusFilter = filter
+        userDefaults.set(filter.rawValue, forKey: Constants.UserDefaultsKeys.taskStatusFilter)
+        refreshNow()
+    }
+
     func updateAutoLaunch(enabled: Bool) {
         autoLaunchEnabled = enabled
         userDefaults.set(enabled, forKey: Constants.UserDefaultsKeys.autoLaunch)
@@ -387,6 +433,39 @@ final class AppState: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
+        // Lazily resolve current user id once per session — used by the tasks endpoint filter.
+        if currentUserId == nil {
+            do {
+                currentUserId = try await api.fetchCurrentUserId(token: token)
+                AppLogger.debug("Resolved currentUserId: \(currentUserId ?? "nil")")
+            } catch {
+                AppLogger.warning("Failed to resolve currentUserId: \(error.localizedDescription)")
+            }
+        }
+
+        // Tasks fetch runs in parallel with notifications and is decoupled from retry logic
+        // so a tasks failure cannot block the notification refresh path.
+        let userIdForTasks = currentUserId
+        let sortKey = taskSortKey
+        let statusFilter = taskStatusFilter
+        let tasksTask = Task<[MegaplanTask]?, Never> { [weak self] in
+            guard let self, let uid = userIdForTasks, !uid.isEmpty else { return nil }
+            await MainActor.run { self.isTasksLoading = true }
+            defer {
+                Task { @MainActor in self.isTasksLoading = false }
+            }
+            do {
+                return try await self.api.fetchTasks(token: token,
+                                                     currentUserId: uid,
+                                                     sortBy: sortKey,
+                                                     statusFilter: statusFilter,
+                                                     limit: 100)
+            } catch {
+                AppLogger.warning("fetchTasks failed: \(error.localizedDescription)")
+                return nil
+            }
+        }
+
         do {
             // Используем retry механизм для загрузки уведомлений
             let (fetchedNotifications, counter) = try await errorRecoveryService.executeWithRetry(
@@ -429,9 +508,18 @@ final class AppState: ObservableObject {
             withAnimation(.easeInOut) {
                 notifications = fetchedNotifications
             }
-            
+
             apiUnreadCount = counter
             AppLogger.debug("Refreshed: \(fetchedNotifications.count) notifications, \(counter) unread, \(newUnreadNotifications.count) new unread")
+
+            // Apply tasks result independently — failure here is non-fatal.
+            if let fetchedTasks = await tasksTask.value {
+                withAnimation(.easeInOut) {
+                    tasks = fetchedTasks
+                }
+                lastTasksSyncTime = Date()
+                AppLogger.debug("Refreshed: \(fetchedTasks.count) tasks")
+            }
         } catch NetworkError.offline {
             // Переход в оффлайн-режим без показа ошибки
             AppLogger.info("No internet connection, entering offline mode")

@@ -109,3 +109,43 @@
 
 // Security
 "security.pinning.warning" = "Security warning: The server certificate has changed. This may indicate a security issue or certificate update. The connection is encrypted but not verified against known certificates.";
+
+// Tabs
+"popover.greeting" = "Hi, %@ 👋";
+"tabs.notifications" = "Notifications";
+"tabs.tasks" = "Tasks";
+
+// Tasks tab
+"tasks.untitled" = "Untitled";
+"tasks.responsible.none" = "Unassigned";
+"tasks.row.created" = "created %@";
+"tasks.empty.title" = "No tasks";
+"tasks.empty.subtitle" = "Tasks you participate in will appear here.";
+"tasks.search.placeholder" = "Search tasks...";
+
+// Tasks — sort
+"tasks.sort.activity" = "By activity";
+"tasks.sort.created" = "By creation";
+"tasks.sort.lastComment" = "By last comment";
+
+// Tasks — filter
+"tasks.filter.active" = "Active";
+"tasks.filter.all" = "All";
+
+// Tasks — relative time
+"tasks.time.justNow" = "just now";
+"tasks.time.minutesAgo" = "%d min ago";
+"tasks.time.yesterday" = "yesterday";
+
+// Tasks — statuses
+"tasks.status.created" = "Created";
+"tasks.status.assigned" = "Assigned";
+"tasks.status.accepted" = "Accepted";
+"tasks.status.done" = "Done";
+"tasks.status.completed" = "Completed";
+"tasks.status.rejected" = "Rejected";
+"tasks.status.cancelled" = "Cancelled";
+"tasks.status.expired" = "Expired";
+"tasks.status.delayed" = "Delayed";
+"tasks.status.template" = "Template";
+"tasks.status.overdue" = "Overdue";

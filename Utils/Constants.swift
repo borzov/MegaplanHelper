@@ -28,6 +28,9 @@ enum Constants {
         static let theme = "megaplan.theme"
         static let fontSize = "megaplan.fontSize"
         static let visitedNotificationIds = "megaplan.visitedNotificationIds"
+        static let visitedTaskIds = "megaplan.visitedTaskIds"
+        static let taskSortKey = "megaplan.tasks.sortKey"
+        static let taskStatusFilter = "megaplan.tasks.statusFilter"
     }
 
     enum Keychain {

@@ -109,3 +109,43 @@
 
 // Security
 "security.pinning.warning" = "Предупреждение безопасности: сертификат сервера изменился. Это может указывать на проблему безопасности или обновление сертификата. Соединение зашифровано, но не проверено на соответствие известным сертификатам.";
+
+// Tabs
+"popover.greeting" = "Привет, %@ 👋";
+"tabs.notifications" = "Уведомления";
+"tabs.tasks" = "Задачи";
+
+// Tasks tab
+"tasks.untitled" = "Без названия";
+"tasks.responsible.none" = "Без ответственного";
+"tasks.row.created" = "создано %@";
+"tasks.empty.title" = "Нет задач";
+"tasks.empty.subtitle" = "Здесь появятся задачи, в которых вы участвуете.";
+"tasks.search.placeholder" = "Поиск задач...";
+
+// Tasks — sort
+"tasks.sort.activity" = "По обновлению";
+"tasks.sort.created" = "По дате создания";
+"tasks.sort.lastComment" = "По комментарию";
+
+// Tasks — filter
+"tasks.filter.active" = "Активные";
+"tasks.filter.all" = "Все";
+
+// Tasks — relative time
+"tasks.time.justNow" = "только что";
+"tasks.time.minutesAgo" = "%d мин назад";
+"tasks.time.yesterday" = "вчера";
+
+// Tasks — statuses
+"tasks.status.created" = "Создана";
+"tasks.status.assigned" = "Назначена";
+"tasks.status.accepted" = "Принята";
+"tasks.status.done" = "Готова";
+"tasks.status.completed" = "Завершена";
+"tasks.status.rejected" = "Отклонена";
+"tasks.status.cancelled" = "Отменена";
+"tasks.status.expired" = "Просрочена";
+"tasks.status.delayed" = "Отложена";
+"tasks.status.template" = "Шаблон";
+"tasks.status.overdue" = "Просрочена";

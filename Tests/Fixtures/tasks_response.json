@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "status": 200,
+    "errors": [],
+    "pagination": { "count": 3, "limit": 100 }
+  },
+  "data": [
+    {
+      "contentType": "Task",
+      "id": "1001",
+      "name": "Аналитика Q2 — подготовить отчёт",
+      "status": "assigned",
+      "humanNumber": 1001,
+      "unreadCommentsCount": 3,
+      "responsible": {
+        "contentType": "Employee",
+        "id": "123",
+        "name": "Иванова Анна",
+        "avatarUrl": "https://demo.megaplan.ru/img/avatar/123.png"
+      },
+      "owner": {
+        "contentType": "Employee",
+        "id": "456",
+        "name": "Петров Сергей"
+      },
+      "auditors": [
+        { "contentType": "Employee", "id": "789", "name": "Орлов Дмитрий" }
+      ],
+      "executors": [],
+      "timeCreated": { "contentType": "DateTime", "value": "2026-04-10T10:30:00+03:00" },
+      "activity": { "contentType": "DateTime", "value": "2026-04-25T12:48:00+03:00" },
+      "lastCommentTimeCreated": { "contentType": "DateTime", "value": "2026-04-25T11:15:00+03:00" }
+    },
+    {
+      "contentType": "Task",
+      "id": "1002",
+      "name": "Ревью дизайна попапа",
+      "status": "accepted",
+      "humanNumber": 1002,
+      "unreadCommentsCount": 0,
+      "responsible": {
+        "contentType": "Employee",
+        "id": "456",
+        "name": "Петров Сергей"
+      },
+      "owner": {
+        "contentType": "Employee",
+        "id": "123",
+        "name": "Иванова Анна"
+      },
+      "auditors": [],
+      "executors": [],
+      "timeCreated": { "contentType": "DateTime", "value": "2026-04-24T09:00:00+03:00" },
+      "activity": { "contentType": "DateTime", "value": "2026-04-25T12:31:00+03:00" }
+    },
+    {
+      "contentType": "Task",
+      "id": "1003",
+      "name": "Баг в биллинге",
+      "status": "overdue",
+      "humanNumber": 1003,
+      "unreadCommentsCount": 1,
+      "responsible": {
+        "contentType": "Employee",
+        "id": "111",
+        "name": "Борзов Максим"
+      },
+      "owner": null,
+      "auditors": [],
+      "executors": [],
+      "timeCreated": { "contentType": "DateTime", "value": "2026-04-10T14:00:00+03:00" }
+    }
+  ]
+}

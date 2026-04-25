@@ -42,6 +42,18 @@
 		C2FF00022F559001001FD92E /* CertificatePinning.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FF00012F559001001FD92E /* CertificatePinning.swift */; };
 		C2FF00042F559001001FD92E /* NotificationDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FF00032F559001001FD92E /* NotificationDTO.swift */; };
 		C2FF00062F559001001FD92E /* URLValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FF00052F559001001FD92E /* URLValidator.swift */; };
+		BB000020 /* MegaplanTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000010 /* MegaplanTask.swift */; };
+		BB000021 /* TaskDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000011 /* TaskDTO.swift */; };
+		BB000022 /* MegaplanTaskFilterBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000012 /* MegaplanTaskFilterBuilder.swift */; };
+		BB000023 /* MegaplanAPI+Tasks.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000013 /* MegaplanAPI+Tasks.swift */; };
+		BB000024 /* TaskListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000014 /* TaskListViewModel.swift */; };
+		BB000025 /* RootPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000015 /* RootPopoverView.swift */; };
+		BB000026 /* TaskListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000016 /* TaskListView.swift */; };
+		BB000027 /* PopoverHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000017 /* PopoverHeaderView.swift */; };
+		BB000028 /* TaskRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000018 /* TaskRow.swift */; };
+		BB000029 /* DateFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000019 /* DateFormatters.swift */; };
+		BB00002A /* UserInfoResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00001A /* UserInfoResolver.swift */; };
+		BB00002B /* EntityCardRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00001B /* EntityCardRow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -81,6 +93,18 @@
 		C2FF00012F559001001FD92E /* CertificatePinning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificatePinning.swift; sourceTree = "<group>"; };
 		C2FF00032F559001001FD92E /* NotificationDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDTO.swift; sourceTree = "<group>"; };
 		C2FF00052F559001001FD92E /* URLValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLValidator.swift; sourceTree = "<group>"; };
+		BB000010 /* MegaplanTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanTask.swift; sourceTree = "<group>"; };
+		BB000011 /* TaskDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDTO.swift; sourceTree = "<group>"; };
+		BB000012 /* MegaplanTaskFilterBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanTaskFilterBuilder.swift; sourceTree = "<group>"; };
+		BB000013 /* MegaplanAPI+Tasks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MegaplanAPI+Tasks.swift"; sourceTree = "<group>"; };
+		BB000014 /* TaskListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskListViewModel.swift; sourceTree = "<group>"; };
+		BB000015 /* RootPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootPopoverView.swift; sourceTree = "<group>"; };
+		BB000016 /* TaskListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskListView.swift; sourceTree = "<group>"; };
+		BB000017 /* PopoverHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverHeaderView.swift; sourceTree = "<group>"; };
+		BB000018 /* TaskRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRow.swift; sourceTree = "<group>"; };
+		BB000019 /* DateFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatters.swift; sourceTree = "<group>"; };
+		BB00001A /* UserInfoResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInfoResolver.swift; sourceTree = "<group>"; };
+		BB00001B /* EntityCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityCardRow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -130,6 +154,7 @@
 			children = (
 				AA000012 /* MegaplanCredentials.swift */,
 				AA000013 /* MegaplanNotification.swift */,
+				BB000010 /* MegaplanTask.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -147,6 +172,10 @@
 				C262F8592EBA978C00CDE7A0 /* AvatarCacheManager.swift */,
 				AA000014 /* KeychainManager.swift */,
 				AA000015 /* MegaplanAPI.swift */,
+				BB000013 /* MegaplanAPI+Tasks.swift */,
+				BB000011 /* TaskDTO.swift */,
+				BB000012 /* MegaplanTaskFilterBuilder.swift */,
+				BB00001A /* UserInfoResolver.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -162,6 +191,7 @@
 				AA000016 /* Constants.swift */,
 				AA000017 /* NetworkError.swift */,
 				AA00002A /* StringExtensions.swift */,
+				BB000019 /* DateFormatters.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -173,6 +203,8 @@
 				AA000018 /* AuthView.swift */,
 				AA000019 /* NotificationListView.swift */,
 				AA00001A /* SettingsView.swift */,
+				BB000015 /* RootPopoverView.swift */,
+				BB000016 /* TaskListView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -208,6 +240,7 @@
 			children = (
 				C2EE49292EC3D205004AEF47 /* NotificationListViewModel.swift */,
 				C2EE492A2EC3D205004AEF47 /* SettingsViewModel.swift */,
+				BB000014 /* TaskListViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -220,6 +253,9 @@
 				C23AC9BB2F0E7FCA001FD92E /* ToastView.swift */,
 				C2EE492F2EC3D21F004AEF47 /* LoadingStateView.swift */,
 				C2EE49302EC3D21F004AEF47 /* SkeletonView.swift */,
+				BB000017 /* PopoverHeaderView.swift */,
+				BB000018 /* TaskRow.swift */,
+				BB00001B /* EntityCardRow.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -349,6 +385,18 @@
 				C2EE49332EC3D21F004AEF47 /* SkeletonView.swift in Sources */,
 				C281F0F42EACED2F00B88503 /* SettingsWindowManager.swift in Sources */,
 				AA00000B /* SettingsView.swift in Sources */,
+				BB000020 /* MegaplanTask.swift in Sources */,
+				BB000021 /* TaskDTO.swift in Sources */,
+				BB000022 /* MegaplanTaskFilterBuilder.swift in Sources */,
+				BB000023 /* MegaplanAPI+Tasks.swift in Sources */,
+				BB000024 /* TaskListViewModel.swift in Sources */,
+				BB000025 /* RootPopoverView.swift in Sources */,
+				BB000026 /* TaskListView.swift in Sources */,
+				BB000027 /* PopoverHeaderView.swift in Sources */,
+				BB000028 /* TaskRow.swift in Sources */,
+				BB000029 /* DateFormatters.swift in Sources */,
+				BB00002A /* UserInfoResolver.swift in Sources */,
+				BB00002B /* EntityCardRow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
