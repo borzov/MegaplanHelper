@@ -88,6 +88,8 @@
 "settings.appearance.preview.title" = "Предпросмотр";
 "settings.appearance.preview.title2" = "Запрос на согласование";
 "settings.appearance.preview.body" = "Прошу проверить пункт 3.2 о сроках поставки и подтвердить";
+"settings.appearance.preview.senderName" = "Анна Петрова";
+"settings.appearance.preview.senderInitials" = "АП";
 "settings.behavior" = "Поведение";
 "settings.showOnlyUnread" = "Показывать только непрочитанные";
 "settings.showOnlyUnreadDescription" = "Скрывать прочитанные уведомления";
