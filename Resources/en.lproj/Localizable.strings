@@ -237,6 +237,12 @@
 "settings.storage.avatarsTitle" = "Avatar cache";
 "settings.storage.statsLine" = "%@ · %d entries";
 "settings.storage.clear" = "Clear";
+"settings.storage.cacheSection" = "Cache";
+"settings.storage.dataSection" = "Data";
+"settings.storage.export" = "Export settings";
+"settings.storage.import" = "Import settings";
+"settings.storage.reset" = "Reset to defaults";
+"settings.storage.resetConfirm" = "Reset all settings to defaults?";
 
 "settings.shortcuts.section" = "Global shortcuts";
 "settings.shortcuts.hint" = "Work while the app is running. Click Record, then press a combination.";

@@ -238,6 +238,12 @@
 "settings.storage.avatarsTitle" = "Кэш аватаров";
 "settings.storage.statsLine" = "%@ · %d записей";
 "settings.storage.clear" = "Очистить";
+"settings.storage.cacheSection" = "Кэш";
+"settings.storage.dataSection" = "Данные";
+"settings.storage.export" = "Экспортировать настройки";
+"settings.storage.import" = "Импортировать настройки";
+"settings.storage.reset" = "Сбросить к умолчаниям";
+"settings.storage.resetConfirm" = "Сбросить все настройки к значениям по умолчанию?";
 "shortcuts.clear" = "Сбросить";
 
 "settings.shortcuts.section" = "Глобальные горячие клавиши";
