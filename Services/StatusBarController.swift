@@ -7,6 +7,8 @@ import Combine
 final class StatusBarController: NSObject, ObservableObject {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
+    /// Weak singleton reference for SwiftUI views that need to drive popover sizing without explicit injection.
+    static weak var current: StatusBarController?
     private var eventMonitor: Any?
     private weak var appState: AppState?
     private weak var notificationListViewModel: NotificationListViewModel?
@@ -16,6 +18,7 @@ final class StatusBarController: NSObject, ObservableObject {
 
     override init() {
         super.init()
+        Self.current = self
     }
 
     /// Sets up the status bar item with the given app state and content view.
@@ -265,6 +268,25 @@ final class StatusBarController: NSObject, ObservableObject {
 
     @objc private func menuQuitClicked() {
         NSApplication.shared.terminate(nil)
+    }
+
+    // MARK: - Popover Sizing
+
+    /// Animates popover content size to fit current step. Used by AuthView wizard.
+    @MainActor
+    func setPopoverContentSize(width: CGFloat, height: CGFloat, animated: Bool = true) {
+        guard let popover else { return }
+        let target = NSSize(width: width, height: height)
+        if animated, popover.isShown {
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = 0.28
+                ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                ctx.allowsImplicitAnimation = true
+                popover.contentSize = target
+            }
+        } else {
+            popover.contentSize = target
+        }
     }
 
     // MARK: - Cleanup
