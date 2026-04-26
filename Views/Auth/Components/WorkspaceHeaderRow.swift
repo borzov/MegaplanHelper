@@ -26,8 +26,8 @@ struct WorkspaceHeaderRow: View {
                 Text(info?.displayName ?? domain)
                     .font(.callout.weight(.semibold))
                     .lineLimit(1)
-                if info?.displayName != nil {
-                    Text(domain)
+                if let info, info.displayName != nil {
+                    Text(info.canonicalDomain)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
