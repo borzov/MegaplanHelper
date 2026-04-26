@@ -5,14 +5,12 @@ struct SettingsView: View {
     @AppStorage("settings.lastSection") private var lastSectionRaw: String = SettingsSection.account.rawValue
     @State private var selection: SettingsSection?
     @State private var searchQuery: String = ""
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
         NavigationSplitView {
             sidebar
                 .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
-                .searchable(text: $searchQuery,
-                            placement: .sidebar,
-                            prompt: Text(String(localized: "settings.searchPrompt")))
         } detail: {
             detailContent
         }
@@ -29,23 +27,69 @@ struct SettingsView: View {
     }
 
     private var sidebar: some View {
+        VStack(spacing: 0) {
+            searchField
+                .padding(.horizontal, 12)
+                .padding(.top, 10)
+                .padding(.bottom, 6)
+
+            sidebarList
+        }
+    }
+
+    /// Custom search field embedded above the list — matches the look of
+    /// macOS Sonoma+ System Settings (single capsule, full sidebar width).
+    private var searchField: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .imageScale(.small)
+            TextField(String(localized: "settings.searchPrompt"), text: $searchQuery)
+                .textFieldStyle(.plain)
+                .focused($searchFocused)
+            if !searchQuery.isEmpty {
+                Button {
+                    searchQuery = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                        .imageScale(.small)
+                }
+                .buttonStyle(.plain)
+                .help(String(localized: "general.clear"))
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
+        .overlay(
+            RoundedRectangle(cornerRadius: 7)
+                .stroke(searchFocused ? Color.accentColor : Color.clear, lineWidth: 1.5)
+        )
+        .animation(.snappy(duration: 0.18), value: searchFocused)
+    }
+
+    private var sidebarList: some View {
         List(selection: $selection) {
             ForEach(SettingsGroup.allCases) { group in
-                Section {
-                    ForEach(visibleSections(for: group), id: \.self) { section in
-                        NavigationLink(value: section) {
-                            Label {
-                                Text(section.titleKey)
-                            } icon: {
-                                Image(systemName: section.iconName)
-                                    .frame(width: 18, height: 18)
-                                    .foregroundStyle(.white)
-                                    .background(tintColor(section.tint), in: RoundedRectangle(cornerRadius: 4))
+                let visible = visibleSections(for: group)
+                if !visible.isEmpty {
+                    Section {
+                        ForEach(visible, id: \.self) { section in
+                            NavigationLink(value: section) {
+                                Label {
+                                    Text(section.titleKey)
+                                } icon: {
+                                    Image(systemName: section.iconName)
+                                        .frame(width: 18, height: 18)
+                                        .foregroundStyle(.white)
+                                        .background(tintColor(section.tint), in: RoundedRectangle(cornerRadius: 4))
+                                }
                             }
                         }
+                    } header: {
+                        Text(group.titleKey)
                     }
-                } header: {
-                    Text(group.titleKey)
                 }
             }
         }

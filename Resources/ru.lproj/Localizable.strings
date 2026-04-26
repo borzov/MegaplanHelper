@@ -51,6 +51,7 @@
 "error.title" = "Ошибка";
 "general.ok" = "OK";
 "general.cancel" = "Отмена";
+"general.clear" = "Очистить";
 "error.invalidURL" = "Адрес сервера введен некорректно.";
 "error.unauthorized" = "Сессия истекла. Выполните вход снова.";
 "error.decoding" = "Не удалось обработать ответ сервера.";

@@ -51,6 +51,7 @@
 "error.title" = "Error";
 "general.ok" = "OK";
 "general.cancel" = "Cancel";
+"general.clear" = "Clear";
 "error.invalidURL" = "The server address looks incorrect.";
 "error.unauthorized" = "Your session has expired. Please sign in again.";
 "error.decoding" = "Failed to parse the server response.";
