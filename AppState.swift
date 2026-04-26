@@ -536,6 +536,30 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Returns the password saved for (domain, login) if it matches the
+    /// currently-stored credentials, otherwise nil. Used by AuthView wizard
+    /// to restore the password field when the user returns to Step 2.
+    func loadSavedCredentialsFromKeychain(domain: String, login: String) async -> String? {
+        let trimmedDomain = domain.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let trimmedLogin = login.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmedDomain.isEmpty, !trimmedLogin.isEmpty else { return nil }
+
+        let storedDomain = userDefaults.string(forKey: Constants.UserDefaultsKeys.domain)?
+            .lowercased() ?? ""
+        let storedLogin = userDefaults.string(forKey: Constants.UserDefaultsKeys.username) ?? ""
+
+        guard storedDomain == trimmedDomain, storedLogin == trimmedLogin else { return nil }
+
+        let account = Constants.Keychain.passwordAccount(for: trimmedLogin, domain: trimmedDomain)
+        do {
+            return try keychain.read(service: Constants.Keychain.service, account: account)
+        } catch {
+            AppLogger.warning("Keychain read failed in loadSavedCredentialsFromKeychain: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
     private func restoreSession() async {
         guard !domain.isEmpty else {
             AppLogger.debug("No stored domain, skipping session restore")
