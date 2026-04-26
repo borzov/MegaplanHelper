@@ -70,6 +70,10 @@ struct AuthCredentialsStepView: View {
             }
         }
         .accessibilityElement(children: .contain)
+        .onDisappear {
+            emailValidationTask?.cancel()
+            emailValidationTask = nil
+        }
     }
 
     private var loginField: some View {

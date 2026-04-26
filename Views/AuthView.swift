@@ -112,6 +112,7 @@ struct AuthView: View {
         let confirmed = info?.canonicalDomain ?? domain.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !confirmed.isEmpty else { return }
 
+        appState.lastAuthError = nil
         withAnimation(.easeInOut(duration: 0.28)) {
             step = .credentials(domain: confirmed, info: info)
         }
