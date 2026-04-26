@@ -117,17 +117,15 @@ struct AuthView: View {
         withAnimation(.easeInOut(duration: 0.28)) {
             step = .credentials(domain: confirmed, info: info)
         }
-        NSAccessibility.post(element: NSApp as Any,
-                             notification: .layoutChanged)
+        NSAccessibility.post(element: NSApp, notification: .layoutChanged)
     }
 
     private func handleBack() {
+        appState.lastAuthError = nil
         withAnimation(.easeInOut(duration: 0.28)) {
             step = .domain
         }
-        NSAccessibility.post(element: NSApp as Any,
-                             notification: .layoutChanged)
-        appState.lastAuthError = nil
+        NSAccessibility.post(element: NSApp, notification: .layoutChanged)
     }
 
     private func handleSubmit() {
