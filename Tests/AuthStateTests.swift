@@ -63,4 +63,10 @@ final class AuthStateTests: XCTestCase {
                            "Missing description for \(error)")
         }
     }
+
+    func testAuthFieldError_ServerErrorWithEmptyMessage_FallsBackToLocalizedString() {
+        let error = AuthFieldError.credentials(.serverError(""))
+        XCTAssertFalse(error.localizedDescription.isEmpty,
+                       "Empty server message must fall back to a localized string")
+    }
 }

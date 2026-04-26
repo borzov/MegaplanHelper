@@ -8,6 +8,7 @@ enum AuthFormStep: Hashable {
 struct WorkspaceInfo: Equatable, Hashable {
     let canonicalDomain: String
     let displayName: String?
+    /// Absolute URL of the workspace favicon, if provided by the probe response.
     let faviconURL: URL?
     let supportsSSO: Bool
 }
@@ -65,7 +66,9 @@ enum AuthFieldError: Equatable {
         case .credentials(.unauthorized):
             return String(localized: "auth.error.unauthorized")
         case .credentials(.serverError(let message)):
-            return message
+            return message.isEmpty
+                ? String(localized: "auth.error.serverError")
+                : message
         case .lockout:
             return String(localized: "auth.error.tooManyAttempts")
         }

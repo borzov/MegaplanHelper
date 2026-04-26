@@ -29,7 +29,8 @@
 "auth.error.invalidEmail" = "Введите корректный email";
 "auth.error.emptyPassword" = "Пароль не может быть пустым";
 "auth.error.unauthorized" = "Неверный логин или пароль";
-"auth.error.tooManyAttempts" = "Слишком много попыток. Попробуйте позже.";
+"auth.error.tooManyAttempts" = "Слишком много попыток. Попробуйте позже";
+"auth.error.serverError" = "Ошибка сервера";
 
 "settings.title" = "Настройки";
 "settings.account" = "Аккаунт";

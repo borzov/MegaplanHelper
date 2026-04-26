@@ -29,7 +29,8 @@
 "auth.error.invalidEmail" = "Enter a valid email";
 "auth.error.emptyPassword" = "Password cannot be empty";
 "auth.error.unauthorized" = "Wrong login or password";
-"auth.error.tooManyAttempts" = "Too many failed attempts. Try again later.";
+"auth.error.tooManyAttempts" = "Too many failed attempts. Try again later";
+"auth.error.serverError" = "Server error";
 
 "settings.title" = "Settings";
 "settings.account" = "Account";
