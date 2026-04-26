@@ -34,6 +34,7 @@
 "auth.error.banner.label" = "Ошибка";
 "auth.lockout.tryAgainIn" = "Повторите через";
 "auth.lockout.countdown.label" = "Осталось времени";
+"auth.step2.back" = "Назад к домену";
 
 "settings.title" = "Настройки";
 "settings.account" = "Аккаунт";

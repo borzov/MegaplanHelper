@@ -34,6 +34,7 @@
 "auth.error.banner.label" = "Error";
 "auth.lockout.tryAgainIn" = "Try again in";
 "auth.lockout.countdown.label" = "Time remaining";
+"auth.step2.back" = "Back to domain";
 
 "settings.title" = "Settings";
 "settings.account" = "Account";
