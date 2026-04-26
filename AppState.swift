@@ -545,13 +545,13 @@ final class AppState: ObservableObject {
 
         guard !trimmedDomain.isEmpty, !trimmedLogin.isEmpty else { return nil }
 
-        let storedDomain = userDefaults.string(forKey: Constants.UserDefaultsKeys.domain)?
-            .lowercased() ?? ""
+        let rawStoredDomain = userDefaults.string(forKey: Constants.UserDefaultsKeys.domain) ?? ""
+        let storedDomain = rawStoredDomain.lowercased()
         let storedLogin = userDefaults.string(forKey: Constants.UserDefaultsKeys.username) ?? ""
 
         guard storedDomain == trimmedDomain, storedLogin == trimmedLogin else { return nil }
 
-        let account = Constants.Keychain.passwordAccount(for: trimmedLogin, domain: trimmedDomain)
+        let account = Constants.Keychain.passwordAccount(for: storedLogin, domain: rawStoredDomain)
         do {
             return try keychain.read(service: Constants.Keychain.service, account: account)
         } catch {
