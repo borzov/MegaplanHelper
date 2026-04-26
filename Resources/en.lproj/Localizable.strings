@@ -241,6 +241,10 @@
 "shortcuts.record" = "Record";
 "shortcuts.stop" = "Stop";
 "shortcuts.clear" = "Clear";
+"shortcuts.clickToRecord" = "Click to record";
+"shortcuts.helpRecording" = "Press a combination, or Esc to cancel";
+"shortcuts.helpBound" = "Click to re-bind. Right-click to clear.";
+"shortcuts.helpUnbound" = "Click and press a key combination";
 
 // Settings — Storage
 "settings.storage.avatarsTitle" = "Avatar cache";

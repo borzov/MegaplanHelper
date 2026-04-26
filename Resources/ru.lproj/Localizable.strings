@@ -257,6 +257,10 @@
 "settings.storage.importInvalidJSON" = "Файл повреждён или содержит невалидный JSON.";
 "settings.storage.importTypeError" = "Неверный тип значения для «%@» — ожидался %@.";
 "shortcuts.clear" = "Сбросить";
+"shortcuts.clickToRecord" = "Нажмите для записи";
+"shortcuts.helpRecording" = "Нажмите комбинацию клавиш или Esc для отмены";
+"shortcuts.helpBound" = "Кликните, чтобы перезаписать. Правый клик — сбросить.";
+"shortcuts.helpUnbound" = "Кликните и нажмите комбинацию клавиш";
 
 "settings.shortcuts.section" = "Глобальные горячие клавиши";
 "settings.shortcuts.hint" = "Работают пока приложение запущено. Нажмите «Записать» и затем нужную комбинацию.";
