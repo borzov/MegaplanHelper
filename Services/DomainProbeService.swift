@@ -36,8 +36,7 @@ actor DomainProbeService {
         let state: DomainProbeState
         do {
             let (_, response) = try await session.data(for: request)
-            if let http = response as? HTTPURLResponse,
-               (200..<400).contains(http.statusCode) {
+            if response is HTTPURLResponse {
                 let info = WorkspaceInfo(canonicalDomain: baseURL.host ?? trimmed,
                                          displayName: nil,
                                          faviconURL: baseURL.appendingPathComponent("favicon.ico"),

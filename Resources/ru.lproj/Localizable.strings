@@ -151,6 +151,7 @@
 "tabs.tasks" = "Задачи";
 
 // Tasks tab
+"tasks.filter" = "Фильтр";
 "tasks.untitled" = "Без названия";
 "tasks.creator.none" = "Создатель неизвестен";
 "tasks.row.created" = "создано %@";

@@ -67,7 +67,7 @@ struct AuthCredentialsStepView: View {
                         LockoutCountdownView(lockedUntil: lockoutState.lockedUntil)
                     }
                 }
-                .padding(20)
+                .padding(24)
             }
         }
         .accessibilityElement(children: .contain)

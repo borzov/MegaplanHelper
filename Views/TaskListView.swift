@@ -7,22 +7,40 @@ struct TaskListView: View {
     @FocusState private var isSearchFieldFocused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            filterBar
-
+        VStack(alignment: .leading, spacing: 0) {
             if viewModel.isSearchActive {
                 searchBar
+                    .padding(.horizontal, 4)
+                    .padding(.top, 6)
+                    .padding(.bottom, 6)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isSearchFieldFocused = true
+                        }
+                    }
+                    .onDisappear { isSearchFieldFocused = false }
+            }
+
+            if viewModel.isFilterPanelActive {
+                filterBar
+                    .padding(.horizontal, 4)
+                    .padding(.top, 6)
+                    .padding(.bottom, 6)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
 
             if appState.isOffline {
                 OfflineBannerView(lastSyncTime: appState.lastTasksSyncTime ?? appState.lastSyncTime)
+                    .padding(.horizontal, 4)
+                    .padding(.bottom, 8)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
 
             content
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.isSearchActive)
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isFilterPanelActive)
         .animation(.easeInOut(duration: 0.3), value: viewModel.groupedTasks.count)
         .onAppear {
             if appState.isAuthenticated, appState.tasks.isEmpty {
@@ -75,28 +93,9 @@ struct TaskListView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            .frame(maxWidth: 140)
+            .frame(maxWidth: 160)
 
             Spacer()
-
-            Button {
-                withAnimation {
-                    viewModel.toggleSearch()
-                    if viewModel.isSearchActive {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            isSearchFieldFocused = true
-                        }
-                    } else {
-                        isSearchFieldFocused = false
-                    }
-                }
-            } label: {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(viewModel.isSearchActive ? .accentColor : .primary)
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel(Text("notifications.search"))
         }
     }
 
@@ -156,13 +155,9 @@ struct TaskListView: View {
                 LazyVStack(alignment: .leading, spacing: 10) {
                     ForEach(viewModel.groupedTasks) { group in
                         if !group.title.isEmpty {
-                            Text(group.title)
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.secondary)
-                                .textCase(.uppercase)
+                            SectionHeaderText(title: group.title)
                                 .padding(.horizontal, 4)
-                                .padding(.top, 6)
-                                .padding(.bottom, 2)
+                                .padding(.vertical, 12)
                         }
 
                         ForEach(group.tasks) { task in

@@ -15,6 +15,7 @@ final class TaskListViewModel: ObservableObject {
     @Published private(set) var groupedTasks: [TaskGroup] = []
     @Published var searchQuery: String = ""
     @Published var isSearchActive: Bool = false
+    @Published var isFilterPanelActive: Bool = false
     @Published private(set) var isServerSearching: Bool = false
 
     let appState: AppState

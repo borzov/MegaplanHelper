@@ -37,7 +37,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .environmentObject(appState)
             .environmentObject(notificationListViewModel)
             .environmentObject(taskListViewModel)
-            .frame(minWidth: 340, maxWidth: 400, minHeight: 600, maxHeight: 1000)
 
         let controller = StatusBarController()
         controller.setup(

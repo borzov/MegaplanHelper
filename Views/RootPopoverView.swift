@@ -11,40 +11,13 @@ struct RootPopoverView: View {
     @State private var selectedTab: AppTab = .notifications
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        Group {
             if appState.isAuthenticated {
-                PopoverHeaderView(
-                    selectedTab: $selectedTab,
-                    firstName: appState.firstName,
-                    unreadCount: appState.unreadCount,
-                    tasksUnreadCount: appState.tasksUnreadCount,
-                    isLoading: appState.isLoading || appState.isTasksLoading,
-                    onRefresh: { appState.refreshNow() }
-                )
-
-                Group {
-                    switch selectedTab {
-                    case .notifications:
-                        NotificationListView()
-                    case .tasks:
-                        TaskListView()
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-
-                footerButtons
+                authenticatedContent
             } else {
-                HStack {
-                    Text("notifications.title")
-                        .font(.headline)
-                    Spacer()
-                }
                 AuthView()
-                Spacer()
             }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color(nsColor: .windowBackgroundColor))
         .overlay(alignment: .bottom) {
             transientToast
@@ -57,6 +30,63 @@ struct RootPopoverView: View {
                 dismissButton: .default(Text("general.ok"))
             )
         }
+    }
+
+    private var authenticatedContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            PopoverHeaderView(
+                selectedTab: $selectedTab,
+                firstName: appState.firstName,
+                unreadCount: appState.unreadCount,
+                tasksUnreadCount: appState.tasksUnreadCount,
+                isLoading: appState.isLoading || appState.isTasksLoading,
+                isSearchActive: activeTabIsSearchActive,
+                isFilterActive: taskListViewModel.isFilterPanelActive,
+                showsFilterButton: selectedTab == .tasks,
+                onRefresh: { appState.refreshNow() },
+                onToggleSearch: toggleActiveTabSearch,
+                onToggleFilter: toggleTasksFilter
+            )
+
+            Group {
+                switch selectedTab {
+                case .notifications:
+                    NotificationListView()
+                case .tasks:
+                    TaskListView()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            footerButtons
+        }
+        .padding(16)
+        .frame(minWidth: 340, maxWidth: 400, minHeight: 600, maxHeight: 1000, alignment: .top)
+    }
+
+    private var activeTabIsSearchActive: Bool {
+        switch selectedTab {
+        case .notifications: return notificationListViewModel.isSearchActive
+        case .tasks: return taskListViewModel.isSearchActive
+        }
+    }
+
+    private func toggleActiveTabSearch() {
+        withAnimation {
+            switch selectedTab {
+            case .notifications:
+                notificationListViewModel.isSearchActive.toggle()
+                if !notificationListViewModel.isSearchActive {
+                    notificationListViewModel.clearSearch()
+                }
+            case .tasks:
+                taskListViewModel.toggleSearch()
+            }
+        }
+    }
+
+    private func toggleTasksFilter() {
+        withAnimation { taskListViewModel.isFilterPanelActive.toggle() }
     }
 
     @ViewBuilder

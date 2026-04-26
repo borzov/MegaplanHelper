@@ -15,8 +15,7 @@ struct AuthView: View {
 
     @State private var probeTask: Task<Void, Never>?
 
-    private let domainStepWidth: CGFloat = 370
-    private let credentialsStepWidth: CGFloat = 420
+    private let stepWidth: CGFloat = 420
     private let popoverHeight: CGFloat = 500
 
     var body: some View {
@@ -62,18 +61,18 @@ struct AuthView: View {
         }
         .frame(width: currentWidth, height: popoverHeight)
         .animation(.easeInOut(duration: 0.28), value: step)
-        .onAppear { hydrateInitialState() }
+        .onAppear {
+            hydrateInitialState()
+            StatusBarController.current?.setPopoverContentSize(
+                width: currentWidth, height: popoverHeight, animated: false
+            )
+        }
         .onChange(of: step) { _, _ in updatePopoverSize() }
     }
 
     // MARK: - Layout
 
-    private var currentWidth: CGFloat {
-        switch step {
-        case .domain: return domainStepWidth
-        case .credentials: return credentialsStepWidth
-        }
-    }
+    private var currentWidth: CGFloat { stepWidth }
 
     private func updatePopoverSize() {
         StatusBarController.current?.setPopoverContentSize(

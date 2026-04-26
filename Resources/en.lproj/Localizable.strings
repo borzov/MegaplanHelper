@@ -151,6 +151,7 @@
 "tabs.tasks" = "Tasks";
 
 // Tasks tab
+"tasks.filter" = "Filter";
 "tasks.untitled" = "Untitled";
 "tasks.creator.none" = "Unknown creator";
 "tasks.row.created" = "created %@";

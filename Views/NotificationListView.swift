@@ -8,12 +8,25 @@ struct NotificationListView: View {
     @FocusState private var isSearchFieldFocused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            contextualHeader
+        VStack(alignment: .leading, spacing: 0) {
+            if viewModel.isSearchActive {
+                searchBar
+                    .padding(.horizontal, 4)
+                    .padding(.top, 6)
+                    .padding(.bottom, 6)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isSearchFieldFocused = true
+                        }
+                    }
+                    .onDisappear { isSearchFieldFocused = false }
+            }
 
             content
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isSearchActive)
         .onAppear {
             if appState.isAuthenticated {
                 Task {
@@ -24,40 +37,6 @@ struct NotificationListView: View {
         // Примечание: ViewModel уже подписан на appState.$notifications через Combine
         // Не добавляйте .onChange здесь чтобы избежать дублирования обновлений
         .toast(isShowing: $showToast, message: String(localized: "toast.markedAsRead"))
-    }
-
-    /// Tab-local header: subtitle + search toggle. The greeting + global refresh
-    /// are owned by `PopoverHeaderView` in `RootPopoverView`.
-    private var contextualHeader: some View {
-        HStack(spacing: 8) {
-            if viewModel.isSearchActive && viewModel.searchQuery.count >= 2 {
-                Text(String(format: String(localized: "notifications.search.results"), viewModel.searchResultsCount))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-
-            Spacer()
-
-            Button {
-                withAnimation {
-                    viewModel.isSearchActive.toggle()
-                    if viewModel.isSearchActive {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            isSearchFieldFocused = true
-                        }
-                    } else {
-                        viewModel.clearSearch()
-                        isSearchFieldFocused = false
-                    }
-                }
-            } label: {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(viewModel.isSearchActive ? .accentColor : .primary)
-                    .font(.system(size: 13, weight: .medium))
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel(Text("notifications.search"))
-        }
     }
 
     private var searchBar: some View {
@@ -115,13 +94,7 @@ struct NotificationListView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
         } else {
-            VStack(spacing: 12) {
-                if viewModel.isSearchActive {
-                    searchBar
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-                
-                ScrollView {
+            ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
                     // Offline banner
                     if appState.isOffline {
@@ -131,16 +104,11 @@ struct NotificationListView: View {
 
                     ForEach(viewModel.groupedNotifications) { group in
                         if !group.title.isEmpty {
-                            // Заголовок группы
-                            Text(group.title)
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.secondary)
-                                .textCase(.uppercase)
+                            SectionHeaderText(title: group.title)
                                 .padding(.horizontal, 4)
-                                .padding(.top, 8)
-                                .padding(.bottom, 4)
+                                .padding(.vertical, 12)
                         }
-                        
+
                         ForEach(group.notifications) { notification in
                             NotificationRow(notification: notification, onMarkRead: {
                                 viewModel.markAsRead(notification)
@@ -162,8 +130,6 @@ struct NotificationListView: View {
                 await viewModel.refresh()
             }
             .animation(.easeInOut(duration: 0.3), value: viewModel.groupedNotifications.count)
-            }
-            .animation(.easeInOut(duration: 0.2), value: viewModel.isSearchActive)
         }
     }
 }
@@ -229,7 +195,7 @@ private struct NotificationRow: View {
             avatar: avatarSource,
             actorName: notification.senderName ?? cachedSenderName,
             isActorPlaceholder: false,
-            categoryIcon: .init(systemName: categoryIcon, color: categoryColor),
+            categoryIcon: nil,
             time: notification.displayDate,
             title: notification.title,
             bodyText: notification.body.isEmpty ? nil : notification.body,
