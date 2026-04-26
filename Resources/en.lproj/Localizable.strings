@@ -220,6 +220,8 @@
 "settings.account.reauthenticate" = "Re-authenticate";
 "settings.account.signOut" = "Sign out";
 "settings.account.signOutConfirm" = "Sign out?";
+"settings.account.showPassword" = "Show password";
+"settings.account.hidePassword" = "Hide password";
 
 // Settings — Sync & Refresh
 "settings.sync.refresh.hint" = "How often the app checks for new notifications";

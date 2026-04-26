@@ -222,6 +222,8 @@
 "settings.account.reauthenticate" = "Войти повторно";
 "settings.account.signOut" = "Выйти";
 "settings.account.signOutConfirm" = "Точно выйти?";
+"settings.account.showPassword" = "Показать пароль";
+"settings.account.hidePassword" = "Скрыть пароль";
 
 // Settings — Sync & Refresh
 "settings.sync.refresh.hint" = "Как часто приложение проверяет новые уведомления";

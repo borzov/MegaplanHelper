@@ -6,6 +6,7 @@ struct AccountSettingsView: View {
     @State private var login: String = ""
     @State private var password: String = ""
     @State private var showingLogoutAlert = false
+    @State private var isPasswordVisible = false
 
     var body: some View {
         Form {
@@ -23,14 +24,45 @@ struct AccountSettingsView: View {
             }
 
             Section(String(localized: "settings.account.server")) {
-                LabeledContent(String(localized: "settings.account.domainLabel")) {
-                    TextField("", text: $domain).textFieldStyle(.roundedBorder)
-                }
-                LabeledContent(String(localized: "settings.account.loginLabel")) {
-                    TextField("", text: $login).textFieldStyle(.roundedBorder)
-                }
+                TextField(String(localized: "settings.account.domainLabel"),
+                          text: $domain,
+                          prompt: Text("demo.megaplan.ru"))
+                    .textContentType(.URL)
+                    .autocorrectionDisabled()
+                    .multilineTextAlignment(.leading)
+
+                TextField(String(localized: "settings.account.loginLabel"),
+                          text: $login,
+                          prompt: Text("user@example.com"))
+                    .textContentType(.username)
+                    .autocorrectionDisabled()
+                    .multilineTextAlignment(.leading)
+
                 LabeledContent(String(localized: "settings.account.passwordLabel")) {
-                    SecureField("", text: $password).textFieldStyle(.roundedBorder)
+                    HStack(spacing: 4) {
+                        Group {
+                            if isPasswordVisible {
+                                TextField("", text: $password, prompt: Text("••••••••"))
+                            } else {
+                                SecureField("", text: $password, prompt: Text("••••••••"))
+                            }
+                        }
+                        .textContentType(.password)
+                        .autocorrectionDisabled()
+                        .multilineTextAlignment(.leading)
+
+                        Button {
+                            isPasswordVisible.toggle()
+                        } label: {
+                            Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
+                                .foregroundStyle(.secondary)
+                                .symbolEffect(.bounce, value: isPasswordVisible)
+                        }
+                        .buttonStyle(.plain)
+                        .help(String(localized: isPasswordVisible
+                                     ? "settings.account.hidePassword"
+                                     : "settings.account.showPassword"))
+                    }
                 }
             }
 
