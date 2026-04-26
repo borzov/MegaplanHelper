@@ -5,8 +5,9 @@ import XCTest
 final class AppStateLockoutTests: XCTestCase {
 
     func testLockoutState_FreshAppState_IsNil() {
-        let suite = UserDefaults(suiteName: "test-\(UUID().uuidString)")!
-        defer { UserDefaults.standard.removePersistentDomain(forName: suite.dictionaryRepresentation().description) }
+        let suiteName = "test-\(UUID().uuidString)"
+        let suite = UserDefaults(suiteName: suiteName)!
+        defer { suite.removePersistentDomain(forName: suiteName) }
         let state = AppState(userDefaults: suite)
         XCTAssertNil(state.lockoutState)
     }

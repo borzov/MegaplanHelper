@@ -72,6 +72,7 @@ final class AppState: ObservableObject {
     private var cachedPasswordData: Data?
     private var lastRefreshTime: Date?
     private let minimumRefreshInterval: TimeInterval = 5.0
+    private static let lockoutDuration: TimeInterval = 15 * 60
     private var failedLoginAttempts = 0
     private var lastFailedLoginTime: Date?
     private var lastSuccessfulNotifications: [MegaplanNotification] = []
@@ -170,10 +171,9 @@ final class AppState: ObservableObject {
 
     func signIn(domain: String, login: String, password: String) async {
         // Brute force protection: 15 minutes lockout after 3 failed attempts
-        let lockoutDuration: TimeInterval = 15 * 60 // 15 minutes
         if failedLoginAttempts >= 3,
            let lastTime = lastFailedLoginTime {
-            if Date().timeIntervalSince(lastTime) < lockoutDuration {
+            if Date().timeIntervalSince(lastTime) < Self.lockoutDuration {
                 presentError(.tooManyAttempts)
                 return
             } else {
@@ -786,12 +786,11 @@ final class AppState: ObservableObject {
     }
 
     private func recomputeLockoutState() {
-        let lockoutDuration: TimeInterval = 15 * 60
         if failedLoginAttempts >= 3,
            let lastTime = lastFailedLoginTime,
-           Date().timeIntervalSince(lastTime) < lockoutDuration {
+           Date().timeIntervalSince(lastTime) < Self.lockoutDuration {
             lockoutState = LockoutState(
-                lockedUntil: lastTime.addingTimeInterval(lockoutDuration),
+                lockedUntil: lastTime.addingTimeInterval(Self.lockoutDuration),
                 attemptCount: failedLoginAttempts
             )
         } else {
