@@ -82,7 +82,9 @@
 "settings.notifications.testTitle" = "Тестовое уведомление";
 "settings.notifications.testBody" = "Если вы это видите — всё работает";
 "settings.notifications.testSent" = "Отправлено";
-"settings.notifications.testDenied" = "Доступ к уведомлениям запрещён";
+"settings.notifications.testDenied" = "Доступ к уведомлениям запрещён.";
+"settings.notifications.testNotAllowed" = "Системные уведомления не разрешены для этого приложения. Откройте Системные настройки → Уведомления и включите доступ.";
+"settings.notifications.openSystemSettings" = "Открыть Системные настройки";
 "settings.appearance" = "Внешний вид";
 "settings.theme" = "Тема";
 "settings.theme.light" = "Светлая";
