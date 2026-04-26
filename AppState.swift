@@ -24,6 +24,7 @@ final class AppState: ObservableObject {
     @Published private(set) var lastSyncTime: Date?
     @Published var alertItem: AlertItem?
     @Published private(set) var lockoutState: LockoutState?
+    /// Not private(set): AuthView clears this when the user edits a field, so a binding-friendly setter is required.
     @Published var lastAuthError: AuthFieldError?
     /// Transient banner message shown briefly in the popover (e.g. "comments
     /// copied"). Auto-clears on its own; nil hides the banner.
@@ -192,10 +193,16 @@ final class AppState: ObservableObject {
         let trimmedDomain = domain.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedLogin = login.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !trimmedDomain.isEmpty,
-              trimmedLogin.isValidEmail(),
-              !password.isEmpty else {
+        if trimmedDomain.isEmpty {
+            lastAuthError = .domain(.invalidFormat)
+            return
+        }
+        if !trimmedLogin.isValidEmail() {
             lastAuthError = .credentials(.invalidEmail)
+            return
+        }
+        if password.isEmpty {
+            lastAuthError = .credentials(.emptyPassword)
             return
         }
 
@@ -203,8 +210,9 @@ final class AppState: ObservableObject {
         do {
             let token = try await api.authenticate(login: trimmedLogin, password: password)
             try persistCredentials(domain: trimmedDomain, login: trimmedLogin, password: password, token: token)
+            lastAuthError = nil
             isAuthenticated = true
-            
+
             // Validate token and check admin permissions
             do {
                 let result = try await api.validateToken(token: token)
@@ -214,8 +222,7 @@ final class AppState: ObservableObject {
                 AppLogger.warning("Failed to validate token after authentication: \(error.localizedDescription)")
                 // Continue anyway, admin check will happen on next token validation
             }
-            
-            lastAuthError = nil
+
             // Reset failed attempts on success
             failedLoginAttempts = 0
             lastFailedLoginTime = nil

@@ -23,6 +23,16 @@ final class AuthFieldErrorMappingTests: XCTestCase {
         XCTAssertEqual(mapped, .domain(.unreachable))
     }
 
+    func testMapping_OfflineError_BecomesDomainUnreachable() {
+        let mapped = AuthFieldError(networkError: .offline)
+        XCTAssertEqual(mapped, .domain(.unreachable))
+    }
+
+    func testMapping_InvalidURL_BecomesDomainUnreachable() {
+        let mapped = AuthFieldError(networkError: .invalidURL)
+        XCTAssertEqual(mapped, .domain(.unreachable))
+    }
+
     func testMapping_ServerError_PreservesMessage() {
         let mapped = AuthFieldError(networkError: .server(message: "boom"))
         XCTAssertEqual(mapped, .credentials(.serverError("boom")))
