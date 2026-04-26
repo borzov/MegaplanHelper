@@ -27,12 +27,14 @@ struct LockoutCountdownView: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(.orange.opacity(0.25), lineWidth: 1)
         )
+        .transition(.opacity.combined(with: .move(edge: .top)))
+        .accessibilityElement(children: .combine)
     }
 }
 
 #if DEBUG
 #Preview {
-    LockoutCountdownView(lockedUntil: Date().addingTimeInterval(890))
+    LockoutCountdownView(lockedUntil: Date().addingTimeInterval(15 * 60 - 10))
         .padding()
         .frame(width: 360)
 }
