@@ -50,6 +50,9 @@ enum DateFormatters {
     /// - сегодня → "HH:mm"
     /// - вчера → "вчера"
     /// - < 7 дней → день недели
+    /// - < 14 дней → "на прошлой неделе"
+    /// - < 30 дней → "N нед. назад"
+    /// - < 365 дней → "N мес. назад"
     /// - этот год → "d MMM"
     /// - иначе → "d MMM yyyy"
     static func relative(_ date: Date, now: Date = Date()) -> String {
@@ -73,6 +76,17 @@ enum DateFormatters {
         let daysBetween = calendar.dateComponents([.day], from: date, to: now).day ?? Int.max
         if daysBetween < 7 {
             return weekdayFormatter.string(from: date).capitalized(with: Locale(identifier: "ru_RU"))
+        }
+        if daysBetween < 14 {
+            return String(localized: "tasks.time.lastWeek")
+        }
+        if daysBetween < 30 {
+            let weeks = daysBetween / 7
+            return String(format: String(localized: "tasks.time.weeksAgo"), weeks)
+        }
+        if daysBetween < 365 {
+            let months = daysBetween / 30
+            return String(format: String(localized: "tasks.time.monthsAgo"), months)
         }
 
         let nowYear = calendar.component(.year, from: now)

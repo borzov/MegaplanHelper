@@ -1,278 +1,130 @@
 import SwiftUI
 
-enum AppTheme: String, CaseIterable {
-    case light
-    case dark
-    case system
-
-    var displayName: String {
-        switch self {
-        case .light: return String(localized: "settings.theme.light")
-        case .dark: return String(localized: "settings.theme.dark")
-        case .system: return String(localized: "settings.theme.system")
-        }
-    }
-}
-
-enum FontSize: String, CaseIterable {
-    case small
-    case medium
-    case large
-
-    var displayName: String {
-        switch self {
-        case .small: return String(localized: "settings.fontSize.small")
-        case .medium: return String(localized: "settings.fontSize.medium")
-        case .large: return String(localized: "settings.fontSize.large")
-        }
-    }
-
-    var value: CGFloat {
-        switch self {
-        case .small: return 12
-        case .medium: return 14
-        case .large: return 16
-        }
-    }
-}
-
 struct SettingsView: View {
-    @EnvironmentObject private var appState: AppState
-    @EnvironmentObject private var notificationListViewModel: NotificationListViewModel
-
-    @AppStorage(Constants.UserDefaultsKeys.notificationsEnabled) private var notificationsEnabled = true
-    @AppStorage(Constants.UserDefaultsKeys.groupingEnabled) private var groupingEnabled = true
-    @AppStorage(Constants.UserDefaultsKeys.showOnlyUnread) private var showOnlyUnread = false
-    @AppStorage(Constants.UserDefaultsKeys.theme) private var theme: AppTheme = .system
-    @AppStorage(Constants.UserDefaultsKeys.fontSize) private var fontSize: FontSize = .medium
-
-    @State private var credentials = MegaplanCredentials.empty
-    @State private var refreshIntervalValue: Double = Constants.defaultRefreshInterval
-    @State private var autoLaunch: Bool = false
-    @State private var showingLogoutAlert = false
+    @EnvironmentObject var appState: AppState
+    @AppStorage("settings.lastSection") private var lastSectionRaw: String = SettingsSection.account.rawValue
+    @State private var selection: SettingsSection?
+    @State private var searchQuery: String = ""
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
+        NavigationSplitView {
+            sidebar
+                .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
+        } detail: {
+            detailContent
+        }
+        .navigationTitle(String(localized: "settings.windowTitle"))
+        .frame(minWidth: 720, idealWidth: 760, minHeight: 520, idealHeight: 560)
+        .onAppear {
+            if selection == nil {
+                selection = SettingsSection(rawValue: lastSectionRaw) ?? .account
+            }
+        }
+        .onChange(of: selection) { _, newValue in
+            if let newValue { lastSectionRaw = newValue.rawValue }
+        }
+    }
+
+    private var sidebar: some View {
         VStack(spacing: 0) {
-            HStack {
-                Text(String(localized: "settings.title"))
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                Spacer()
+            searchField
+                .padding(.horizontal, 12)
+                .padding(.top, 10)
+                .padding(.bottom, 6)
+
+            sidebarList
+        }
+    }
+
+    /// Custom search field embedded above the list — matches the look of
+    /// macOS Sonoma+ System Settings (single capsule, full sidebar width).
+    private var searchField: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .imageScale(.small)
+            TextField(String(localized: "settings.searchPrompt"), text: $searchQuery)
+                .textFieldStyle(.plain)
+                .focused($searchFocused)
+            if !searchQuery.isEmpty {
+                Button {
+                    searchQuery = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                        .imageScale(.small)
+                }
+                .buttonStyle(.plain)
+                .help(String(localized: "general.clear"))
             }
-            .padding()
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
+        .overlay(
+            RoundedRectangle(cornerRadius: 7)
+                .stroke(searchFocused ? Color.accentColor : Color.clear, lineWidth: 1.5)
+        )
+        .animation(.snappy(duration: 0.18), value: searchFocused)
+    }
 
-            Divider()
-
-            Form {
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        TextField(String(localized: "auth.domain.placeholder"), text: $credentials.domain)
-                        Text(String(localized: "settings.domainDescription"))
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-
-                    HStack(spacing: 16) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            TextField(String(localized: "auth.login"), text: $credentials.login)
-                            Text(String(localized: "settings.loginDescription"))
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            SecureField(String(localized: "auth.password"), text: $credentials.password)
-                            Text(String(localized: "settings.passwordDescription"))
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-
-                    HStack(spacing: 12) {
-                        Button {
-                            authenticate()
-                        } label: {
-                            HStack {
-                                if appState.isLoading {
-                                    ProgressView().controlSize(.small)
-                                } else {
-                                    Image(systemName: "checkmark.circle.fill")
+    private var sidebarList: some View {
+        List(selection: $selection) {
+            ForEach(SettingsGroup.allCases) { group in
+                let visible = visibleSections(for: group)
+                if !visible.isEmpty {
+                    Section {
+                        ForEach(visible, id: \.self) { section in
+                            NavigationLink(value: section) {
+                                Label {
+                                    Text(section.titleKey)
+                                } icon: {
+                                    Image(systemName: section.iconName)
+                                        .frame(width: 18, height: 18)
+                                        .foregroundStyle(.white)
+                                        .background(tintColor(section.tint), in: RoundedRectangle(cornerRadius: 4))
                                 }
-                                Text(appState.isLoading ? String(localized: "auth.authenticating") : String(localized: "auth.button"))
                             }
-                            .frame(maxWidth: .infinity)
                         }
-                        .disabled(appState.isLoading || appState.isAuthenticated)
-
-                        Button(role: .destructive) {
-                            showingLogoutAlert = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                Text(String(localized: "settings.logout"))
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .disabled(!appState.isAuthenticated)
-                    }
-
-                    HStack {
-                        if appState.isAuthenticated {
-                            Label(String(localized: "settings.authenticated"), systemImage: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                        } else {
-                            Label(String(localized: "settings.notAuthenticated"), systemImage: "xmark.circle.fill")
-                                .foregroundColor(.orange)
-                        }
-                        Spacer()
-                    }
-                    .font(.caption)
-                } header: {
-                    Text(String(localized: "settings.account"))
-                }
-
-                Section {
-                    Picker(String(localized: "settings.refreshInterval"), selection: $refreshIntervalValue) {
-                        Text(String(localized: "settings.interval30")).tag(30.0)
-                        Text(String(localized: "settings.interval60")).tag(60.0)
-                        Text(String(localized: "settings.interval120")).tag(120.0)
-                        Text(String(localized: "settings.interval300")).tag(300.0)
-                        Text(String(localized: "settings.interval600")).tag(600.0)
-                    }
-                    .pickerStyle(.menu)
-                    .onChange(of: refreshIntervalValue) { newValue in
-                        appState.updateRefreshInterval(newValue)
-                    }
-
-                    Toggle(isOn: Binding(
-                        get: { autoLaunch },
-                        set: { newValue in
-                            autoLaunch = newValue
-                            appState.updateAutoLaunch(enabled: newValue)
-                        }
-                    )) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(String(localized: "settings.autoLaunch"))
-                            Text(String(localized: "settings.autoLaunchDescription"))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                } header: {
-                    Text(String(localized: "settings.preferences"))
-                }
-
-                Section {
-                    Toggle(isOn: $notificationsEnabled) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(String(localized: "settings.notifications.enabled"))
-                            Text(String(localized: "settings.notifications.enabledDescription"))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-
-                    Toggle(isOn: $groupingEnabled) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(String(localized: "settings.notifications.grouping"))
-                            Text(String(localized: "settings.notifications.groupingDescription"))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .onChange(of: groupingEnabled) { newValue in
-                        notificationListViewModel.updateGroupingEnabled(newValue)
-                    }
-                } header: {
-                    Text(String(localized: "settings.notifications"))
-                }
-
-                Section {
-                    Picker(String(localized: "settings.theme"), selection: $theme) {
-                        ForEach(AppTheme.allCases, id: \.self) { value in
-                            Text(value.displayName).tag(value)
-                        }
-                    }
-                    .pickerStyle(.menu)
-
-                    Picker(String(localized: "settings.fontSize"), selection: $fontSize) {
-                        ForEach(FontSize.allCases, id: \.self) { value in
-                            Text(value.displayName).tag(value)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                } header: {
-                    Text(String(localized: "settings.appearance"))
-                }
-
-                Section {
-                    Toggle(isOn: $showOnlyUnread) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(String(localized: "settings.showOnlyUnread"))
-                            Text(String(localized: "settings.showOnlyUnreadDescription"))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .onChange(of: showOnlyUnread) { newValue in
-                        notificationListViewModel.updateShowOnlyUnread(newValue)
-                    }
-                } header: {
-                    Text(String(localized: "settings.behavior"))
-                }
-
-                Section {
-                    HStack {
-                        Spacer()
-                        Text(String(format: String(localized: "settings.version"),
-                                    Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0",
-                                    Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"))
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                        Spacer()
+                    } header: {
+                        Text(group.titleKey)
                     }
                 }
             }
-            .formStyle(.grouped)
         }
-        .onAppear(perform: syncState)
-        .alert(String(localized: "settings.logoutAlertTitle"), isPresented: $showingLogoutAlert) {
-            Button(String(localized: "general.cancel"), role: .cancel) { }
-            Button(String(localized: "settings.logout"), role: .destructive) {
-                appState.logout()
-            }
-        } message: {
-            Text(String(localized: "settings.logoutAlertMessage"))
+        .listStyle(.sidebar)
+    }
+
+    private func visibleSections(for group: SettingsGroup) -> [SettingsSection] {
+        let allInGroup = SettingsSection.allCases.filter { $0.group == group }
+        let trimmed = searchQuery.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return allInGroup }
+        let matches = Set(SettingsSearchIndex.shared.search(trimmed))
+        return allInGroup.filter { matches.contains($0) }
+    }
+
+    private func tintColor(_ tint: SettingsSection.TintColor) -> Color {
+        switch tint {
+        case .purple: return .purple
+        case .blue:   return .blue
+        case .red:    return .red
+        case .orange: return .orange
+        case .grey:   return .gray
+        case .green:  return .green
         }
     }
 
-    private func syncState() {
-        credentials.domain = appState.domain
-        credentials.login = appState.username
-        refreshIntervalValue = appState.refreshInterval
-        autoLaunch = appState.autoLaunchEnabled
-    }
-
-    private func authenticate() {
-        Task {
-            await appState.signIn(
-                domain: credentials.domain,
-                login: credentials.login,
-                password: credentials.password
-            )
-            syncState()
+    @ViewBuilder
+    private var detailContent: some View {
+        switch selection ?? .account {
+        case .account:       AccountSettingsView()
+        case .sync:          SyncSettingsView()
+        case .appearance:    AppearanceSettingsView()
+        case .notifications: NotificationsSettingsView()
+        case .shortcuts:     ShortcutsSettingsView()
+        case .storage:       StorageSettingsView()
+        case .about:         AboutView()
         }
     }
 }
-
-#if DEBUG
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        let state = AppState()
-        SettingsView()
-            .environmentObject(state)
-            .environmentObject(NotificationListViewModel(appState: state))
-            .frame(width: 480, height: 500)
-    }
-}
-#endif

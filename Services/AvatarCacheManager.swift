@@ -13,7 +13,7 @@ final class AvatarCacheManager {
 
     private let cacheDirectory: URL
     private let cacheExpirationInterval: TimeInterval = Constants.CacheConfig.expirationInterval
-    private let fileManager = FileManager.default
+    private let fileManager: FileManager
 
     // Network session with configured timeouts
     private static let urlSession: URLSession = {
@@ -35,10 +35,21 @@ final class AvatarCacheManager {
     private static let metadataEncoder = JSONEncoder()
 
     private init() {
+        let fileManager = FileManager.default
         let cachesURL = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        cacheDirectory = cachesURL.appendingPathComponent("MegaplanMenuBarApp", isDirectory: true)
+        self.fileManager = fileManager
+        self.cacheDirectory = cachesURL.appendingPathComponent("MegaplanMenuBarApp", isDirectory: true)
             .appendingPathComponent("Avatars", isDirectory: true)
+
+        createCacheDirectoryIfNeeded()
+    }
+
+    /// Test-only initializer that allows injecting a custom cache directory.
+    /// Production code must keep using `AvatarCacheManager.shared`.
+    internal init(cacheDirectory: URL, fileManager: FileManager = .default) {
+        self.fileManager = fileManager
+        self.cacheDirectory = cacheDirectory
 
         createCacheDirectoryIfNeeded()
     }
@@ -256,27 +267,75 @@ final class AvatarCacheManager {
         createCacheDirectoryIfNeeded()
     }
 
+    /// Async overload — file removal runs off the main actor. Use from UI code.
+    func clearCache() async {
+        await Task.detached(priority: .utility) { [weak self] in
+            self?.clearCache()
+        }.value
+    }
+
     // MARK: - Cache Size Management
 
-    /// Returns the total size of all files in the cache directory in bytes
-    private func getCacheSize() -> Int64 {
-        guard let contents = try? fileManager.contentsOfDirectory(
-            at: cacheDirectory,
-            includingPropertiesForKeys: [.fileSizeKey],
-            options: .skipsHiddenFiles
-        ) else {
+    /// Sums file sizes inside `directory`. Returns 0 on I/O error and logs the
+    /// failure via `AppLogger.error` so callers (sync and async) get consistent
+    /// diagnostics.
+    private static func computeSize(at directory: URL, using fileManager: FileManager) -> Int64 {
+        let files: [URL]
+        do {
+            files = try fileManager.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: [.fileSizeKey],
+                options: [.skipsHiddenFiles]
+            )
+        } catch {
+            AppLogger.error("AvatarCacheManager.computeSize failed at \(directory.path): \(error.localizedDescription)")
             return 0
         }
 
-        return contents.reduce(0) { total, fileURL in
+        return files.reduce(Int64(0)) { total, fileURL in
             let size = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
             return total + Int64(size)
         }
     }
 
+    /// Synchronous helper used by hot paths (e.g. cleanup after caching).
+    /// Returns the total size of all files in the cache directory in bytes.
+    private func cacheSizeSync() -> Int64 {
+        Self.computeSize(at: cacheDirectory, using: fileManager)
+    }
+
+    /// Public: returns total disk size of all cached avatars in bytes.
+    func cacheSize() async -> Int64 {
+        let cacheDirectory = self.cacheDirectory
+        let fileManager = self.fileManager
+        return await Task.detached(priority: .utility) {
+            Self.computeSize(at: cacheDirectory, using: fileManager)
+        }.value
+    }
+
+    /// Public: returns count of cached avatar files (excluding metadata sidecars).
+    func entryCount() async -> Int {
+        let cacheDirectory = self.cacheDirectory
+        let fileManager = self.fileManager
+        return await Task.detached(priority: .utility) {
+            let files: [URL]
+            do {
+                files = try fileManager.contentsOfDirectory(
+                    at: cacheDirectory,
+                    includingPropertiesForKeys: nil,
+                    options: [.skipsHiddenFiles]
+                )
+            } catch {
+                AppLogger.error("AvatarCacheManager.entryCount failed at \(cacheDirectory.path): \(error.localizedDescription)")
+                return 0
+            }
+            return files.filter { $0.pathExtension != "json" }.count
+        }.value
+    }
+
     /// Cleans up the cache if it exceeds the maximum size limit using LRU policy
     private func cleanupIfNeeded() {
-        let currentSize = getCacheSize()
+        let currentSize = cacheSizeSync()
         guard currentSize > Self.maxDiskCacheSize else { return }
 
         AppLogger.info("Cache size (\(currentSize) bytes) exceeds limit (\(Self.maxDiskCacheSize) bytes), starting cleanup")

@@ -52,3 +52,6 @@ CLAUDE.md
 
 # Test
 TestPython/
+# Brainstorm artifacts (Visual Companion mockups, design specs, plans)
+.superpowers/
+docs/superpowers/

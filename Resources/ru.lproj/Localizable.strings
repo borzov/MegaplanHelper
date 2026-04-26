@@ -51,6 +51,7 @@
 "error.title" = "Ошибка";
 "general.ok" = "OK";
 "general.cancel" = "Отмена";
+"general.clear" = "Очистить";
 "error.invalidURL" = "Адрес сервера введен некорректно.";
 "error.unauthorized" = "Сессия истекла. Выполните вход снова.";
 "error.decoding" = "Не удалось обработать ответ сервера.";
@@ -72,10 +73,18 @@
 "notifications.group.earlier" = "Ранее";
 
 "settings.notifications" = "Уведомления";
+"settings.notifications.section" = "Уведомления";
 "settings.notifications.enabled" = "Включить системные уведомления";
 "settings.notifications.enabledDescription" = "Показывать уведомления в Центре уведомлений";
 "settings.notifications.grouping" = "Группировать уведомления";
 "settings.notifications.groupingDescription" = "Группировать уведомления по датам";
+"settings.notifications.test" = "Отправить тестовое";
+"settings.notifications.testTitle" = "Тестовое уведомление";
+"settings.notifications.testBody" = "Если вы это видите — всё работает";
+"settings.notifications.testSent" = "Отправлено";
+"settings.notifications.testDenied" = "Доступ к уведомлениям запрещён.";
+"settings.notifications.testNotAllowed" = "Системные уведомления не разрешены для этого приложения. Откройте Системные настройки → Уведомления и включите доступ.";
+"settings.notifications.openSystemSettings" = "Открыть Системные настройки";
 "settings.appearance" = "Внешний вид";
 "settings.theme" = "Тема";
 "settings.theme.light" = "Светлая";
@@ -85,6 +94,21 @@
 "settings.fontSize.small" = "Маленький";
 "settings.fontSize.medium" = "Средний";
 "settings.fontSize.large" = "Большой";
+"settings.appearance.preview.title" = "Предпросмотр";
+"settings.appearance.preview.title2" = "Запрос на согласование";
+"settings.appearance.preview.body" = "Прошу проверить пункт 3.2 о сроках поставки и подтвердить";
+"settings.appearance.preview.senderName" = "Анна Петрова";
+"settings.appearance.preview.senderInitials" = "АП";
+"settings.appearance.themeSection" = "Тема";
+"settings.appearance.theme" = "Тема";
+"settings.appearance.theme.system" = "Системная";
+"settings.appearance.theme.light" = "Светлая";
+"settings.appearance.theme.dark" = "Тёмная";
+"settings.appearance.fontSection" = "Шрифт";
+"settings.appearance.fontSize" = "Размер шрифта";
+"settings.appearance.font.small" = "S";
+"settings.appearance.font.medium" = "M";
+"settings.appearance.font.large" = "L";
 "settings.behavior" = "Поведение";
 "settings.showOnlyUnread" = "Показывать только непрочитанные";
 "settings.showOnlyUnreadDescription" = "Скрывать прочитанные уведомления";
@@ -145,6 +169,9 @@
 "tasks.time.justNow" = "только что";
 "tasks.time.minutesAgo" = "%d мин назад";
 "tasks.time.yesterday" = "вчера";
+"tasks.time.lastWeek" = "на прошлой неделе";
+"tasks.time.weeksAgo" = "%d нед. назад";
+"tasks.time.monthsAgo" = "%d мес. назад";
 
 // Tasks — statuses
 "tasks.status.created" = "Создана";
@@ -158,3 +185,93 @@
 "tasks.status.delayed" = "Отложена";
 "tasks.status.template" = "Шаблон";
 "tasks.status.overdue" = "Просрочена";
+
+// Settings — window
+"settings.windowTitle" = "Настройки";
+"settings.searchPrompt" = "Поиск настроек";
+
+// Settings — sidebar groups
+"settings.group.general" = "Основное";
+"settings.group.personalization" = "Персонализация";
+"settings.group.advanced" = "Расширенные";
+"settings.group.about" = "О программе";
+
+// Settings — sidebar sections
+"settings.section.account" = "Аккаунт";
+"settings.section.sync" = "Синхронизация";
+"settings.section.appearance" = "Внешний вид";
+"settings.section.notifications" = "Уведомления";
+"settings.section.shortcuts" = "Горячие клавиши";
+"settings.section.storage" = "Хранилище и кэш";
+"settings.section.about" = "Версия и помощь";
+
+// Shortcuts — actions
+"shortcuts.action.openPopover" = "Открыть окно уведомлений";
+"shortcuts.action.refreshNow" = "Обновить сейчас";
+"shortcuts.action.focusSearch" = "Перейти к поиску";
+"shortcuts.action.markAllRead" = "Прочитать всё";
+
+// Settings — Account card
+"settings.account.connected" = "Подключено";
+"settings.account.disconnected" = "Отключено";
+"settings.account.connectedSyncedAgo" = "Подключено · синхронизировано %@";
+
+// Settings — Account section
+"settings.account.server" = "Сервер";
+"settings.account.domainLabel" = "Домен";
+"settings.account.loginLabel" = "Логин";
+"settings.account.passwordLabel" = "Пароль";
+"settings.account.reauthenticate" = "Войти повторно";
+"settings.account.signOut" = "Выйти";
+"settings.account.signOutConfirm" = "Точно выйти?";
+"settings.account.showPassword" = "Показать пароль";
+"settings.account.hidePassword" = "Скрыть пароль";
+
+// Settings — Sync & Refresh
+"settings.sync.refresh.hint" = "Как часто приложение проверяет новые уведомления";
+"settings.sync.refresh.everySec" = "%d сек";
+"settings.sync.refresh.everyMin" = "%d мин";
+"settings.sync.refresh.everyMinSec" = "%d мин %d сек";
+"settings.sync.refreshSection" = "Обновление";
+"settings.sync.startupSection" = "Поведение";
+"settings.sync.autoLaunch" = "Запускать при входе";
+"settings.sync.showOnlyUnread" = "Показывать только непрочитанные";
+
+// Shortcuts — recorder UI
+"shortcuts.recording" = "Нажмите комбинацию…";
+"shortcuts.notSet" = "Не задано";
+"shortcuts.record" = "Записать";
+"shortcuts.stop" = "Стоп";
+
+// Settings — Storage
+"settings.storage.avatarsTitle" = "Кэш аватаров";
+"settings.storage.statsLine" = "%@ · %d записей";
+"settings.storage.clear" = "Очистить";
+"settings.storage.cacheSection" = "Кэш";
+"settings.storage.dataSection" = "Данные";
+"settings.storage.export" = "Экспортировать настройки";
+"settings.storage.import" = "Импортировать настройки";
+"settings.storage.reset" = "Сбросить к умолчаниям";
+"settings.storage.resetConfirm" = "Сбросить все настройки к значениям по умолчанию?";
+"settings.storage.importFailedTitle" = "Не удалось импортировать настройки";
+"settings.storage.importInvalidJSON" = "Файл повреждён или содержит невалидный JSON.";
+"settings.storage.importTypeError" = "Неверный тип значения для «%@» — ожидался %@.";
+"shortcuts.clear" = "Сбросить";
+"shortcuts.clickToRecord" = "Нажмите для записи";
+"shortcuts.helpRecording" = "Нажмите комбинацию клавиш или Esc для отмены";
+"shortcuts.helpBound" = "Кликните, чтобы перезаписать. Правый клик — сбросить.";
+"shortcuts.helpUnbound" = "Кликните и нажмите комбинацию клавиш";
+
+"settings.shortcuts.section" = "Глобальные горячие клавиши";
+"settings.shortcuts.hint" = "Работают пока приложение запущено. Нажмите «Записать» и затем нужную комбинацию.";
+
+// Settings — About
+"settings.about.linksSection" = "Полезные ссылки";
+"settings.about.github" = "Репозиторий на GitHub";
+"settings.about.docs" = "Документация";
+"settings.about.feedback" = "Сообщить о проблеме";
+"settings.about.adminSection" = "Администратор";
+"settings.about.copyLog" = "Скопировать диагностический лог";
+"settings.about.knowledgeBase" = "База знаний";
+"settings.about.deals" = "Сделки";
+"settings.about.tasks" = "Задачи";

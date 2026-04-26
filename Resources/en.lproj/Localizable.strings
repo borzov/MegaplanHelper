@@ -51,6 +51,7 @@
 "error.title" = "Error";
 "general.ok" = "OK";
 "general.cancel" = "Cancel";
+"general.clear" = "Clear";
 "error.invalidURL" = "The server address looks incorrect.";
 "error.unauthorized" = "Your session has expired. Please sign in again.";
 "error.decoding" = "Failed to parse the server response.";
@@ -72,10 +73,18 @@
 "notifications.group.earlier" = "Earlier";
 
 "settings.notifications" = "Notifications";
+"settings.notifications.section" = "Notifications";
 "settings.notifications.enabled" = "Enable system notifications";
 "settings.notifications.enabledDescription" = "Show notifications in Notification Center";
 "settings.notifications.grouping" = "Group notifications";
 "settings.notifications.groupingDescription" = "Group notifications by date";
+"settings.notifications.test" = "Send test";
+"settings.notifications.testTitle" = "Test notification";
+"settings.notifications.testBody" = "If you see this, it works";
+"settings.notifications.testSent" = "Sent";
+"settings.notifications.testDenied" = "Notifications access denied.";
+"settings.notifications.testNotAllowed" = "System notifications aren't allowed for this app. Open System Settings → Notifications and enable access.";
+"settings.notifications.openSystemSettings" = "Open System Settings";
 "settings.appearance" = "Appearance";
 "settings.theme" = "Theme";
 "settings.theme.light" = "Light";
@@ -85,6 +94,21 @@
 "settings.fontSize.small" = "Small";
 "settings.fontSize.medium" = "Medium";
 "settings.fontSize.large" = "Large";
+"settings.appearance.preview.title" = "Preview";
+"settings.appearance.preview.title2" = "Approval request";
+"settings.appearance.preview.body" = "Please review section 3.2 about delivery dates and confirm";
+"settings.appearance.preview.senderName" = "Sarah Connor";
+"settings.appearance.preview.senderInitials" = "SC";
+"settings.appearance.themeSection" = "Theme";
+"settings.appearance.theme" = "Theme";
+"settings.appearance.theme.system" = "System";
+"settings.appearance.theme.light" = "Light";
+"settings.appearance.theme.dark" = "Dark";
+"settings.appearance.fontSection" = "Font";
+"settings.appearance.fontSize" = "Font size";
+"settings.appearance.font.small" = "S";
+"settings.appearance.font.medium" = "M";
+"settings.appearance.font.large" = "L";
 "settings.behavior" = "Behavior";
 "settings.showOnlyUnread" = "Show only unread";
 "settings.showOnlyUnreadDescription" = "Hide read notifications";
@@ -143,6 +167,9 @@
 "tasks.time.justNow" = "just now";
 "tasks.time.minutesAgo" = "%d min ago";
 "tasks.time.yesterday" = "yesterday";
+"tasks.time.lastWeek" = "last week";
+"tasks.time.weeksAgo" = "%d wk ago";
+"tasks.time.monthsAgo" = "%d mo ago";
 
 // Tasks — statuses
 "tasks.status.created" = "Created";
@@ -156,3 +183,93 @@
 "tasks.status.delayed" = "Delayed";
 "tasks.status.template" = "Template";
 "tasks.status.overdue" = "Overdue";
+
+// Settings — window
+"settings.windowTitle" = "Settings";
+"settings.searchPrompt" = "Search settings";
+
+// Settings — sidebar groups
+"settings.group.general" = "General";
+"settings.group.personalization" = "Personalization";
+"settings.group.advanced" = "Advanced";
+"settings.group.about" = "About";
+
+// Settings — sidebar sections
+"settings.section.account" = "Account";
+"settings.section.sync" = "Sync & Refresh";
+"settings.section.appearance" = "Appearance";
+"settings.section.notifications" = "Notifications";
+"settings.section.shortcuts" = "Shortcuts";
+"settings.section.storage" = "Storage & Cache";
+"settings.section.about" = "Version & Help";
+
+// Shortcuts — actions
+"shortcuts.action.openPopover" = "Open notifications popover";
+"shortcuts.action.refreshNow" = "Refresh now";
+"shortcuts.action.focusSearch" = "Focus search";
+"shortcuts.action.markAllRead" = "Mark all read";
+
+// Settings — Account card
+"settings.account.connected" = "Connected";
+"settings.account.disconnected" = "Disconnected";
+"settings.account.connectedSyncedAgo" = "Connected · synced %@";
+
+// Settings — Account section
+"settings.account.server" = "Server";
+"settings.account.domainLabel" = "Domain";
+"settings.account.loginLabel" = "Login";
+"settings.account.passwordLabel" = "Password";
+"settings.account.reauthenticate" = "Re-authenticate";
+"settings.account.signOut" = "Sign out";
+"settings.account.signOutConfirm" = "Sign out?";
+"settings.account.showPassword" = "Show password";
+"settings.account.hidePassword" = "Hide password";
+
+// Settings — Sync & Refresh
+"settings.sync.refresh.hint" = "How often the app checks for new notifications";
+"settings.sync.refresh.everySec" = "Every %d sec";
+"settings.sync.refresh.everyMin" = "Every %d min";
+"settings.sync.refresh.everyMinSec" = "Every %d min %d sec";
+"settings.sync.refreshSection" = "Refresh";
+"settings.sync.startupSection" = "Behavior";
+"settings.sync.autoLaunch" = "Launch at login";
+"settings.sync.showOnlyUnread" = "Show only unread";
+
+// Shortcuts — recorder UI
+"shortcuts.recording" = "Press a combination…";
+"shortcuts.notSet" = "Not set";
+"shortcuts.record" = "Record";
+"shortcuts.stop" = "Stop";
+"shortcuts.clear" = "Clear";
+"shortcuts.clickToRecord" = "Click to record";
+"shortcuts.helpRecording" = "Press a combination, or Esc to cancel";
+"shortcuts.helpBound" = "Click to re-bind. Right-click to clear.";
+"shortcuts.helpUnbound" = "Click and press a key combination";
+
+// Settings — Storage
+"settings.storage.avatarsTitle" = "Avatar cache";
+"settings.storage.statsLine" = "%@ · %d entries";
+"settings.storage.clear" = "Clear";
+"settings.storage.cacheSection" = "Cache";
+"settings.storage.dataSection" = "Data";
+"settings.storage.export" = "Export settings";
+"settings.storage.import" = "Import settings";
+"settings.storage.reset" = "Reset to defaults";
+"settings.storage.resetConfirm" = "Reset all settings to defaults?";
+"settings.storage.importFailedTitle" = "Couldn't import settings";
+"settings.storage.importInvalidJSON" = "The file is corrupted or contains invalid JSON.";
+"settings.storage.importTypeError" = "Wrong value type for \"%@\" — expected %@.";
+
+"settings.shortcuts.section" = "Global shortcuts";
+"settings.shortcuts.hint" = "Work while the app is running. Click Record, then press a combination.";
+
+// Settings — About
+"settings.about.linksSection" = "Useful links";
+"settings.about.github" = "GitHub repository";
+"settings.about.docs" = "Documentation";
+"settings.about.feedback" = "Report an issue";
+"settings.about.adminSection" = "Administrator";
+"settings.about.copyLog" = "Copy diagnostic log";
+"settings.about.knowledgeBase" = "Knowledge base";
+"settings.about.deals" = "Deals";
+"settings.about.tasks" = "Tasks";
