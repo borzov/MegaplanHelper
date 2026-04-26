@@ -40,6 +40,8 @@
 "auth.step1.hint" = "mycompany.megaplan.ru · mycompany · https://crm.acme.com";
 "auth.step1.continue" = "Continue";
 "auth.probe.online.a11y" = "Domain reachable";
+"auth.passwordToggle.show" = "Show password";
+"auth.passwordToggle.hide" = "Hide password";
 
 "settings.title" = "Settings";
 "settings.account" = "Account";

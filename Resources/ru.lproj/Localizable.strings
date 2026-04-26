@@ -40,6 +40,8 @@
 "auth.step1.hint" = "mycompany.megaplan.ru · mycompany · https://crm.acme.com";
 "auth.step1.continue" = "Продолжить";
 "auth.probe.online.a11y" = "Домен доступен";
+"auth.passwordToggle.show" = "Показать пароль";
+"auth.passwordToggle.hide" = "Скрыть пароль";
 
 "settings.title" = "Настройки";
 "settings.account" = "Аккаунт";
