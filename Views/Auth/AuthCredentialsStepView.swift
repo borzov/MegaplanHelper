@@ -16,11 +16,18 @@ struct AuthCredentialsStepView: View {
     @State private var emailValidationTask: Task<Void, Never>?
     @State private var emailError: AuthFieldError?
 
+    private var trimmedLogin: String {
+        login.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isLoginValid: Bool {
+        trimmedLogin.isValidEmail()
+    }
+
     private var canSubmit: Bool {
         guard !isLoading else { return false }
         if let lockoutState, lockoutState.isActive { return false }
-        return login.trimmingCharacters(in: .whitespacesAndNewlines).isValidEmail()
-            && !password.isEmpty
+        return isLoginValid && !password.isEmpty
     }
 
     var body: some View {
@@ -122,14 +129,12 @@ struct AuthCredentialsStepView: View {
     }
 
     private var currentErrorMessage: String? {
-        if let lastError {
-            switch lastError {
-            case .lockout: return nil // shown by LockoutCountdownView
-            case .credentials(.invalidEmail) where login.isEmpty: return nil
-            default: return lastError.localizedDescription
-            }
+        guard let lastError else { return nil }
+        switch lastError {
+        case .lockout: return nil // shown by LockoutCountdownView
+        case .credentials(.invalidEmail) where login.isEmpty: return nil
+        default: return lastError.localizedDescription
         }
-        return nil
     }
 
     private func scheduleEmailValidation() {
@@ -137,10 +142,32 @@ struct AuthCredentialsStepView: View {
         emailValidationTask = Task { @MainActor in
             try? await Task.sleep(nanoseconds: 300_000_000) // 300ms debounce
             if Task.isCancelled { return }
-            let trimmed = login.trimmingCharacters(in: .whitespacesAndNewlines)
-            emailError = (!trimmed.isEmpty && !trimmed.isValidEmail())
+            emailError = (!trimmedLogin.isEmpty && !isLoginValid)
                 ? .credentials(.invalidEmail)
                 : nil
         }
     }
 }
+
+#if DEBUG
+#Preview("Default") {
+    @Previewable @State var login = ""
+    @Previewable @State var password = ""
+    @Previewable @State var isVisible = false
+    @Previewable @FocusState var focus: AuthFieldFocus?
+    AuthCredentialsStepView(
+        domain: "acme.megaplan.ru",
+        info: nil,
+        login: $login,
+        password: $password,
+        isPasswordVisible: $isVisible,
+        focus: $focus,
+        isLoading: false,
+        lockoutState: nil,
+        lastError: nil,
+        onBack: {},
+        onSubmit: {}
+    )
+    .frame(width: 420, height: 460)
+}
+#endif
