@@ -35,6 +35,11 @@
 "auth.lockout.tryAgainIn" = "Повторите через";
 "auth.lockout.countdown.label" = "Осталось времени";
 "auth.step2.back" = "Назад к домену";
+"auth.step1.title" = "Куда входим?";
+"auth.step1.subtitle" = "Введите адрес рабочего пространства Megaplan";
+"auth.step1.hint" = "mycompany.megaplan.ru · mycompany · https://crm.acme.com";
+"auth.step1.continue" = "Продолжить";
+"auth.probe.online.a11y" = "Домен доступен";
 
 "settings.title" = "Настройки";
 "settings.account" = "Аккаунт";

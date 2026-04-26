@@ -35,6 +35,11 @@
 "auth.lockout.tryAgainIn" = "Try again in";
 "auth.lockout.countdown.label" = "Time remaining";
 "auth.step2.back" = "Back to domain";
+"auth.step1.title" = "Where do you sign in?";
+"auth.step1.subtitle" = "Enter your Megaplan workspace URL";
+"auth.step1.hint" = "mycompany.megaplan.ru · mycompany · https://crm.acme.com";
+"auth.step1.continue" = "Continue";
+"auth.probe.online.a11y" = "Domain reachable";
 
 "settings.title" = "Settings";
 "settings.account" = "Account";
