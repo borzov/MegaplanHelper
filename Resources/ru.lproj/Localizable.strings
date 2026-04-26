@@ -31,6 +31,7 @@
 "auth.error.unauthorized" = "Неверный логин или пароль";
 "auth.error.tooManyAttempts" = "Слишком много попыток. Попробуйте позже";
 "auth.error.serverError" = "Ошибка сервера";
+"auth.error.banner.label" = "Ошибка";
 
 "settings.title" = "Настройки";
 "settings.account" = "Аккаунт";

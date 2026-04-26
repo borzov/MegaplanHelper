@@ -31,6 +31,7 @@
 "auth.error.unauthorized" = "Wrong login or password";
 "auth.error.tooManyAttempts" = "Too many failed attempts. Try again later";
 "auth.error.serverError" = "Server error";
+"auth.error.banner.label" = "Error";
 
 "settings.title" = "Settings";
 "settings.account" = "Account";
