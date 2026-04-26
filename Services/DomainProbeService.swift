@@ -50,7 +50,9 @@ actor DomainProbeService {
             state = .unreachable
         }
 
-        cache[trimmed] = state
+        if state != .unreachable {
+            cache[trimmed] = state
+        }
         return state
     }
 

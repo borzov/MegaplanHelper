@@ -79,4 +79,18 @@ final class DomainProbeServiceTests: XCTestCase {
 
         XCTAssertEqual(callCount, 1, "second call must be served from cache")
     }
+
+    func testProbe_UnreachableResult_IsNotCached_HandlerCalledTwice() async {
+        var callCount = 0
+        URLProtocolMock.handler = { _ in
+            callCount += 1
+            throw URLError(.cannotConnectToHost)
+        }
+        let service = DomainProbeService(session: URLProtocolMock.makeSession())
+
+        _ = await service.probe("acme.megaplan.ru")
+        _ = await service.probe("acme.megaplan.ru")
+
+        XCTAssertEqual(callCount, 2, "unreachable results must not be cached so retry works after network recovery")
+    }
 }
