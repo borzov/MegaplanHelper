@@ -23,6 +23,7 @@ final class AppState: ObservableObject {
     @Published private(set) var isSessionExpired: Bool = false
     @Published private(set) var lastSyncTime: Date?
     @Published var alertItem: AlertItem?
+    @Published private(set) var lockoutState: LockoutState?
     /// Transient banner message shown briefly in the popover (e.g. "comments
     /// copied"). Auto-clears on its own; nil hides the banner.
     @Published var transientToast: String?
@@ -179,6 +180,7 @@ final class AppState: ObservableObject {
                 // Lockout period has expired, reset the counter
                 failedLoginAttempts = 0
                 lastFailedLoginTime = nil
+                recomputeLockoutState()
             }
         }
         
@@ -214,6 +216,7 @@ final class AppState: ObservableObject {
             // Reset failed attempts on success
             failedLoginAttempts = 0
             lastFailedLoginTime = nil
+            recomputeLockoutState()
 
             // Clear cached password after successful authentication if session was already restored
             // This reduces the time password stays in memory
@@ -228,7 +231,8 @@ final class AppState: ObservableObject {
             // Increment failed attempts
             failedLoginAttempts += 1
             lastFailedLoginTime = Date()
-            
+            recomputeLockoutState()
+
             AppLogger.error("Authentication failed: \(error.localizedDescription)")
             presentError(NetworkError(error))
         }
@@ -779,6 +783,20 @@ final class AppState: ObservableObject {
 
     private func presentError(_ error: NetworkError) {
         alertItem = AlertItem(message: error.localizedDescription)
+    }
+
+    private func recomputeLockoutState() {
+        let lockoutDuration: TimeInterval = 15 * 60
+        if failedLoginAttempts >= 3,
+           let lastTime = lastFailedLoginTime,
+           Date().timeIntervalSince(lastTime) < lockoutDuration {
+            lockoutState = LockoutState(
+                lockedUntil: lastTime.addingTimeInterval(lockoutDuration),
+                attemptCount: failedLoginAttempts
+            )
+        } else {
+            lockoutState = nil
+        }
     }
 
     deinit {
