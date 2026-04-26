@@ -25,6 +25,11 @@
 "auth.description" = "To continue using the app, please sign in with your Megaplan account";
 "auth.error.invalidDomain" = "Invalid domain format";
 "auth.error.blockedDomain" = "This domain is blocked for security reasons";
+"auth.error.unreachableDomain" = "Could not reach this domain";
+"auth.error.invalidEmail" = "Enter a valid email";
+"auth.error.emptyPassword" = "Password cannot be empty";
+"auth.error.unauthorized" = "Wrong login or password";
+"auth.error.tooManyAttempts" = "Too many failed attempts. Try again later.";
 
 "settings.title" = "Settings";
 "settings.account" = "Account";

@@ -25,6 +25,11 @@
 "auth.description" = "Для продолжения работы приложения необходимо авторизоваться, используя свою учетную запись в Мегаплане";
 "auth.error.invalidDomain" = "Некорректный формат домена";
 "auth.error.blockedDomain" = "Этот домен заблокирован по соображениям безопасности";
+"auth.error.unreachableDomain" = "Не удалось связаться с доменом";
+"auth.error.invalidEmail" = "Введите корректный email";
+"auth.error.emptyPassword" = "Пароль не может быть пустым";
+"auth.error.unauthorized" = "Неверный логин или пароль";
+"auth.error.tooManyAttempts" = "Слишком много попыток. Попробуйте позже.";
 
 "settings.title" = "Настройки";
 "settings.account" = "Аккаунт";
