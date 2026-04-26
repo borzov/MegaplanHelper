@@ -32,6 +32,8 @@
 "auth.error.tooManyAttempts" = "Too many failed attempts. Try again later";
 "auth.error.serverError" = "Server error";
 "auth.error.banner.label" = "Error";
+"auth.lockout.tryAgainIn" = "Try again in";
+"auth.lockout.countdown.label" = "Time remaining";
 
 "settings.title" = "Settings";
 "settings.account" = "Account";

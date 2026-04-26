@@ -32,6 +32,8 @@
 "auth.error.tooManyAttempts" = "Слишком много попыток. Попробуйте позже";
 "auth.error.serverError" = "Ошибка сервера";
 "auth.error.banner.label" = "Ошибка";
+"auth.lockout.tryAgainIn" = "Повторите через";
+"auth.lockout.countdown.label" = "Осталось времени";
 
 "settings.title" = "Настройки";
 "settings.account" = "Аккаунт";
