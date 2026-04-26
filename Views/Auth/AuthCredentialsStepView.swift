@@ -61,6 +61,7 @@ struct AuthCredentialsStepView: View {
                     .controlSize(.large)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!canSubmit)
+                    .accessibilityIdentifier("auth.signIn.button")
 
                     if let lockoutState, lockoutState.isActive {
                         LockoutCountdownView(lockedUntil: lockoutState.lockedUntil)
@@ -89,6 +90,7 @@ struct AuthCredentialsStepView: View {
                 .onChange(of: login) { _, _ in scheduleEmailValidation() }
                 .submitLabel(.next)
                 .onSubmit { focus = .password }
+                .accessibilityIdentifier("auth.login.field")
 
             if case .credentials(.invalidEmail) = emailError {
                 Text(String(localized: "auth.error.invalidEmail"))
@@ -115,6 +117,7 @@ struct AuthCredentialsStepView: View {
                 .focused($focus, equals: .password)
                 .submitLabel(.go)
                 .onSubmit { if canSubmit { onSubmit() } }
+                .accessibilityIdentifier("auth.password.field")
 
                 Button {
                     isPasswordVisible.toggle()

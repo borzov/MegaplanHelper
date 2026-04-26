@@ -38,6 +38,7 @@ struct AuthDomainStepView: View {
                         .focused($focus, equals: .domain)
                         .submitLabel(.continue)
                         .onSubmit { if isValid { onContinue() } }
+                        .accessibilityIdentifier("auth.domain.field")
 
                     if isProbing {
                         ProgressView()

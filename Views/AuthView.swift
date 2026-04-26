@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct AuthView: View {
     @EnvironmentObject private var appState: AppState
@@ -116,12 +117,16 @@ struct AuthView: View {
         withAnimation(.easeInOut(duration: 0.28)) {
             step = .credentials(domain: confirmed, info: info)
         }
+        NSAccessibility.post(element: NSApp as Any,
+                             notification: .layoutChanged)
     }
 
     private func handleBack() {
         withAnimation(.easeInOut(duration: 0.28)) {
             step = .domain
         }
+        NSAccessibility.post(element: NSApp as Any,
+                             notification: .layoutChanged)
         appState.lastAuthError = nil
     }
 
