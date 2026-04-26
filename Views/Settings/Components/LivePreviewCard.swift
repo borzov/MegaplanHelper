@@ -17,27 +17,28 @@ struct LivePreviewCard: View {
                     .fill(LinearGradient(colors: [.indigo, .purple],
                                          startPoint: .topLeading,
                                          endPoint: .bottomTrailing))
-                    .frame(width: 30, height: 30)
+                    .frame(width: avatarSize, height: avatarSize)
                     .overlay(Text(String(localized: "settings.appearance.preview.senderInitials"))
-                                .font(.caption.weight(.semibold))
+                                .font(.system(size: bodySize, weight: .semibold))
                                 .foregroundStyle(.white))
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 1) {
                     HStack {
                         Text(String(localized: "settings.appearance.preview.senderName"))
-                            .fontWeight(.semibold)
+                            .font(.system(size: bodySize, weight: .semibold))
                         Spacer()
-                        Text("14:32").foregroundStyle(.secondary)
+                        Text("14:32")
+                            .font(.system(size: bodySize))
+                            .foregroundStyle(.secondary)
                     }
-                    .font(.caption)
 
                     Text(String(localized: "settings.appearance.preview.title2"))
-                        .font(.subheadline)
+                        .font(.system(size: titleSize, weight: .medium))
                         .lineLimit(1)
 
                     Text(String(localized: "settings.appearance.preview.body"))
-                        .font(.caption)
+                        .font(.system(size: bodySize))
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
@@ -45,9 +46,9 @@ struct LivePreviewCard: View {
             .padding(10)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator, lineWidth: 0.5))
-            .dynamicTypeSize(typeSize)
         }
         .preferredColorScheme(scheme)
+        .animation(.snappy(duration: 0.2), value: fontSize)
     }
 
     private var scheme: ColorScheme? {
@@ -58,11 +59,31 @@ struct LivePreviewCard: View {
         }
     }
 
-    private var typeSize: DynamicTypeSize {
+    /// Explicit point sizes per fontSize bucket. `.system(size:)` is the only
+    /// reliable way to make Picker changes visible in a SwiftUI preview on macOS —
+    /// `.dynamicTypeSize` is an accessibility hint, not a layout override, and
+    /// fixed system fonts (`.subheadline`, `.caption`) ignore it on macOS.
+    private var titleSize: CGFloat {
         switch fontSize {
-        case "small":  return .small
-        case "large":  return .xLarge
-        default:       return .large
+        case "small":  return 12
+        case "large":  return 17
+        default:       return 14
+        }
+    }
+
+    private var bodySize: CGFloat {
+        switch fontSize {
+        case "small":  return 10
+        case "large":  return 14
+        default:       return 12
+        }
+    }
+
+    private var avatarSize: CGFloat {
+        switch fontSize {
+        case "small":  return 26
+        case "large":  return 36
+        default:       return 30
         }
     }
 }
