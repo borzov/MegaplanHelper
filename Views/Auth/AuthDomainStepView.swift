@@ -7,6 +7,7 @@ struct AuthDomainStepView: View {
     let onContinue: () -> Void
 
     private var isValid: Bool {
+        // .online считается актуальным только пока AuthView сбрасывает probeState в .idle при изменении domain (см. Task 12).
         if case .online = probeState { return true }
         guard !domain.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
         return URLValidator.validateDomain(domain) != nil
@@ -31,7 +32,7 @@ struct AuthDomainStepView: View {
                         .symbolEffect(.pulse, options: .repeating, isActive: isProbing)
                         .accessibilityHidden(true)
 
-                    TextField("https://", text: $domain, prompt: Text(verbatim: "mycompany.megaplan.ru"))
+                    TextField("auth.domain", text: $domain, prompt: Text(verbatim: "mycompany.megaplan.ru"))
                         .textFieldStyle(.plain)
                         .autocorrectionDisabled()
                         .focused($focus, equals: .domain)
