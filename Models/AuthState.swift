@@ -80,3 +80,22 @@ enum AuthFieldFocus: Hashable {
     case login
     case password
 }
+
+extension AuthFieldError {
+    init(networkError: NetworkError) {
+        switch networkError {
+        case .unauthorized:
+            self = .credentials(.unauthorized)
+        case .tooManyAttempts:
+            self = .lockout
+        case .validationFailed:
+            self = .credentials(.invalidEmail)
+        case .transport, .offline, .invalidURL:
+            self = .domain(.unreachable)
+        case .server(let message):
+            self = .credentials(.serverError(message))
+        case .decodingFailed, .missingToken, .autoLaunchFailure, .sessionExpired:
+            self = .credentials(.serverError(networkError.localizedDescription))
+        }
+    }
+}

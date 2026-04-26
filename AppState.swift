@@ -24,6 +24,7 @@ final class AppState: ObservableObject {
     @Published private(set) var lastSyncTime: Date?
     @Published var alertItem: AlertItem?
     @Published private(set) var lockoutState: LockoutState?
+    @Published var lastAuthError: AuthFieldError?
     /// Transient banner message shown briefly in the popover (e.g. "comments
     /// copied"). Auto-clears on its own; nil hides the banner.
     @Published var transientToast: String?
@@ -174,7 +175,8 @@ final class AppState: ObservableObject {
         if failedLoginAttempts >= 3,
            let lastTime = lastFailedLoginTime {
             if Date().timeIntervalSince(lastTime) < Self.lockoutDuration {
-                presentError(.tooManyAttempts)
+                lastAuthError = .lockout
+                recomputeLockoutState()
                 return
             } else {
                 // Lockout period has expired, reset the counter
@@ -193,7 +195,7 @@ final class AppState: ObservableObject {
         guard !trimmedDomain.isEmpty,
               trimmedLogin.isValidEmail(),
               !password.isEmpty else {
-            presentError(.validationFailed)
+            lastAuthError = .credentials(.invalidEmail)
             return
         }
 
@@ -213,6 +215,7 @@ final class AppState: ObservableObject {
                 // Continue anyway, admin check will happen on next token validation
             }
             
+            lastAuthError = nil
             // Reset failed attempts on success
             failedLoginAttempts = 0
             lastFailedLoginTime = nil
@@ -233,8 +236,9 @@ final class AppState: ObservableObject {
             lastFailedLoginTime = Date()
             recomputeLockoutState()
 
-            AppLogger.error("Authentication failed: \(error.localizedDescription)")
-            presentError(NetworkError(error))
+            let networkError = NetworkError(error)
+            AppLogger.error("Authentication failed: \(networkError.localizedDescription)")
+            lastAuthError = AuthFieldError(networkError: networkError)
         }
     }
 
