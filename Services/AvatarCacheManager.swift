@@ -12,7 +12,7 @@ final class AvatarCacheManager {
     static let shared = AvatarCacheManager()
 
     private let cacheDirectory: URL
-    private let cacheExpirationInterval: TimeInterval = Constants.CacheConfig.expirationInterval
+    private let cacheExpirationInterval: TimeInterval = Constants.CacheConfig.avatarDiskTTL
     private let fileManager: FileManager
 
     // Network session with configured timeouts

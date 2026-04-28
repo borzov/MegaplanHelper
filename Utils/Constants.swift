@@ -55,8 +55,27 @@ enum Constants {
         /// Maximum total size of disk avatar cache (100 MB)
         static let maxDiskCacheSize: Int64 = 100 * 1_024 * 1_024
 
-        /// Cache expiration interval (1 hour)
-        static let expirationInterval: TimeInterval = 3600
+        /// User metadata cache expiration interval in memory (1 hour)
+        static let userInfoMemoryTTL: TimeInterval = 3600
+
+        /// Avatar image cache expiration interval on disk (24 hours)
+        static let avatarDiskTTL: TimeInterval = 24 * 3600
+    }
+
+    enum DomainProbeConfig {
+        /// TTL for successful probe responses (10 minutes)
+        static let positiveTTL: TimeInterval = 600
+
+        /// TTL for temporary network failures (90 seconds)
+        static let negativeTTL: TimeInterval = 90
+    }
+
+    enum SnapshotConfig {
+        /// Snapshot schema version for migration safety
+        static let notificationsSchemaVersion = 1
+
+        /// Maximum age of snapshot on disk (24 hours)
+        static let notificationsTTL: TimeInterval = 24 * 3600
     }
 
     /// Security-related configuration

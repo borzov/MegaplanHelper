@@ -272,6 +272,16 @@
 "settings.storage.avatarsTitle" = "Avatar cache";
 "settings.storage.statsLine" = "%@ · %d entries";
 "settings.storage.clear" = "Clear";
+"settings.storage.cacheOverviewTitle" = "Cache system overview";
+"settings.storage.clearAllCaches" = "Clear all caches";
+"settings.storage.totalSummary" = "On disk: %@ · In-memory UserInfo: %d";
+"settings.storage.userInfoCacheTitle" = "User info cache (memory)";
+"settings.storage.userInfoCacheLine" = "%d of %d entries";
+"settings.storage.snapshotCacheTitle" = "Notifications snapshot (disk)";
+"settings.storage.snapshotMissing" = "No snapshot found for current workspace";
+"settings.storage.snapshotLine" = "%@ · %d notifications (%d unread) · %4$@";
+"settings.storage.runtimeNotificationsTitle" = "Current runtime notifications cache";
+"settings.storage.runtimeNotificationsLine" = "%d items in memory · %d unread";
 "settings.storage.cacheSection" = "Cache";
 "settings.storage.dataSection" = "Data";
 "settings.storage.export" = "Export settings";

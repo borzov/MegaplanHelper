@@ -80,17 +80,60 @@ final class DomainProbeServiceTests: XCTestCase {
         XCTAssertEqual(callCount, 1, "second call must be served from cache")
     }
 
-    func testProbe_UnreachableResult_IsNotCached_HandlerCalledTwice() async {
+    func testProbe_UnreachableResult_IsCachedWithinNegativeTTL_HandlerCalledOnce() async {
         var callCount = 0
         URLProtocolMock.handler = { _ in
             callCount += 1
             throw URLError(.cannotConnectToHost)
         }
-        let service = DomainProbeService(session: URLProtocolMock.makeSession())
+        let service = DomainProbeService(
+            session: URLProtocolMock.makeSession(),
+            negativeTTL: 1
+        )
 
         _ = await service.probe("acme.megaplan.ru")
         _ = await service.probe("acme.megaplan.ru")
 
-        XCTAssertEqual(callCount, 2, "unreachable results must not be cached so retry works after network recovery")
+        XCTAssertEqual(callCount, 1, "unreachable result must use negative cache inside TTL window")
+    }
+
+    func testProbe_UnreachableResult_ExpiresAfterNegativeTTL_HandlerCalledTwice() async {
+        var callCount = 0
+        URLProtocolMock.handler = { _ in
+            callCount += 1
+            throw URLError(.cannotConnectToHost)
+        }
+        let service = DomainProbeService(
+            session: URLProtocolMock.makeSession(),
+            negativeTTL: 0.01
+        )
+
+        _ = await service.probe("acme.megaplan.ru")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        _ = await service.probe("acme.megaplan.ru")
+
+        XCTAssertEqual(callCount, 2, "expired negative cache must trigger a new probe")
+    }
+
+    func testProbe_OnlineResult_ExpiresAfterPositiveTTL_HandlerCalledTwice() async {
+        var callCount = 0
+        URLProtocolMock.handler = { request in
+            callCount += 1
+            let response = HTTPURLResponse(url: request.url!,
+                                           statusCode: 200,
+                                           httpVersion: "HTTP/1.1",
+                                           headerFields: nil)!
+            return (response, nil)
+        }
+        let service = DomainProbeService(
+            session: URLProtocolMock.makeSession(),
+            positiveTTL: 0.01
+        )
+
+        _ = await service.probe("acme.megaplan.ru")
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        _ = await service.probe("acme.megaplan.ru")
+
+        XCTAssertEqual(callCount, 2, "expired positive cache must trigger a new probe")
     }
 }

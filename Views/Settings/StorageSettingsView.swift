@@ -2,6 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct StorageSettingsView: View {
+    @EnvironmentObject var appState: AppState
     @State private var showResetConfirm = false
     @State private var importingFromFile = false
     @State private var exportingToFile = false
@@ -14,6 +15,7 @@ struct StorageSettingsView: View {
         Form {
             Section(String(localized: "settings.storage.cacheSection")) {
                 CacheStatsRow()
+                    .environmentObject(appState)
             }
 
             Section(String(localized: "settings.storage.dataSection")) {

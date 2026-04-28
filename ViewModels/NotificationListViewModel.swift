@@ -26,7 +26,6 @@ final class NotificationListViewModel: ObservableObject {
     let appState: AppState
     private let userDefaults: UserDefaults
     private var cancellables = Set<AnyCancellable>()
-    private var lastSuccessfulNotifications: [MegaplanNotification] = []
     private var visitedNotificationIds: Set<String> = []
     private var searchableNotifications: [SearchableNotification] = []
     

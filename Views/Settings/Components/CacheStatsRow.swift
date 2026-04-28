@@ -1,18 +1,32 @@
 import SwiftUI
 
-/// Row showing avatar cache size + entry count + Clear button + visual progress.
+/// Row showing cache details across avatar, memory and snapshot caches.
 struct CacheStatsRow: View {
-    @State private var sizeBytes: Int64 = 0
-    @State private var count: Int = 0
+    @EnvironmentObject private var appState: AppState
+
+    @State private var avatarSizeBytes: Int64 = 0
+    @State private var avatarCount: Int = 0
+    @State private var userInfoCount: Int = 0
+    @State private var snapshotSizeBytes: Int64 = 0
+    @State private var snapshotNotificationsCount: Int = 0
+    @State private var snapshotUnreadCount: Int = 0
+    @State private var snapshotSavedAt: Date?
     @State private var isClearing = false
 
-    private let limit: Int64 = Constants.CacheConfig.maxDiskCacheSize
+    private let avatarLimit: Int64 = Constants.CacheConfig.maxDiskCacheSize
 
     private static let sizeFormatter: ByteCountFormatter = {
         let f = ByteCountFormatter()
         f.allowedUnits = [.useMB, .useKB]
         f.countStyle = .file
         return f
+    }()
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter
     }()
 
     /// Minimum spinner display so the Clear action feels acknowledged.
@@ -22,15 +36,13 @@ struct CacheStatsRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(String(localized: "settings.storage.avatarsTitle"))
+                    Text(String(localized: "settings.storage.cacheOverviewTitle"))
                         .font(.headline)
-                    Text(String(format: String(localized: "settings.storage.statsLine"),
-                                Self.sizeFormatter.string(fromByteCount: sizeBytes),
-                                count))
+                    Text(totalCacheSummary)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .contentTransition(.numericText())
-                        .animation(.snappy, value: sizeBytes)
+                        .animation(.snappy, value: avatarSizeBytes)
                 }
                 Spacer()
                 Button(role: .destructive) {
@@ -39,28 +51,98 @@ struct CacheStatsRow: View {
                     if isClearing {
                         ProgressView().controlSize(.small)
                     } else {
-                        Text(String(localized: "settings.storage.clear"))
+                        Text(String(localized: "settings.storage.clearAllCaches"))
                     }
                 }
-                .disabled(isClearing || count == 0)
+                .disabled(isClearing || !hasAnyCacheData)
             }
-            StorageBar(used: sizeBytes, limit: limit)
+            StorageBar(used: avatarSizeBytes, limit: avatarLimit)
                 .accessibilityHidden(true)
+
+            Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 8) {
+                GridRow {
+                    Text(String(localized: "settings.storage.avatarsTitle"))
+                        .foregroundStyle(.secondary)
+                    Text(String(format: String(localized: "settings.storage.statsLine"),
+                                Self.sizeFormatter.string(fromByteCount: avatarSizeBytes),
+                                avatarCount))
+                }
+
+                GridRow {
+                    Text(String(localized: "settings.storage.userInfoCacheTitle"))
+                        .foregroundStyle(.secondary)
+                    Text(String(format: String(localized: "settings.storage.userInfoCacheLine"),
+                                userInfoCount,
+                                Constants.CacheConfig.maxUserInfoEntries))
+                }
+
+                GridRow {
+                    Text(String(localized: "settings.storage.snapshotCacheTitle"))
+                        .foregroundStyle(.secondary)
+                    Text(snapshotSummary)
+                }
+
+                GridRow {
+                    Text(String(localized: "settings.storage.runtimeNotificationsTitle"))
+                        .foregroundStyle(.secondary)
+                    Text(String(format: String(localized: "settings.storage.runtimeNotificationsLine"),
+                                appState.notifications.count,
+                                appState.unreadCount))
+                }
+            }
+            .font(.caption)
         }
-        // Refresh runs once on appear; users see live updates after the next time they
-        // re-open Storage settings. A periodic Timer would address concurrent cache
-        // growth, but is deferred — Phase 1 doesn't require it.
         .task { await refresh() }
     }
 
+    private var hasAnyCacheData: Bool {
+        avatarCount > 0 || avatarSizeBytes > 0 || userInfoCount > 0 || snapshotSavedAt != nil
+    }
+
+    private var totalCacheSummary: String {
+        let diskTotal = avatarSizeBytes + snapshotSizeBytes
+        return String(format: String(localized: "settings.storage.totalSummary"),
+                      Self.sizeFormatter.string(fromByteCount: diskTotal),
+                      userInfoCount)
+    }
+
+    private var snapshotSummary: String {
+        guard let snapshotSavedAt else {
+            return String(localized: "settings.storage.snapshotMissing")
+        }
+        return String(
+            format: String(localized: "settings.storage.snapshotLine"),
+            Self.sizeFormatter.string(fromByteCount: snapshotSizeBytes),
+            snapshotNotificationsCount,
+            snapshotUnreadCount,
+            Self.dateFormatter.string(from: snapshotSavedAt)
+        )
+    }
+
     private func refresh() async {
-        sizeBytes = await AvatarCacheManager.shared.cacheSize()
-        count = await AvatarCacheManager.shared.entryCount()
+        avatarSizeBytes = await AvatarCacheManager.shared.cacheSize()
+        avatarCount = await AvatarCacheManager.shared.entryCount()
+        userInfoCount = await UserInfoCache.shared.entryCount()
+
+        if let workspaceKey = AppState.workspaceKey(from: appState.domain),
+           let stats = await NotificationsSnapshotStore.shared.snapshotStats(workspaceKey: workspaceKey) {
+            snapshotSizeBytes = stats.sizeBytes
+            snapshotNotificationsCount = stats.notificationsCount
+            snapshotUnreadCount = stats.unreadCount
+            snapshotSavedAt = stats.savedAt
+        } else {
+            snapshotSizeBytes = 0
+            snapshotNotificationsCount = 0
+            snapshotUnreadCount = 0
+            snapshotSavedAt = nil
+        }
     }
 
     private func clear() async {
         isClearing = true
         await AvatarCacheManager.shared.clearCache()
+        await UserInfoCache.shared.clearCache()
+        await NotificationsSnapshotStore.shared.clear()
         try? await Task.sleep(nanoseconds: Self.perceptualClearDelay)
         await refresh()
         isClearing = false

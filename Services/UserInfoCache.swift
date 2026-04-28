@@ -5,7 +5,7 @@ actor UserInfoCache {
 
     private var cache: [String: CachedUserInfo] = [:]
     private var accessOrder: [String] = []  // LRU tracking
-    private let cacheExpiration: TimeInterval = Constants.CacheConfig.expirationInterval
+    private let cacheExpiration: TimeInterval = Constants.CacheConfig.userInfoMemoryTTL
     private let maxCacheSize: Int = Constants.CacheConfig.maxUserInfoEntries
 
     struct CachedUserInfo {
@@ -56,6 +56,10 @@ actor UserInfoCache {
     func clearCache() {
         cache.removeAll()
         accessOrder.removeAll()
+    }
+
+    func entryCount() -> Int {
+        cache.count
     }
 
     // MARK: - Private LRU Helpers

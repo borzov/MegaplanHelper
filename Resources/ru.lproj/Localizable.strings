@@ -269,6 +269,16 @@
 "settings.storage.avatarsTitle" = "Кэш аватаров";
 "settings.storage.statsLine" = "%@ · %d записей";
 "settings.storage.clear" = "Очистить";
+"settings.storage.cacheOverviewTitle" = "Обзор системы кеширования";
+"settings.storage.clearAllCaches" = "Очистить все кеши";
+"settings.storage.totalSummary" = "На диске: %@ · В памяти UserInfo: %d";
+"settings.storage.userInfoCacheTitle" = "Кэш данных пользователей (память)";
+"settings.storage.userInfoCacheLine" = "%d из %d записей";
+"settings.storage.snapshotCacheTitle" = "Снимок уведомлений (диск)";
+"settings.storage.snapshotMissing" = "Не найден для текущего рабочего пространства";
+"settings.storage.snapshotLine" = "%@ · %d уведомлений (%d непрочитанных) · %4$@";
+"settings.storage.runtimeNotificationsTitle" = "Текущий runtime-кэш уведомлений";
+"settings.storage.runtimeNotificationsLine" = "%d элементов в памяти · %d непрочитанных";
 "settings.storage.cacheSection" = "Кэш";
 "settings.storage.dataSection" = "Данные";
 "settings.storage.export" = "Экспортировать настройки";

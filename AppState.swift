@@ -65,6 +65,7 @@ final class AppState: ObservableObject {
     private var currentUserId: String?
     private let keychain = KeychainManager()
     private let userDefaults: UserDefaults
+    private let snapshotStore: NotificationsSnapshotStore
     private let notificationManager = NotificationManager.shared
     private let errorRecoveryService = ErrorRecoveryService.shared
     private let refreshScheduler: RefreshScheduler
@@ -84,10 +85,12 @@ final class AppState: ObservableObject {
 
     init(
         api: AuthenticationService & NotificationService & TaskService & EmployeeService = MegaplanAPI(),
-        userDefaults: UserDefaults = .standard
+        userDefaults: UserDefaults = .standard,
+        snapshotStore: NotificationsSnapshotStore = .shared
     ) {
         self.api = api
         self.userDefaults = userDefaults
+        self.snapshotStore = snapshotStore
         let domainValue = userDefaults.string(forKey: Constants.UserDefaultsKeys.domain) ?? ""
         let usernameValue = userDefaults.string(forKey: Constants.UserDefaultsKeys.username) ?? ""
         self.domain = domainValue
@@ -192,6 +195,7 @@ final class AppState: ObservableObject {
 
         let trimmedDomain = domain.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedLogin = login.trimmingCharacters(in: .whitespacesAndNewlines)
+        let previousWorkspaceKey = Self.workspaceKey(from: self.domain)
 
         if trimmedDomain.isEmpty {
             lastAuthError = .domain(.invalidFormat)
@@ -210,6 +214,9 @@ final class AppState: ObservableObject {
         do {
             let token = try await api.authenticate(login: trimmedLogin, password: password)
             try persistCredentials(domain: trimmedDomain, login: trimmedLogin, password: password, token: token)
+            if previousWorkspaceKey != Self.workspaceKey(from: trimmedDomain) {
+                await snapshotStore.clear()
+            }
             lastAuthError = nil
             isAuthenticated = true
 
@@ -283,6 +290,9 @@ final class AppState: ObservableObject {
         Task {
             await UserInfoCache.shared.clearCache()
             AppLogger.debug("Cleared user info cache")
+        }
+        Task {
+            await snapshotStore.clear()
         }
 
         do {
@@ -566,6 +576,8 @@ final class AppState: ObservableObject {
             return
         }
 
+        restoreSnapshotIfAvailable(for: domain)
+
         (api as? MegaplanAPI)?.updateDomain(domain)
         do {
             if let token = try keychain.read(service: Constants.Keychain.service, account: Constants.Keychain.tokenAccount) {
@@ -708,6 +720,13 @@ final class AppState: ObservableObject {
             // Сохраняем успешные данные для оффлайн-режима
             lastSuccessfulNotifications = fetchedNotifications
             lastSuccessfulUnreadCount = counter
+            if let workspaceKey = Self.workspaceKey(from: domain) {
+                await snapshotStore.save(
+                    workspaceKey: workspaceKey,
+                    unreadCount: counter,
+                    notifications: fetchedNotifications
+                )
+            }
             
             withAnimation(.easeInOut) {
                 notifications = fetchedNotifications
@@ -817,6 +836,32 @@ final class AppState: ObservableObject {
         AppLogger.debug("Using cached data in offline mode (total: \(lastSuccessfulNotifications.count))")
     }
 
+    private func restoreSnapshotIfAvailable(for domain: String) {
+        guard let workspaceKey = Self.workspaceKey(from: domain) else { return }
+
+        Task { [weak self] in
+            guard let self else { return }
+            guard let snapshot = await snapshotStore.load(workspaceKey: workspaceKey) else { return }
+
+            await MainActor.run {
+                self.lastSuccessfulNotifications = snapshot.notifications
+                self.lastSuccessfulUnreadCount = snapshot.unreadCount
+                if self.notifications.isEmpty {
+                    self.notifications = snapshot.notifications
+                    self.apiUnreadCount = snapshot.unreadCount
+                }
+            }
+        }
+    }
+
+    static func workspaceKey(from domain: String) -> String? {
+        let trimmed = domain.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let hasScheme = trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://")
+        let normalized = hasScheme ? trimmed : "https://\(trimmed)"
+        return URL(string: normalized)?.host?.lowercased()
+    }
+
     private func presentError(_ error: NetworkError) {
         alertItem = AlertItem(message: error.localizedDescription)
     }
@@ -862,6 +907,114 @@ final class AppState: ObservableObject {
 struct AlertItem: Identifiable {
     let id = UUID()
     let message: String
+}
+
+struct NotificationsSnapshotEnvelope: Codable {
+    static var currentSchemaVersion: Int { Constants.SnapshotConfig.notificationsSchemaVersion }
+
+    let schemaVersion: Int
+    let savedAt: Date
+    let workspaceKey: String
+    let unreadCount: Int
+    let notifications: [MegaplanNotification]
+}
+
+actor NotificationsSnapshotStore {
+    static let shared = NotificationsSnapshotStore()
+
+    struct SnapshotStats {
+        let sizeBytes: Int64
+        let savedAt: Date
+        let unreadCount: Int
+        let notificationsCount: Int
+    }
+
+    private let fileURL: URL
+    private let fileManager: FileManager
+    private let decoder = JSONDecoder()
+    private let encoder = JSONEncoder()
+
+    init(fileManager: FileManager = .default, fileURL: URL? = nil) {
+        self.fileManager = fileManager
+        if let fileURL {
+            self.fileURL = fileURL
+        } else {
+            let cachesURL = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
+                ?? URL(fileURLWithPath: NSTemporaryDirectory())
+            let directoryURL = cachesURL
+                .appendingPathComponent("MegaplanMenuBarApp", isDirectory: true)
+                .appendingPathComponent("Snapshots", isDirectory: true)
+            self.fileURL = directoryURL.appendingPathComponent("notifications_snapshot.json")
+        }
+    }
+
+    func load(workspaceKey: String) -> NotificationsSnapshotEnvelope? {
+        guard fileManager.fileExists(atPath: fileURL.path),
+              let data = try? Data(contentsOf: fileURL),
+              let snapshot = try? decoder.decode(NotificationsSnapshotEnvelope.self, from: data) else {
+            return nil
+        }
+
+        guard snapshot.schemaVersion == NotificationsSnapshotEnvelope.currentSchemaVersion else {
+            clear()
+            return nil
+        }
+
+        let age = Date().timeIntervalSince(snapshot.savedAt)
+        guard age <= Constants.SnapshotConfig.notificationsTTL else {
+            clear()
+            return nil
+        }
+
+        guard snapshot.workspaceKey == workspaceKey else {
+            return nil
+        }
+
+        return snapshot
+    }
+
+    func save(workspaceKey: String, unreadCount: Int, notifications: [MegaplanNotification]) {
+        let snapshot = NotificationsSnapshotEnvelope(
+            schemaVersion: NotificationsSnapshotEnvelope.currentSchemaVersion,
+            savedAt: Date(),
+            workspaceKey: workspaceKey,
+            unreadCount: unreadCount,
+            notifications: notifications
+        )
+
+        do {
+            let directoryURL = fileURL.deletingLastPathComponent()
+            try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
+            let data = try encoder.encode(snapshot)
+            try data.write(to: fileURL, options: .atomic)
+        } catch {
+            AppLogger.warning("Failed to save notifications snapshot: \(error.localizedDescription)")
+        }
+    }
+
+    func clear() {
+        guard fileManager.fileExists(atPath: fileURL.path) else { return }
+        do {
+            try fileManager.removeItem(at: fileURL)
+        } catch {
+            AppLogger.warning("Failed to clear notifications snapshot: \(error.localizedDescription)")
+        }
+    }
+
+    func snapshotStats(workspaceKey: String) -> SnapshotStats? {
+        guard let snapshot = load(workspaceKey: workspaceKey),
+              let attrs = try? fileManager.attributesOfItem(atPath: fileURL.path),
+              let size = attrs[.size] as? NSNumber else {
+            return nil
+        }
+
+        return SnapshotStats(
+            sizeBytes: size.int64Value,
+            savedAt: snapshot.savedAt,
+            unreadCount: snapshot.unreadCount,
+            notificationsCount: snapshot.notifications.count
+        )
+    }
 }
 
 // MARK: - RefreshScheduler

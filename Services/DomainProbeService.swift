@@ -1,13 +1,27 @@
 import Foundation
 
 actor DomainProbeService {
+    private struct CachedProbe {
+        let state: DomainProbeState
+        let probedAt: Date
+    }
+
     private let session: URLSession
     private let timeout: TimeInterval
-    private var cache: [String: DomainProbeState] = [:]
+    private let positiveTTL: TimeInterval
+    private let negativeTTL: TimeInterval
+    private var cache: [String: CachedProbe] = [:]
 
-    init(session: URLSession = .shared, timeout: TimeInterval = 4.0) {
+    init(
+        session: URLSession = .shared,
+        timeout: TimeInterval = 4.0,
+        positiveTTL: TimeInterval = Constants.DomainProbeConfig.positiveTTL,
+        negativeTTL: TimeInterval = Constants.DomainProbeConfig.negativeTTL
+    ) {
         self.session = session
         self.timeout = timeout
+        self.positiveTTL = positiveTTL
+        self.negativeTTL = negativeTTL
     }
 
     func clearCache() {
@@ -18,12 +32,14 @@ actor DomainProbeService {
         let trimmed = domain.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !trimmed.isEmpty else { return .invalid }
 
-        if let cached = cache[trimmed] { return cached }
+        if let cached = cache[trimmed], !isExpired(cached) {
+            return cached.state
+        }
 
         guard let baseURL = URLValidator.validateDomain(trimmed) else {
             let host = stripScheme(trimmed)
             let state: DomainProbeState = URLValidator.isBlockedHost(host) ? .blocked : .invalid
-            cache[trimmed] = state
+            cache[trimmed] = CachedProbe(state: state, probedAt: Date())
             return state
         }
 
@@ -49,10 +65,20 @@ actor DomainProbeService {
             state = .unreachable
         }
 
-        if state != .unreachable {
-            cache[trimmed] = state
-        }
+        cache[trimmed] = CachedProbe(state: state, probedAt: Date())
         return state
+    }
+
+    private func isExpired(_ cached: CachedProbe) -> Bool {
+        let ttl: TimeInterval
+        switch cached.state {
+        case .unreachable:
+            ttl = negativeTTL
+        default:
+            ttl = positiveTTL
+        }
+
+        return Date().timeIntervalSince(cached.probedAt) > ttl
     }
 
     private nonisolated func stripScheme(_ s: String) -> String {
