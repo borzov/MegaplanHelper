@@ -262,7 +262,7 @@ struct RootPopoverView: View {
                         .font(.system(size: metrics.iconMedium))
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel(Text("Copy API Log"))
+                .accessibilityLabel(Text(String(localized: "settings.about.copyLog")))
 
                 Button {
                     if let url = URL(string: "https://\(appState.domain)/knowledge/") {
@@ -273,7 +273,7 @@ struct RootPopoverView: View {
                         .font(.system(size: metrics.iconMedium))
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel(Text("Knowledge Base"))
+                .accessibilityLabel(Text(String(localized: "settings.about.knowledgeBase")))
 
                 Button {
                     if let url = URL(string: "https://\(appState.domain)/deals/list/") {
@@ -284,7 +284,7 @@ struct RootPopoverView: View {
                         .font(.system(size: metrics.iconMedium))
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel(Text("Deals"))
+                .accessibilityLabel(Text(String(localized: "settings.about.deals")))
 
                 Button {
                     if let url = URL(string: "https://\(appState.domain)/task/") {
@@ -295,7 +295,7 @@ struct RootPopoverView: View {
                         .font(.system(size: metrics.iconMedium))
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel(Text("Tasks"))
+                .accessibilityLabel(Text(String(localized: "settings.about.tasks")))
             }
 
             Spacer()
@@ -307,7 +307,7 @@ struct RootPopoverView: View {
                     .font(.system(size: metrics.iconMedium))
             }
             .buttonStyle(.borderless)
-            .accessibilityLabel(Text("Settings"))
+            .accessibilityLabel(Text(String(localized: "settings.title")))
 
             Button {
                 NSApplication.shared.terminate(nil)
@@ -316,7 +316,7 @@ struct RootPopoverView: View {
                     .font(.system(size: metrics.iconMedium))
             }
             .buttonStyle(.borderless)
-            .accessibilityLabel(Text("Quit Application"))
+            .accessibilityLabel(Text(String(localized: "menu.quit")))
         }
         .padding(.vertical, 0)
         .padding(.horizontal, 4)

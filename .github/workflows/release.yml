@@ -41,6 +41,16 @@ jobs:
         echo "✅ Приложение найдено: build/export/MegaplanHepler.app"
         du -sh build/export/MegaplanHepler.app
 
+    - name: Notarize application
+      if: ${{ secrets.APPLE_ID != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+      env:
+        APPLE_ID: ${{ secrets.APPLE_ID }}
+        APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      run: |
+        chmod +x ./scripts/notarize-app.sh
+        ./scripts/notarize-app.sh "${{ github.workspace }}/build/export/MegaplanHepler.app"
+
     - name: Create release archive
       run: |
         VERSION=${GITHUB_REF#refs/tags/v}
