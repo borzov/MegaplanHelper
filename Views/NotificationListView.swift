@@ -40,44 +40,19 @@ struct NotificationListView: View {
     }
 
     private var searchBar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
-                .font(.system(size: 14))
-
-            TextField("notifications.search.placeholder", text: $viewModel.searchQuery)
-                .textFieldStyle(.plain)
-                .focused($isSearchFieldFocused)
-                .onSubmit {
-                    if viewModel.searchQuery.isEmpty {
-                        viewModel.clearSearch()
-                    }
-                }
-            
-            if !viewModel.searchQuery.isEmpty {
-                Button {
+        ListSearchBar(
+            placeholder: "notifications.search.placeholder",
+            text: $viewModel.searchQuery,
+            isFocused: $isSearchFieldFocused,
+            clearAccessibilityLabel: "notifications.search.clear",
+            onSubmit: {
+                if viewModel.searchQuery.isEmpty {
                     viewModel.clearSearch()
-                    // Keep focus on search field after clearing
-                    isSearchFieldFocused = true
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
-                        .font(.system(size: 14))
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text("notifications.search.clear"))
-                .buttonPressEffect()
+            },
+            onClear: {
+                viewModel.clearSearch()
             }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color(.controlBackgroundColor))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(Color(.separatorColor), lineWidth: 1)
         )
     }
 
@@ -95,7 +70,7 @@ struct NotificationListView: View {
             }
         } else {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 10) {
+                LazyVStack(alignment: .leading, spacing: 8) {
                     // Offline banner
                     if appState.isOffline {
                         OfflineBannerView(lastSyncTime: appState.lastSyncTime)
@@ -144,7 +119,7 @@ private struct NotificationRow: View {
     @State private var isLoadingAvatar = false
     @State private var cachedSenderName: String?
 
-    private var categoryIcon: String {
+    private var categoryIconName: String {
         if notification.isMention {
             return "at.circle.fill"
         } else if notification.isCommentNotification {
@@ -166,6 +141,10 @@ private struct NotificationRow: View {
         } else {
             return .gray
         }
+    }
+
+    private var cardCategoryIcon: EntityCardCategoryIcon? {
+        .init(systemName: categoryIconName, color: categoryColor)
     }
 
     private var tint: EntityCardTint {
@@ -195,7 +174,7 @@ private struct NotificationRow: View {
             avatar: avatarSource,
             actorName: notification.senderName ?? cachedSenderName,
             isActorPlaceholder: false,
-            categoryIcon: nil,
+            categoryIcon: cardCategoryIcon,
             time: notification.displayDate,
             title: notification.title,
             bodyText: notification.body.isEmpty ? nil : notification.body,
@@ -204,7 +183,7 @@ private struct NotificationRow: View {
             tint: tint,
             isVisited: viewModel.isVisited(notification),
             onTap: openNotificationLink,
-            trailing: { AnyView(markAsReadButton) }
+            trailing: { markAsReadButton }
         )
         .overlay(loadingAvatarOverlay)
         .animation(.easeInOut(duration: 0.3), value: isMarkingAsRead)
@@ -515,39 +494,6 @@ private struct NotificationRow: View {
         )
         
         AppLogger.debug("Failed to load fallback avatar for senderId \(senderId) from all endpoints")
-    }
-}
-
-extension View {
-    func buttonPressEffect() -> some View {
-        self.modifier(ButtonPressEffectModifier())
-    }
-}
-
-private struct ButtonPressEffectModifier: ViewModifier {
-    @State private var isPressed = false
-    @State private var isHovered = false
-    
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(isPressed ? 0.9 : (isHovered ? 1.05 : 1.0))
-            .opacity(isPressed ? 0.7 : 1.0)
-            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isPressed)
-            .animation(.easeInOut(duration: 0.15), value: isHovered)
-            .onHover { hovering in
-                isHovered = hovering
-            }
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        if !isPressed {
-                            isPressed = true
-                        }
-                    }
-                    .onEnded { _ in
-                        isPressed = false
-                    }
-            )
     }
 }
 

@@ -1,6 +1,73 @@
 import AppKit
 import SwiftUI
 
+struct ListSearchBar: View {
+    let placeholder: LocalizedStringKey
+    @Binding var text: String
+    let isFocused: FocusState<Bool>.Binding
+    let clearAccessibilityLabel: LocalizedStringKey?
+    let onSubmit: (() -> Void)?
+    let onClear: (() -> Void)?
+
+    init(
+        placeholder: LocalizedStringKey,
+        text: Binding<String>,
+        isFocused: FocusState<Bool>.Binding,
+        clearAccessibilityLabel: LocalizedStringKey? = nil,
+        onSubmit: (() -> Void)? = nil,
+        onClear: (() -> Void)? = nil
+    ) {
+        self.placeholder = placeholder
+        self._text = text
+        self.isFocused = isFocused
+        self.clearAccessibilityLabel = clearAccessibilityLabel
+        self.onSubmit = onSubmit
+        self.onClear = onClear
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.secondary)
+                .font(.system(size: 13))
+
+            TextField(placeholder, text: $text)
+                .textFieldStyle(.plain)
+                .focused(isFocused)
+                .onSubmit {
+                    onSubmit?()
+                }
+
+            if !text.isEmpty {
+                Button {
+                    if let onClear {
+                        onClear()
+                    } else {
+                        text = ""
+                    }
+                    isFocused.wrappedValue = true
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.secondary)
+                        .font(.system(size: 13))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text(clearAccessibilityLabel ?? "notifications.search.clear"))
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color(.controlBackgroundColor))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color(.separatorColor), lineWidth: 1)
+        )
+    }
+}
+
 struct TaskListView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var viewModel: TaskListViewModel
@@ -107,36 +174,13 @@ struct TaskListView: View {
     }
 
     private var searchBar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
-                .font(.system(size: 13))
-
-            TextField("tasks.search.placeholder", text: $viewModel.searchQuery)
-                .textFieldStyle(.plain)
-                .focused($isSearchFieldFocused)
-
-            if !viewModel.searchQuery.isEmpty {
-                Button {
-                    viewModel.clearSearch()
-                    isSearchFieldFocused = true
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
-                        .font(.system(size: 13))
-                }
-                .buttonStyle(.plain)
+        ListSearchBar(
+            placeholder: "tasks.search.placeholder",
+            text: $viewModel.searchQuery,
+            isFocused: $isSearchFieldFocused,
+            onClear: {
+                viewModel.clearSearch()
             }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color(.controlBackgroundColor))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(Color(.separatorColor), lineWidth: 1)
         )
     }
 
