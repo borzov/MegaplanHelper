@@ -25,6 +25,7 @@ struct PopoverHeaderView: View {
     let isSearchActive: Bool
     let isFilterActive: Bool
     let showsFilterButton: Bool
+    let filterAccessibilityLabel: LocalizedStringKey
     let onRefresh: () -> Void
     let onToggleSearch: () -> Void
     let onToggleFilter: () -> Void
@@ -55,7 +56,7 @@ struct PopoverHeaderView: View {
                             .foregroundColor(isFilterActive ? .accentColor : .primary)
                     }
                     .buttonStyle(.borderless)
-                    .accessibilityLabel(Text("tasks.filter"))
+                    .accessibilityLabel(Text(filterAccessibilityLabel))
                 }
 
                 Button(action: onToggleSearch) {
@@ -170,6 +171,7 @@ struct PopoverHeaderView_Previews: PreviewProvider {
             isSearchActive: false,
             isFilterActive: false,
             showsFilterButton: false,
+            filterAccessibilityLabel: "tasks.filter",
             onRefresh: {},
             onToggleSearch: {},
             onToggleFilter: {}

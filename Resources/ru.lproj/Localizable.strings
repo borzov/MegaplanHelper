@@ -12,6 +12,10 @@
 "notifications.search.placeholder" = "Поиск уведомлений...";
 "notifications.search.clear" = "Очистить";
 "notifications.search.results" = "Найдено: %lld";
+"notifications.filter" = "Фильтр уведомлений";
+"notifications.filter.all" = "Все действия";
+"notifications.filter.type.untyped" = "Без типа";
+"notifications.filter.selectedCount" = "Выбрано: %lld";
 
 "auth.title" = "Вход в Мегаплан";
 "auth.domain" = "Домен";

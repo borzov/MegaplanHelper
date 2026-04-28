@@ -1,6 +1,15 @@
 import AppKit
 import SwiftUI
 
+private enum TopBarLayout {
+    static let horizontalPadding: CGFloat = 4
+    static let topPadding: CGFloat = 6
+    static let bottomPadding: CGFloat = 6
+    static let filterTopPadding: CGFloat = -6
+    static let filterBottomPadding: CGFloat = 6
+    static let minFilterRowHeight: CGFloat = 24
+}
+
 struct ListSearchBar: View {
     @Environment(\.popoverFontMetrics) private var metrics
     let placeholder: LocalizedStringKey
@@ -79,9 +88,9 @@ struct TaskListView: View {
         VStack(alignment: .leading, spacing: 0) {
             if viewModel.isSearchActive {
                 searchBar
-                    .padding(.horizontal, 4)
-                    .padding(.top, 6)
-                    .padding(.bottom, 6)
+                    .padding(.horizontal, TopBarLayout.horizontalPadding)
+                    .padding(.top, TopBarLayout.topPadding)
+                    .padding(.bottom, TopBarLayout.bottomPadding)
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .onAppear {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -93,9 +102,9 @@ struct TaskListView: View {
 
             if viewModel.isFilterPanelActive {
                 filterBar
-                    .padding(.horizontal, 4)
-                    .padding(.top, 6)
-                    .padding(.bottom, 6)
+                    .padding(.horizontal, TopBarLayout.horizontalPadding)
+                    .padding(.top, TopBarLayout.filterTopPadding)
+                    .padding(.bottom, TopBarLayout.filterBottomPadding)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
 
@@ -166,6 +175,7 @@ struct TaskListView: View {
 
             Spacer()
         }
+        .frame(minHeight: TopBarLayout.minFilterRowHeight, alignment: .leading)
     }
 
     private var filterBinding: Binding<TaskStatusFilter> {

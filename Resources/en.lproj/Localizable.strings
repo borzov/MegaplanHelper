@@ -12,6 +12,10 @@
 "notifications.search.placeholder" = "Search notifications...";
 "notifications.search.clear" = "Clear";
 "notifications.search.results" = "Found: %lld";
+"notifications.filter" = "Notification filter";
+"notifications.filter.all" = "All actions";
+"notifications.filter.type.untyped" = "Untyped";
+"notifications.filter.selectedCount" = "Selected: %lld";
 
 "auth.title" = "Sign in to Megaplan";
 "auth.domain" = "Domain";

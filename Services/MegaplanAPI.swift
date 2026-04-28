@@ -133,31 +133,73 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
     }
 
     func fetchNotifications(token: String) async throws -> [MegaplanNotification] {
-        let request = try makeRequest(
-            path: "/api/v3/notification",
-            method: "GET",
-            body: nil,
-            token: token
-        )
-
         do {
+            let limit = 1000
+            let queryDict: [String: Any] = ["limit": limit, "isActive": true]
+            let queryData = try JSONSerialization.data(withJSONObject: queryDict)
+            guard
+                let queryJSON = String(data: queryData, encoding: .utf8),
+                let encodedQuery = queryJSON.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
+            else {
+                throw NetworkError.invalidURL
+            }
+
+            let request = try makeRequest(
+                path: "/api/v3/notification?\(encodedQuery)",
+                method: "GET",
+                body: nil,
+                token: token
+            )
+
             let data = try await perform(request)
-            AppLogger.debug("Raw notifications response: \(String(data: data, encoding: .utf8) ?? "nil")")
-            
             let envelope = try decoder.decode(NotificationsEnvelope.self, from: data)
-            AppLogger.debug("Parsed \(envelope.items.count) notifications")
-            
-            let notifications = envelope.items.map { $0.domainModel }
-            
-            // Extract and cache user info from notifications
+            let notifications = envelope.items.map(\.domainModel)
+                .sorted { $0.createdAt > $1.createdAt }
             let userInfoMap = extractUserInfoFromNotifications(data: data)
+
+            AppLogger.debug("Parsed \(notifications.count) active notifications (single request, limit=\(limit))")
             await cacheUserInfoFromNotifications(userInfoMap: userInfoMap, notifications: notifications)
-            
             return notifications
         } catch {
             AppLogger.error("Failed to fetch notifications: \(error.localizedDescription)")
             throw NetworkError(error)
         }
+    }
+
+    private static func extractPaginationCount(from data: Data) -> Int? {
+        guard
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let meta = json["meta"] as? [String: Any],
+            let pagination = meta["pagination"] as? [String: Any]
+        else {
+            return nil
+        }
+
+        if let count = pagination["count"] as? Int {
+            return count
+        }
+        if let countString = pagination["count"] as? String {
+            return Int(countString)
+        }
+        return nil
+    }
+
+    private static func extractPaginationLimit(from data: Data) -> Int? {
+        guard
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let meta = json["meta"] as? [String: Any],
+            let pagination = meta["pagination"] as? [String: Any]
+        else {
+            return nil
+        }
+
+        if let limit = pagination["limit"] as? Int {
+            return limit
+        }
+        if let limitString = pagination["limit"] as? String {
+            return Int(limitString)
+        }
+        return nil
     }
     
     // MARK: - User Info Extraction and Caching

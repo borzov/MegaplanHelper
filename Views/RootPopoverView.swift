@@ -125,11 +125,12 @@ struct RootPopoverView: View {
                 tasksUnreadCount: appState.tasksUnreadCount,
                 isLoading: appState.isLoading || appState.isTasksLoading,
                 isSearchActive: activeTabIsSearchActive,
-                isFilterActive: taskListViewModel.isFilterPanelActive,
-                showsFilterButton: selectedTab == .tasks,
+                isFilterActive: activeTabIsFilterActive,
+                showsFilterButton: selectedTab == .notifications || selectedTab == .tasks,
+                filterAccessibilityLabel: selectedTab == .notifications ? "notifications.filter" : "tasks.filter",
                 onRefresh: { appState.refreshNow() },
                 onToggleSearch: toggleActiveTabSearch,
-                onToggleFilter: toggleTasksFilter
+                onToggleFilter: toggleActiveTabFilter
             )
             .frame(maxWidth: .infinity)
 
@@ -170,8 +171,24 @@ struct RootPopoverView: View {
         }
     }
 
-    private func toggleTasksFilter() {
-        withAnimation { taskListViewModel.isFilterPanelActive.toggle() }
+    private var activeTabIsFilterActive: Bool {
+        switch selectedTab {
+        case .notifications:
+            return notificationListViewModel.isFilterPanelActive || !notificationListViewModel.selectedTypeFilterKeys.isEmpty
+        case .tasks:
+            return taskListViewModel.isFilterPanelActive
+        }
+    }
+
+    private func toggleActiveTabFilter() {
+        withAnimation {
+            switch selectedTab {
+            case .notifications:
+                notificationListViewModel.isFilterPanelActive.toggle()
+            case .tasks:
+                taskListViewModel.isFilterPanelActive.toggle()
+            }
+        }
     }
 
     private func registerHotkeyHandlersIfNeeded() {

@@ -1,7 +1,17 @@
 import AppKit
 import SwiftUI
 
+private enum TopBarLayout {
+    static let horizontalPadding: CGFloat = 4
+    static let topPadding: CGFloat = 6
+    static let bottomPadding: CGFloat = 6
+    static let filterTopPadding: CGFloat = -6
+    static let filterBottomPadding: CGFloat = 6
+    static let minFilterRowHeight: CGFloat = 24
+}
+
 struct NotificationListView: View {
+    @Environment(\.popoverFontMetrics) private var metrics
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var viewModel: NotificationListViewModel
     @State private var showToast = false
@@ -11,9 +21,9 @@ struct NotificationListView: View {
         VStack(alignment: .leading, spacing: 0) {
             if viewModel.isSearchActive {
                 searchBar
-                    .padding(.horizontal, 4)
-                    .padding(.top, 6)
-                    .padding(.bottom, 6)
+                    .padding(.horizontal, TopBarLayout.horizontalPadding)
+                    .padding(.top, TopBarLayout.topPadding)
+                    .padding(.bottom, TopBarLayout.bottomPadding)
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .onAppear {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -23,10 +33,19 @@ struct NotificationListView: View {
                     .onDisappear { isSearchFieldFocused = false }
             }
 
+            if viewModel.isFilterPanelActive {
+                filterBar
+                    .padding(.horizontal, TopBarLayout.horizontalPadding)
+                    .padding(.top, TopBarLayout.filterTopPadding)
+                    .padding(.bottom, TopBarLayout.filterBottomPadding)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
             content
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .animation(.easeInOut(duration: 0.2), value: viewModel.isSearchActive)
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isFilterPanelActive)
         .onAppear {
             if appState.isAuthenticated {
                 Task {
@@ -54,6 +73,74 @@ struct NotificationListView: View {
                 viewModel.clearSearch()
             }
         )
+    }
+
+    private var filterBar: some View {
+        HStack(spacing: 8) {
+            Menu {
+                Button {
+                    viewModel.selectedTypeFilterKeys.removeAll()
+                    viewModel.updateGroupedNotifications()
+                } label: {
+                    if viewModel.selectedTypeFilterKeys.isEmpty {
+                        Label(String(localized: "notifications.filter.all"), systemImage: "checkmark")
+                    } else {
+                        Text("notifications.filter.all")
+                    }
+                }
+
+                ForEach(viewModel.typeFilterOptions) { option in
+                    Button {
+                        if viewModel.selectedTypeFilterKeys.contains(option.typeKey) {
+                            viewModel.selectedTypeFilterKeys.remove(option.typeKey)
+                        } else {
+                            viewModel.selectedTypeFilterKeys.insert(option.typeKey)
+                        }
+                        viewModel.updateGroupedNotifications()
+                    } label: {
+                        if viewModel.selectedTypeFilterKeys.contains(option.typeKey) {
+                            Label(option.title, systemImage: "checkmark")
+                        } else {
+                            Text(option.title)
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "line.3.horizontal.decrease.circle")
+                        .font(.system(size: metrics.subBody, weight: .medium))
+                    Text(selectedFilterTitle)
+                        .font(.system(size: metrics.badge))
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: max(8, metrics.subBody - 2), weight: .semibold))
+                }
+                .foregroundColor(.primary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(Color(.controlBackgroundColor))
+                )
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+
+            Spacer()
+        }
+        .frame(minHeight: TopBarLayout.minFilterRowHeight, alignment: .leading)
+    }
+
+    private var selectedFilterTitle: String {
+        guard !viewModel.selectedTypeFilterKeys.isEmpty else {
+            return String(localized: "notifications.filter.all")
+        }
+        if viewModel.selectedTypeFilterKeys.count == 1,
+           let selected = viewModel.selectedTypeFilterKeys.first,
+           let option = viewModel.typeFilterOptions.first(where: { $0.typeKey == selected }) {
+            return option.title
+        }
+        return String(format: String(localized: "notifications.filter.selectedCount"), viewModel.selectedTypeFilterKeys.count)
     }
 
     @ViewBuilder
