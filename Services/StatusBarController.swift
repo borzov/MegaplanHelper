@@ -13,6 +13,9 @@ final class StatusBarController: NSObject, ObservableObject {
     private weak var appState: AppState?
     private weak var notificationListViewModel: NotificationListViewModel?
     private var cancellables = Set<AnyCancellable>()
+    private var wakeObserver: (any NSObjectProtocol)?
+    private var screenChangeObserver: (any NSObjectProtocol)?
+    private var isPresentingAlert = false
 
     nonisolated(unsafe) private static var cachedMenuBarImage: NSImage?
 
@@ -37,6 +40,7 @@ final class StatusBarController: NSObject, ObservableObject {
         setupStatusItem()
         setupPopover(with: contentView)
         setupEventMonitor()
+        setupSystemObservers()
         observeAppState()
 
         AppLogger.info("StatusBarController setup complete")
@@ -100,6 +104,32 @@ final class StatusBarController: NSObject, ObservableObject {
                 self?.updateIcon()
             }
             .store(in: &cancellables)
+
+        appState.$alertItem
+            .receive(on: DispatchQueue.main)
+            .compactMap { $0 }
+            .sink { [weak self] alert in
+                self?.presentAppKitAlert(alert)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func setupSystemObservers() {
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.repositionVisiblePopover()
+        }
+
+        screenChangeObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.repositionVisiblePopover()
+        }
     }
 
     // MARK: - Icon and Badge
@@ -181,6 +211,41 @@ final class StatusBarController: NSObject, ObservableObject {
             hidePopover()
         } else {
             showPopover()
+        }
+    }
+
+    private func repositionVisiblePopover() {
+        guard let popover, popover.isShown else { return }
+        hidePopover()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            self?.showPopover()
+        }
+    }
+
+    private func presentAppKitAlert(_ alertItem: AlertItem) {
+        guard !isPresentingAlert else { return }
+        isPresentingAlert = true
+
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(localized: "error.title")
+        alert.informativeText = alertItem.message
+        alert.addButton(withTitle: String(localized: "general.ok"))
+
+        let completion: () -> Void = { [weak self] in
+            guard let self else { return }
+            self.isPresentingAlert = false
+            self.appState?.alertItem = nil
+        }
+
+        if let window = popover?.contentViewController?.view.window {
+            alert.beginSheetModal(for: window) { _ in
+                completion()
+            }
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+            alert.runModal()
+            completion()
         }
     }
 
@@ -294,6 +359,12 @@ final class StatusBarController: NSObject, ObservableObject {
     deinit {
         if let eventMonitor = eventMonitor {
             NSEvent.removeMonitor(eventMonitor)
+        }
+        if let wakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver)
+        }
+        if let screenChangeObserver {
+            NotificationCenter.default.removeObserver(screenChangeObserver)
         }
         cancellables.removeAll()
     }

@@ -616,8 +616,14 @@ final class AppState: ObservableObject {
                 logout()
             }
         } catch {
+            let mappedError = NetworkError(error)
+            if isTransientNetworkFailure(mappedError) {
+                isOffline = true
+                AppLogger.info("Token validation failed due to transient network issue: \(mappedError.localizedDescription)")
+                return
+            }
             AppLogger.error("Token validation failed: \(error.localizedDescription)")
-            presentError(NetworkError(error))
+            presentError(mappedError)
         }
     }
 
@@ -732,23 +738,18 @@ final class AppState: ObservableObject {
             stopRefreshTimer()
             presentError(.sessionExpired)
         } catch {
-            // Для других ошибок проверяем, не связаны ли они с сетью
-            if let networkError = error as? NetworkError,
-               case .transport = networkError {
-                // Проверяем, не является ли это сетевой ошибкой
-                if let urlError = (error as NSError).userInfo[NSUnderlyingErrorKey] as? URLError,
-                   urlError.code == .notConnectedToInternet || urlError.code == .networkConnectionLost {
-                    isOffline = true
-                    restoreCachedNotifications()
-                    AppLogger.info("Network error detected, entering offline mode")
-                    return
-                }
+            let mappedError = NetworkError(error)
+            if isTransientNetworkFailure(mappedError) {
+                isOffline = true
+                restoreCachedNotifications()
+                AppLogger.info("Transient network issue detected during refresh, entering offline mode")
+                return
             }
-            
+
             AppLogger.error("Refresh failed: \(error.localizedDescription)")
             // Не показываем ошибку для сетевых проблем в оффлайн-режиме
             if !isOffline {
-                presentError(NetworkError(error))
+                presentError(mappedError)
             }
         }
     }
@@ -818,6 +819,15 @@ final class AppState: ObservableObject {
 
     private func presentError(_ error: NetworkError) {
         alertItem = AlertItem(message: error.localizedDescription)
+    }
+
+    private func isTransientNetworkFailure(_ error: NetworkError) -> Bool {
+        switch error {
+        case .offline, .timedOut:
+            return true
+        default:
+            return false
+        }
     }
 
     private func recomputeLockoutState() {

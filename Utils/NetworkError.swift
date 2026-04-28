@@ -4,6 +4,7 @@ enum NetworkError: LocalizedError, Identifiable {
     case invalidURL
     case unauthorized
     case decodingFailed
+    case timedOut
     case transport(message: String)
     case server(message: String)
     case missingToken
@@ -18,6 +19,7 @@ enum NetworkError: LocalizedError, Identifiable {
         case .invalidURL: return "invalidURL"
         case .unauthorized: return "unauthorized"
         case .decodingFailed: return "decodingFailed"
+        case .timedOut: return "timedOut"
         case .transport: return "transport"
         case .server: return "server"
         case .missingToken: return "missingToken"
@@ -37,6 +39,8 @@ enum NetworkError: LocalizedError, Identifiable {
             return String(localized: "error.unauthorized")
         case .decodingFailed:
             return String(localized: "error.decoding")
+        case .timedOut:
+            return String(localized: "error.timeout")
         case .transport(let message):
             return String(format: String(localized: "error.transport"), message)
         case .server(let message):
@@ -63,6 +67,10 @@ enum NetworkError: LocalizedError, Identifiable {
         }
 
         if let urlError = error as? URLError {
+            if urlError.code == .timedOut {
+                self = .timedOut
+                return
+            }
             self = .transport(message: urlError.localizedDescription)
             return
         }

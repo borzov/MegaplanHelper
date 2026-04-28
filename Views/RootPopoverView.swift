@@ -108,13 +108,6 @@ struct RootPopoverView: View {
             transientToast
                 .padding(.bottom, 12)
         }
-        .alert(item: $appState.alertItem) { alert in
-            Alert(
-                title: Text("error.title"),
-                message: Text(alert.message),
-                dismissButton: .default(Text("general.ok"))
-            )
-        }
         .onAppear {
             registerHotkeyHandlersIfNeeded()
         }

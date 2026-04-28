@@ -90,7 +90,7 @@ extension AuthFieldError {
             self = .lockout
         case .validationFailed:
             self = .credentials(.invalidEmail)
-        case .transport, .offline, .invalidURL:
+        case .transport, .offline, .timedOut, .invalidURL:
             self = .domain(.unreachable)
         case .server(let message):
             self = .credentials(.serverError(message))

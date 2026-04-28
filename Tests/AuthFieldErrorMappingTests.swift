@@ -28,6 +28,11 @@ final class AuthFieldErrorMappingTests: XCTestCase {
         XCTAssertEqual(mapped, .domain(.unreachable))
     }
 
+    func testMapping_TimedOutError_BecomesDomainUnreachable() {
+        let mapped = AuthFieldError(networkError: .timedOut)
+        XCTAssertEqual(mapped, .domain(.unreachable))
+    }
+
     func testMapping_InvalidURL_BecomesDomainUnreachable() {
         let mapped = AuthFieldError(networkError: .invalidURL)
         XCTAssertEqual(mapped, .domain(.unreachable))

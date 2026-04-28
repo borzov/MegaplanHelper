@@ -62,10 +62,8 @@ final class SettingsWindowManager {
 
         self.settingsWindow = window
 
-        // Сворачиваем popover статус-бара, чтобы он не перекрывал окно настроек.
-        if let menuBarWindow = NSApp.windows.first(where: { $0.level == .statusBar || $0.level == .popUpMenu }) {
-            menuBarWindow.orderOut(nil)
-        }
+        // Явно закрываем popover статус-бара перед показом настроек.
+        StatusBarController.current?.hidePopover()
 
         // Активируем приложение, не меняя activation policy: остаёмся `.accessory`,
         // чтобы иконка в Dock/Cmd+Tab не появлялась.

@@ -395,7 +395,7 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
             case .notConnectedToInternet, .networkConnectionLost:
                 throw NetworkError.offline
             case .timedOut:
-                throw NetworkError.transport(message: String(localized: "error.timeout"))
+                throw NetworkError.timedOut
             default:
                 throw NetworkError.transport(message: urlError.localizedDescription)
             }
