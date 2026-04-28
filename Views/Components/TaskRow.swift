@@ -90,15 +90,11 @@ struct TaskRow: View {
         DateFormatters.relative(task.timestamp(for: sortKey))
     }
 
-    /// Footer:
-    /// - if responsible is known and different from the creator — "ИФ · создано 23 апр"
-    /// - if responsible is the same person as the creator — just "создано 23 апр"
-    ///   (no duplication since the name is already in the header)
-    /// - if responsible is unknown — also just "создано 23 апр"
+    /// Footer line: assignee name + creation date whenever the name is known (including when assignee equals creator).
+    /// Falls back to date-only when the name never resolves.
     private var subBody: String {
         let createdAt = DateFormatters.absoluteShort(task.timeCreated)
-        let responsibleSameAsCreator = (responsible?.id != nil) && (responsible?.id == creator?.id)
-        if let name = responsibleDisplayName, !name.isEmpty, !responsibleSameAsCreator {
+        if let name = responsibleDisplayName, !name.isEmpty {
             return String(format: String(localized: "tasks.row.actorAndCreated"), name, createdAt)
         }
         return String(format: String(localized: "tasks.row.created"), createdAt)
