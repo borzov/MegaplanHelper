@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @AppStorage("settings.lastSection") private var lastSectionRaw: String = SettingsSection.account.rawValue
+    @AppStorage("appTheme") private var appTheme: String = "system"
     @State private var selection: SettingsSection?
     @State private var searchQuery: String = ""
     @FocusState private var searchFocused: Bool
@@ -24,6 +25,8 @@ struct SettingsView: View {
         .onChange(of: selection) { _, newValue in
             if let newValue { lastSectionRaw = newValue.rawValue }
         }
+        .preferredColorScheme(AppearanceTheme.colorScheme(for: appTheme))
+        .id(appTheme)
     }
 
     private var sidebar: some View {

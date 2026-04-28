@@ -54,6 +54,7 @@ enum EntityCardAvatar {
 /// Keeps padding, shadow, avatar rendering, gestures, and tint logic in one place
 /// so both lists look identical and styling tweaks land in a single file.
 struct EntityCardRow<Trailing: View>: View {
+    @Environment(\.popoverFontMetrics) private var metrics
     let avatar: EntityCardAvatar
     let actorName: String?
     let isActorPlaceholder: Bool   // true → render name in italic secondary tone
@@ -116,7 +117,7 @@ struct EntityCardRow<Trailing: View>: View {
             VStack(alignment: .leading, spacing: titleBodySpacing) {
                 if !title.isEmpty {
                     Text(title)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: metrics.title, weight: .semibold))
                         .foregroundColor(.primary)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -124,7 +125,7 @@ struct EntityCardRow<Trailing: View>: View {
 
                 if let bodyText, !bodyText.isEmpty {
                     Text(bodyText)
-                        .font(.system(size: 13))
+                        .font(.system(size: metrics.body))
                         .foregroundColor(.secondary)
                         .lineLimit(3)
                         .fixedSize(horizontal: false, vertical: true)
@@ -132,7 +133,7 @@ struct EntityCardRow<Trailing: View>: View {
 
                 if let subBody, !subBody.isEmpty {
                     Text(subBody)
-                        .font(.system(size: 11))
+                        .font(.system(size: metrics.subBody))
                         .foregroundColor(.secondary.opacity(0.85))
                 }
             }
@@ -192,7 +193,7 @@ struct EntityCardRow<Trailing: View>: View {
                     .aspectRatio(contentMode: .fill)
             case .initials(let initials) where !initials.isEmpty:
                 Text(initials)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: metrics.badge, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(
@@ -206,7 +207,7 @@ struct EntityCardRow<Trailing: View>: View {
                     .overlay(
                         Image(systemName: avatarSymbolName)
                             .foregroundColor(.gray)
-                            .font(.system(size: 14))
+                            .font(.system(size: metrics.iconMedium))
                     )
             }
         }

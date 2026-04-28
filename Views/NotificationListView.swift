@@ -110,6 +110,7 @@ struct NotificationListView: View {
 }
 
 private struct NotificationRow: View {
+    @Environment(\.popoverFontMetrics) private var metrics
     let notification: MegaplanNotification
     let onMarkRead: () -> Void
     @EnvironmentObject var appState: AppState
@@ -206,7 +207,7 @@ private struct NotificationRow: View {
                         .scaleEffect(0.8)
                 } else {
                     Image(systemName: "checkmark")
-                        .font(.caption)
+                        .font(.system(size: metrics.badge))
                         .fontWeight(.semibold)
                 }
             }

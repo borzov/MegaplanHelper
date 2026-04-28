@@ -1,12 +1,96 @@
 import AppKit
 import SwiftUI
 
+enum AppearanceTheme {
+    static func colorScheme(for rawValue: String) -> ColorScheme? {
+        switch rawValue {
+        case "light":
+            return .light
+        case "dark":
+            return .dark
+        default:
+            return nil
+        }
+    }
+}
+
+struct PopoverFontMetrics: Equatable {
+    let iconSmall: CGFloat
+    let iconMedium: CGFloat
+    let iconLarge: CGFloat
+    let sectionHeader: CGFloat
+    let toastPrimary: CGFloat
+    let toastSecondary: CGFloat
+    let title: CGFloat
+    let body: CGFloat
+    let subBody: CGFloat
+    let badge: CGFloat
+
+    static func resolve(_ rawValue: String) -> PopoverFontMetrics {
+        switch rawValue {
+        case "small":
+            return .init(
+                iconSmall: 11,
+                iconMedium: 12,
+                iconLarge: 34,
+                sectionHeader: 11,
+                toastPrimary: 12,
+                toastSecondary: 11,
+                title: 14,
+                body: 12,
+                subBody: 10,
+                badge: 11
+            )
+        case "large":
+            return .init(
+                iconSmall: 13,
+                iconMedium: 16,
+                iconLarge: 40,
+                sectionHeader: 13,
+                toastPrimary: 14,
+                toastSecondary: 13,
+                title: 17,
+                body: 14,
+                subBody: 12,
+                badge: 13
+            )
+        default:
+            return .init(
+                iconSmall: 12,
+                iconMedium: 14,
+                iconLarge: 36,
+                sectionHeader: 12,
+                toastPrimary: 13,
+                toastSecondary: 12,
+                title: 15,
+                body: 13,
+                subBody: 11,
+                badge: 12
+            )
+        }
+    }
+}
+
+private struct PopoverFontMetricsKey: EnvironmentKey {
+    static let defaultValue = PopoverFontMetrics.resolve("medium")
+}
+
+extension EnvironmentValues {
+    var popoverFontMetrics: PopoverFontMetrics {
+        get { self[PopoverFontMetricsKey.self] }
+        set { self[PopoverFontMetricsKey.self] = newValue }
+    }
+}
+
 /// Top-level popover container. Hosts the shared header (greeting + tab picker),
 /// switches between authenticated tabs, and renders the global footer.
 struct RootPopoverView: View {
+    @Environment(\.popoverFontMetrics) private var metrics
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var notificationListViewModel: NotificationListViewModel
     @EnvironmentObject private var taskListViewModel: TaskListViewModel
+    @AppStorage("appTheme") private var appTheme: String = "system"
+    @AppStorage("fontSize") private var fontSize: String = "medium"
 
     @State private var selectedTab: AppTab = .notifications
     @State private var isHotkeysRegistered = false
@@ -34,6 +118,9 @@ struct RootPopoverView: View {
         .onAppear {
             registerHotkeyHandlersIfNeeded()
         }
+        .preferredColorScheme(AppearanceTheme.colorScheme(for: appTheme))
+        .environment(\.popoverFontMetrics, PopoverFontMetrics.resolve(fontSize))
+        .id(appTheme)
     }
 
     private var authenticatedContent: some View {
@@ -125,10 +212,10 @@ struct RootPopoverView: View {
         if let message = appState.transientToast {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: metrics.toastPrimary, weight: .semibold))
                     .foregroundColor(.white)
                 Text(message)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: metrics.toastSecondary, weight: .medium))
                     .foregroundColor(.white)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
@@ -162,7 +249,7 @@ struct RootPopoverView: View {
                     pasteboard.setString(logContent, forType: .string)
                 } label: {
                     Image(systemName: "doc.on.clipboard")
-                        .font(.system(size: 14))
+                        .font(.system(size: metrics.iconMedium))
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Copy API Log"))
@@ -173,7 +260,7 @@ struct RootPopoverView: View {
                     }
                 } label: {
                     Image(systemName: "book.closed")
-                        .font(.system(size: 14))
+                        .font(.system(size: metrics.iconMedium))
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Knowledge Base"))
@@ -184,7 +271,7 @@ struct RootPopoverView: View {
                     }
                 } label: {
                     Image(systemName: "briefcase")
-                        .font(.system(size: 14))
+                        .font(.system(size: metrics.iconMedium))
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Deals"))
@@ -195,7 +282,7 @@ struct RootPopoverView: View {
                     }
                 } label: {
                     Image(systemName: "checklist")
-                        .font(.system(size: 14))
+                        .font(.system(size: metrics.iconMedium))
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel(Text("Tasks"))
@@ -207,7 +294,7 @@ struct RootPopoverView: View {
                 openAppSettings()
             } label: {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 14))
+                    .font(.system(size: metrics.iconMedium))
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(Text("Settings"))
@@ -216,7 +303,7 @@ struct RootPopoverView: View {
                 NSApplication.shared.terminate(nil)
             } label: {
                 Image(systemName: "power")
-                    .font(.system(size: 14))
+                    .font(.system(size: metrics.iconMedium))
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(Text("Quit Application"))

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct OfflineBannerView: View {
+    @Environment(\.popoverFontMetrics) private var metrics
     let lastSyncTime: Date?
 
     private var timeAgoText: String {
@@ -17,7 +18,7 @@ struct OfflineBannerView: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "wifi.slash")
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: metrics.iconMedium, weight: .medium))
                 .foregroundColor(.orange)
 
             VStack(alignment: .leading, spacing: 2) {

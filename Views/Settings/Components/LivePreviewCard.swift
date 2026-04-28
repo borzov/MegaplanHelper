@@ -3,7 +3,6 @@ import SwiftUI
 /// Renders a mock notification card that reacts to current Appearance settings
 /// (theme + fontSize). Used inside AppearanceSettingsView.
 struct LivePreviewCard: View {
-    @AppStorage("appTheme") private var theme: String = "system"
     @AppStorage("fontSize") private var fontSize: String = "medium"
 
     var body: some View {
@@ -47,16 +46,7 @@ struct LivePreviewCard: View {
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator, lineWidth: 0.5))
         }
-        .preferredColorScheme(scheme)
         .animation(.snappy(duration: 0.2), value: fontSize)
-    }
-
-    private var scheme: ColorScheme? {
-        switch theme {
-        case "light": return .light
-        case "dark":  return .dark
-        default:      return nil
-        }
     }
 
     /// Explicit point sizes per fontSize bucket. `.system(size:)` is the only
@@ -64,19 +54,11 @@ struct LivePreviewCard: View {
     /// `.dynamicTypeSize` is an accessibility hint, not a layout override, and
     /// fixed system fonts (`.subheadline`, `.caption`) ignore it on macOS.
     private var titleSize: CGFloat {
-        switch fontSize {
-        case "small":  return 12
-        case "large":  return 17
-        default:       return 14
-        }
+        metrics.title
     }
 
     private var bodySize: CGFloat {
-        switch fontSize {
-        case "small":  return 10
-        case "large":  return 14
-        default:       return 12
-        }
+        metrics.badge
     }
 
     private var avatarSize: CGFloat {
@@ -85,6 +67,10 @@ struct LivePreviewCard: View {
         case "large":  return 36
         default:       return 30
         }
+    }
+
+    private var metrics: PopoverFontMetrics {
+        PopoverFontMetrics.resolve(fontSize)
     }
 }
 

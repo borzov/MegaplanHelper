@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ToastView: View {
+    @Environment(\.popoverFontMetrics) private var metrics
     let message: String
     let icon: String
     @Binding var isShowing: Bool
@@ -8,11 +9,11 @@ struct ToastView: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: metrics.iconLarge - 20, weight: .medium))
                 .foregroundColor(.white)
 
             Text(message)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: metrics.body, weight: .medium))
                 .foregroundColor(.white)
         }
         .padding(.horizontal, 16)

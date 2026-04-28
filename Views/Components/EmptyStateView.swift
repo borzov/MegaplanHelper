@@ -1,12 +1,13 @@
 import SwiftUI
 
 struct EmptyStateView: View {
+    @Environment(\.popoverFontMetrics) private var metrics
     let onRefresh: () -> Void
 
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "bell.badge.slash")
-                .font(.system(size: 48))
+                .font(.system(size: metrics.iconLarge + 12))
                 .foregroundColor(.secondary)
                 .symbolRenderingMode(.hierarchical)
 
@@ -29,7 +30,7 @@ struct EmptyStateView: View {
                     Image(systemName: "arrow.clockwise")
                     Text("notifications.refresh")
                 }
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: metrics.body, weight: .medium))
                 .foregroundColor(.white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)

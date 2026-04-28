@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 struct ListSearchBar: View {
+    @Environment(\.popoverFontMetrics) private var metrics
     let placeholder: LocalizedStringKey
     @Binding var text: String
     let isFocused: FocusState<Bool>.Binding
@@ -29,7 +30,7 @@ struct ListSearchBar: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.secondary)
-                .font(.system(size: 13))
+                .font(.system(size: metrics.body))
 
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
@@ -49,7 +50,7 @@ struct ListSearchBar: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.secondary)
-                        .font(.system(size: 13))
+                        .font(.system(size: metrics.body))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text(clearAccessibilityLabel ?? "notifications.search.clear"))
@@ -69,6 +70,7 @@ struct ListSearchBar: View {
 }
 
 struct TaskListView: View {
+    @Environment(\.popoverFontMetrics) private var metrics
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var viewModel: TaskListViewModel
     @FocusState private var isSearchFieldFocused: Bool
@@ -135,11 +137,11 @@ struct TaskListView: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.up.arrow.down")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: metrics.subBody, weight: .medium))
                     Text(appState.taskSortKey.displayName)
-                        .font(.system(size: 12))
+                        .font(.system(size: metrics.badge))
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(.system(size: max(8, metrics.subBody - 2), weight: .semibold))
                 }
                 .foregroundColor(.primary)
                 .padding(.horizontal, 10)
@@ -232,13 +234,13 @@ struct TaskListView: View {
     private var taskEmptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "checkmark.seal")
-                .font(.system(size: 36))
+                .font(.system(size: metrics.iconLarge))
                 .foregroundColor(.secondary)
             Text("tasks.empty.title")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: metrics.title, weight: .semibold))
                 .foregroundColor(.primary)
             Text("tasks.empty.subtitle")
-                .font(.system(size: 12))
+                .font(.system(size: metrics.badge))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -247,7 +249,7 @@ struct TaskListView: View {
                 Task { await viewModel.refresh() }
             }) {
                 Label("notifications.refresh", systemImage: "arrow.clockwise")
-                    .font(.system(size: 12))
+                    .font(.system(size: metrics.badge))
             }
             .buttonStyle(.bordered)
             .padding(.top, 4)

@@ -16,6 +16,7 @@ enum AppTab: String, CaseIterable, Identifiable {
 }
 
 struct PopoverHeaderView: View {
+    @Environment(\.popoverFontMetrics) private var metrics
     @Binding var selectedTab: AppTab
     let firstName: String
     let unreadCount: Int
@@ -50,7 +51,7 @@ struct PopoverHeaderView: View {
                 if showsFilterButton {
                     Button(action: onToggleFilter) {
                         Image(systemName: "line.3.horizontal.decrease.circle")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: metrics.iconMedium, weight: .medium))
                             .foregroundColor(isFilterActive ? .accentColor : .primary)
                     }
                     .buttonStyle(.borderless)
@@ -59,7 +60,7 @@ struct PopoverHeaderView: View {
 
                 Button(action: onToggleSearch) {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: metrics.iconMedium, weight: .medium))
                         .foregroundColor(isSearchActive ? .accentColor : .primary)
                 }
                 .buttonStyle(.borderless)
@@ -72,7 +73,7 @@ struct PopoverHeaderView: View {
                             .frame(width: 18, height: 18)
                     } else {
                         Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: metrics.iconMedium, weight: .medium))
                     }
                 }
                 .buttonStyle(.borderless)
@@ -145,11 +146,12 @@ private struct NativeEqualWidthSegmentedControl: NSViewRepresentable {
 /// Shared by `PopoverHeaderView`, `NotificationListView`, and `TaskListView`
 /// so all section headers (and the toolbar inline header) look identical.
 struct SectionHeaderText: View {
+    @Environment(\.popoverFontMetrics) private var metrics
     let title: String
 
     var body: some View {
         Text(title)
-            .font(.system(size: 12, weight: .semibold))
+            .font(.system(size: metrics.sectionHeader, weight: .semibold))
             .foregroundStyle(.secondary)
             .textCase(.uppercase)
     }
