@@ -9,6 +9,7 @@ struct RootPopoverView: View {
     @EnvironmentObject private var taskListViewModel: TaskListViewModel
 
     @State private var selectedTab: AppTab = .notifications
+    @State private var isHotkeysRegistered = false
 
     var body: some View {
         Group {
@@ -30,6 +31,9 @@ struct RootPopoverView: View {
                 dismissButton: .default(Text("general.ok"))
             )
         }
+        .onAppear {
+            registerHotkeyHandlersIfNeeded()
+        }
     }
 
     private var authenticatedContent: some View {
@@ -47,6 +51,7 @@ struct RootPopoverView: View {
                 onToggleSearch: toggleActiveTabSearch,
                 onToggleFilter: toggleTasksFilter
             )
+            .frame(maxWidth: .infinity)
 
             Group {
                 switch selectedTab {
@@ -87,6 +92,32 @@ struct RootPopoverView: View {
 
     private func toggleTasksFilter() {
         withAnimation { taskListViewModel.isFilterPanelActive.toggle() }
+    }
+
+    private func registerHotkeyHandlersIfNeeded() {
+        guard !isHotkeysRegistered else { return }
+        isHotkeysRegistered = true
+
+        let manager = HotkeyManager.shared
+        manager.register(.openPopover) {
+            // Reserved for global popover open behavior.
+        }
+        manager.register(.refreshNow) {
+            appState.refreshNow()
+        }
+        manager.register(.focusSearch) {
+            toggleActiveTabSearch()
+        }
+        manager.register(.markAllRead) {
+            markAllNotificationsAsReadForActiveTab()
+        }
+    }
+
+    private func markAllNotificationsAsReadForActiveTab() {
+        guard selectedTab == .notifications else { return }
+        for notification in notificationListViewModel.notifications where !notification.isRead {
+            appState.markNotificationAsRead(notification)
+        }
     }
 
     @ViewBuilder

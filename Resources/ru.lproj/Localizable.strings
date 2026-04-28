@@ -277,7 +277,7 @@
 "shortcuts.clear" = "Сбросить";
 "shortcuts.clickToRecord" = "Нажмите для записи";
 "shortcuts.helpRecording" = "Нажмите комбинацию клавиш или Esc для отмены";
-"shortcuts.helpBound" = "Кликните, чтобы перезаписать. Правый клик — сбросить.";
+"shortcuts.helpBound" = "Кликните, чтобы перезаписать. Сброс рядом или правым кликом.";
 "shortcuts.helpUnbound" = "Кликните и нажмите комбинацию клавиш";
 
 "settings.shortcuts.section" = "Глобальные горячие клавиши";

@@ -31,21 +31,40 @@ struct ShortcutRecorderRow: View {
     }
 
     private var pill: some View {
-        Button(action: toggleRecording) {
-            HStack(spacing: 4) {
-                pillContent
+        ZStack(alignment: .trailing) {
+            Button(action: toggleRecording) {
+                HStack(spacing: 4) {
+                    pillContent
+                }
+                .frame(minWidth: 110, minHeight: 22)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 3)
+                .padding(.trailing, showsInlineClearButton ? 18 : 0)
+                .background(pillBackground, in: RoundedRectangle(cornerRadius: 6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(pillBorder, lineWidth: 1)
+                )
+                .contentShape(RoundedRectangle(cornerRadius: 6))
             }
-            .frame(minWidth: 110, minHeight: 22)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 3)
-            .background(pillBackground, in: RoundedRectangle(cornerRadius: 6))
-            .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(pillBorder, lineWidth: 1)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: 6))
+            .buttonStyle(.plain)
+
+            if showsInlineClearButton {
+                Button {
+                    withAnimation(.snappy(duration: 0.15)) {
+                        manager.unbind(action)
+                    }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .padding(.trailing, 8)
+                .help(String(localized: "shortcuts.clear"))
+                .accessibilityLabel(Text("shortcuts.clear"))
+            }
         }
-        .buttonStyle(.plain)
         .onHover { hovering in
             withAnimation(.snappy(duration: 0.12)) { isHovered = hovering }
         }
@@ -57,6 +76,10 @@ struct ShortcutRecorderRow: View {
                 }
             }
         }
+    }
+
+    private var showsInlineClearButton: Bool {
+        manager.bindings[action] != nil && !isRecording
     }
 
     @ViewBuilder

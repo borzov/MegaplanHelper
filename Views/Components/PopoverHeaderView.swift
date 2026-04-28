@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 enum AppTab: String, CaseIterable, Identifiable {
     case notifications
@@ -78,61 +79,65 @@ struct PopoverHeaderView: View {
                 .accessibilityLabel(Text("notifications.refresh"))
             }
 
-            HStack(spacing: 4) {
-                TabPillButton(
-                    title: AppTab.notifications.displayName,
-                    count: unreadCount,
-                    isSelected: selectedTab == .notifications,
-                    onSelect: { selectedTab = .notifications }
-                )
-                TabPillButton(
-                    title: AppTab.tasks.displayName,
-                    count: tasksUnreadCount,
-                    isSelected: selectedTab == .tasks,
-                    onSelect: { selectedTab = .tasks }
-                )
-            }
-            .padding(2)
-            .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color(.controlBackgroundColor))
+            NativeEqualWidthSegmentedControl(
+                selectedTab: $selectedTab,
+                notificationTitle: tabTitle(for: .notifications, count: unreadCount),
+                taskTitle: tabTitle(for: .tasks, count: tasksUnreadCount)
             )
+            .frame(maxWidth: .infinity)
+            .frame(height: 28)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func tabTitle(for tab: AppTab, count: Int) -> String {
+        let baseTitle = tab.displayName
+        guard count > 0 else { return baseTitle }
+        return "\(baseTitle) (\(count))"
     }
 }
 
-// MARK: - Subcomponents
+private struct NativeEqualWidthSegmentedControl: NSViewRepresentable {
+    @Binding var selectedTab: AppTab
+    let notificationTitle: String
+    let taskTitle: String
 
-private struct TabPillButton: View {
-    let title: String
-    let count: Int
-    let isSelected: Bool
-    let onSelect: () -> Void
+    func makeNSView(context: Context) -> NSSegmentedControl {
+        let control = NSSegmentedControl(labels: [notificationTitle, taskTitle], trackingMode: .selectOne, target: context.coordinator, action: #selector(Coordinator.valueChanged(_:)))
+        control.segmentStyle = .rounded
+        control.segmentDistribution = .fillEqually
+        control.selectedSegment = selectedIndex
+        control.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        control.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return control
+    }
 
-    var body: some View {
-        Button(action: onSelect) {
-            HStack(spacing: 4) {
-                Text(title)
-                    .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
-                if count > 0 {
-                    Text("·")
-                    Text("\(count)")
-                        .font(.system(size: 12).monospacedDigit())
-                }
-            }
-            .foregroundStyle(isSelected ? Color.white : Color.secondary)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 5)
-            .contentShape(Rectangle())
-            .background(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(isSelected ? Color.accentColor : Color.clear)
-            )
+    func updateNSView(_ control: NSSegmentedControl, context: Context) {
+        control.setLabel(notificationTitle, forSegment: 0)
+        control.setLabel(taskTitle, forSegment: 1)
+        if control.selectedSegment != selectedIndex {
+            control.selectedSegment = selectedIndex
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(Text(title))
-        .accessibilityValue(count > 0 ? Text("\(count)") : Text(""))
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(selectedTab: $selectedTab)
+    }
+
+    private var selectedIndex: Int {
+        selectedTab == .notifications ? 0 : 1
+    }
+
+    final class Coordinator: NSObject {
+        private var selectedTab: Binding<AppTab>
+
+        init(selectedTab: Binding<AppTab>) {
+            self.selectedTab = selectedTab
+        }
+
+        @objc func valueChanged(_ sender: NSSegmentedControl) {
+            selectedTab.wrappedValue = sender.selectedSegment == 0 ? .notifications : .tasks
+        }
     }
 }
 

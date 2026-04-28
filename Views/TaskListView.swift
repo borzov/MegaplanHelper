@@ -152,12 +152,12 @@ struct TaskListView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
         } else {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 10) {
+                LazyVStack(alignment: .leading, spacing: 8) {
                     ForEach(viewModel.groupedTasks) { group in
                         if !group.title.isEmpty {
                             SectionHeaderText(title: group.title)
                                 .padding(.horizontal, 4)
-                                .padding(.vertical, 12)
+                                .padding(.vertical, 7)
                         }
 
                         ForEach(group.tasks) { task in

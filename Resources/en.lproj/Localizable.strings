@@ -261,7 +261,7 @@
 "shortcuts.clear" = "Clear";
 "shortcuts.clickToRecord" = "Click to record";
 "shortcuts.helpRecording" = "Press a combination, or Esc to cancel";
-"shortcuts.helpBound" = "Click to re-bind. Right-click to clear.";
+"shortcuts.helpBound" = "Click to re-bind. Use Clear next to it or right-click.";
 "shortcuts.helpUnbound" = "Click and press a key combination";
 
 // Settings — Storage

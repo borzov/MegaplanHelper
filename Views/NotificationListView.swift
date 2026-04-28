@@ -95,7 +95,7 @@ struct NotificationListView: View {
             }
         } else {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 12) {
+                LazyVStack(alignment: .leading, spacing: 10) {
                     // Offline banner
                     if appState.isOffline {
                         OfflineBannerView(lastSyncTime: appState.lastSyncTime)
@@ -106,7 +106,7 @@ struct NotificationListView: View {
                         if !group.title.isEmpty {
                             SectionHeaderText(title: group.title)
                                 .padding(.horizontal, 4)
-                                .padding(.vertical, 12)
+                                .padding(.vertical, 7)
                         }
 
                         ForEach(group.notifications) { notification in
