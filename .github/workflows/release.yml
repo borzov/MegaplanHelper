@@ -20,6 +20,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.tag != '' && inputs.tag || github.ref }}
 
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
@@ -42,18 +44,29 @@ jobs:
         du -sh build/export/MegaplanHepler.app
 
     - name: Notarize application
-      if: ${{ secrets.APPLE_ID != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
       env:
         APPLE_ID: ${{ secrets.APPLE_ID }}
         APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       run: |
+        if [ -z "$APPLE_ID" ] || [ -z "$APPLE_TEAM_ID" ] || [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ]; then
+          echo "ℹ️ Notarization skipped: required Apple secrets are not configured."
+          exit 0
+        fi
+
         chmod +x ./scripts/notarize-app.sh
         ./scripts/notarize-app.sh "${{ github.workspace }}/build/export/MegaplanHepler.app"
 
     - name: Create release archive
+      env:
+        RELEASE_TAG_INPUT: ${{ inputs.tag }}
       run: |
-        VERSION=${GITHUB_REF#refs/tags/v}
+        if [ -n "$RELEASE_TAG_INPUT" ]; then
+          VERSION="${RELEASE_TAG_INPUT#v}"
+        else
+          VERSION="${GITHUB_REF#refs/tags/v}"
+        fi
+
         cd build/export
         zip -r "MegaplanHelper-v${VERSION}.zip" MegaplanHepler.app
         cd ../..
@@ -66,6 +79,6 @@ jobs:
         files: build/export/MegaplanHelper-v*.zip
         draft: false
         prerelease: false
-        tag_name: ${{ github.ref_name }}
+        tag_name: ${{ inputs.tag != '' && inputs.tag || github.ref_name }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
