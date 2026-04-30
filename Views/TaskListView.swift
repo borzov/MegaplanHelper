@@ -110,8 +110,8 @@ struct TaskListView: View {
 
             if appState.isOffline {
                 OfflineBannerView(lastSyncTime: appState.lastTasksSyncTime ?? appState.lastSyncTime)
-                    .padding(.horizontal, 4)
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, TopBarLayout.horizontalPadding)
+                    .padding(.vertical, 8)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
 

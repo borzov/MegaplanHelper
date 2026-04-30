@@ -16,32 +16,33 @@ struct OfflineBannerView: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(alignment: .center, spacing: 8) {
             Image(systemName: "wifi.slash")
                 .font(.system(size: metrics.iconMedium, weight: .medium))
                 .foregroundColor(.orange)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("offline.mode.title")
+                Text(String(localized: "offline.mode.title"))
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
 
                 if lastSyncTime != nil {
-                    Text("offline.mode.lastSync \(timeAgoText)")
+                    Text(verbatim: "\(String(localized: "offline.mode.lastSync")) \(timeAgoText)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 } else {
-                    Text("offline.mode.noSync")
+                    Text(String(localized: "offline.mode.noSync"))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
 
-            Spacer()
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color.orange.opacity(0.1))
@@ -50,8 +51,6 @@ struct OfflineBannerView: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(Color.orange.opacity(0.3), lineWidth: 1)
         )
-        .padding(.horizontal, 12)
-        .padding(.vertical, 4)
     }
 }
 
