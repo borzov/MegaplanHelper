@@ -38,6 +38,7 @@ final class TaskDTOTests: XCTestCase {
         XCTAssertEqual(first.name, "Аналитика Q2 — подготовить отчёт")
         XCTAssertEqual(first.status, .assigned)
         XCTAssertEqual(first.humanNumber, 1001)
+        XCTAssertEqual(first.totalCommentsCount, 10)
         XCTAssertEqual(first.unreadCommentsCount, 3)
         XCTAssertEqual(first.responsible?.id, "123")
         XCTAssertEqual(first.responsible?.name, "Иванова Анна")
@@ -56,6 +57,7 @@ final class TaskDTOTests: XCTestCase {
         let second = envelope.items[1]
 
         XCTAssertEqual(second.id, "1002")
+        XCTAssertEqual(second.totalCommentsCount, 6)
         XCTAssertNil(second.lastCommentTimeCreated)
         XCTAssertNotNil(second.activity)  // present
     }
@@ -66,6 +68,7 @@ final class TaskDTOTests: XCTestCase {
         let third = envelope.items[2]
 
         XCTAssertEqual(third.id, "1003")
+        XCTAssertEqual(third.totalCommentsCount, 4)
         XCTAssertNil(third.activity)
         XCTAssertNil(third.lastCommentTimeCreated)
         XCTAssertNil(third.owner)

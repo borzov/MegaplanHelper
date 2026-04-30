@@ -19,6 +19,7 @@ final class TaskSortingTests: XCTestCase {
             timeCreated: created,
             activity: activity,
             lastCommentTimeCreated: lastComment,
+            totalCommentsCount: 0,
             unreadCommentsCount: 0,
             humanNumber: nil
         )

@@ -160,6 +160,11 @@
 "tasks.creator.none" = "Unknown creator";
 "tasks.row.created" = "created %@";
 "tasks.row.actorAndCreated" = "%@ · created %@";
+"tasks.row.comments.separator" = " · ";
+"tasks.row.comments.new.one" = "%d new";
+"tasks.row.comments.new.few" = "%d new";
+"tasks.row.comments.new.many" = "%d new";
+"tasks.row.comments.a11y.withUnread" = "%@, %d unread";
 
 "comments.one" = "comment";
 "comments.few" = "comments";

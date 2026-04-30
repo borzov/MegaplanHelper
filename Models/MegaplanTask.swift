@@ -14,6 +14,8 @@ struct MegaplanTask: Identifiable, Equatable, Hashable {
     let timeCreated: Date
     let activity: Date?
     let lastCommentTimeCreated: Date?
+    /// Total comments on the task thread (Megaplan field `commentsCount`).
+    let totalCommentsCount: Int
     let unreadCommentsCount: Int
     let humanNumber: Int?
 

@@ -41,6 +41,21 @@ struct EntityCardBadge {
     let systemName: String
     let text: String
     let color: Color
+    /// When set (e.g. secondary-style badge), overrides the default white label on `color`.
+    var foregroundColor: Color?
+    var accessibilityLabel: String?
+
+    init(systemName: String,
+         text: String,
+         color: Color,
+         foregroundColor: Color? = nil,
+         accessibilityLabel: String? = nil) {
+        self.systemName = systemName
+        self.text = text
+        self.color = color
+        self.foregroundColor = foregroundColor
+        self.accessibilityLabel = accessibilityLabel
+    }
 }
 
 /// Avatar source — either a loaded NSImage, gradient initials, or a system fallback.
@@ -246,12 +261,15 @@ struct EntityCardRow<Trailing: View>: View {
             Text(badge.text)
                 .font(.caption)
                 .fontWeight(.medium)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
         }
-        .foregroundColor(.white)
+        .foregroundColor(badge.foregroundColor ?? .white)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(badge.color)
         .clipShape(Capsule())
+        .accessibilityLabel(badge.accessibilityLabel ?? badge.text)
     }
 }
 

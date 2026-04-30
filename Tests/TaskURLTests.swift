@@ -15,6 +15,7 @@ final class TaskURLTests: XCTestCase {
             timeCreated: Date(),
             activity: nil,
             lastCommentTimeCreated: nil,
+            totalCommentsCount: 0,
             unreadCommentsCount: 0,
             humanNumber: nil
         )

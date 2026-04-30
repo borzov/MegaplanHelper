@@ -79,11 +79,41 @@ struct TaskRow: View {
         return .neutral
     }
 
+    /// Display total uses max(api total, unread) so the badge stays consistent if the API omits `commentsCount`.
+    private var effectiveCommentTotal: Int {
+        max(task.totalCommentsCount, task.unreadCommentsCount)
+    }
+
     private var badge: EntityCardBadge? {
-        guard task.unreadCommentsCount > 0 else { return nil }
-        return .init(systemName: "bubble.right.fill",
-                     text: Pluralization.commentsLabel(task.unreadCommentsCount),
-                     color: .blue)
+        let total = effectiveCommentTotal
+        guard total > 0 else { return nil }
+
+        let unread = task.unreadCommentsCount
+        if unread > 0 {
+            let sep = String(localized: "tasks.row.comments.separator")
+            let text = "\(total)\(sep)\(Pluralization.newUnreadCommentsSegment(unread))"
+            let a11y = String(
+                format: String(localized: "tasks.row.comments.a11y.withUnread"),
+                Pluralization.commentsLabel(total),
+                unread
+            )
+            return EntityCardBadge(
+                systemName: "bubble.right.fill",
+                text: text,
+                color: .blue,
+                foregroundColor: nil,
+                accessibilityLabel: a11y
+            )
+        }
+
+        let text = Pluralization.commentsLabel(total)
+        return EntityCardBadge(
+            systemName: "bubble.right.fill",
+            text: text,
+            color: Color.gray.opacity(0.38),
+            foregroundColor: .primary,
+            accessibilityLabel: text
+        )
     }
 
     private var timeText: String {

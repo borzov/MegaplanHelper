@@ -34,4 +34,12 @@ enum Pluralization {
                         many: String(localized: "comments.many"))
         return String(format: String(localized: "comments.format"), count, noun)
     }
+
+    /// Short segment for unread count in the "total · …" task badge (Russian plural rules, localized strings).
+    static func newUnreadCommentsSegment(_ count: Int) -> String {
+        russian(count: count,
+                one: String(localized: "tasks.row.comments.new.one"),
+                few: String(localized: "tasks.row.comments.new.few"),
+                many: String(localized: "tasks.row.comments.new.many"))
+    }
 }

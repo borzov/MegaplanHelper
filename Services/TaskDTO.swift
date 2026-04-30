@@ -92,6 +92,7 @@ struct TaskDTO: Decodable {
     let timeCreated: MegaplanDateTime?
     let activity: MegaplanDateTime?
     let lastCommentTimeCreated: MegaplanDateTime?
+    let totalCommentsCount: Int
     let unreadCommentsCount: Int
     let humanNumber: Int?
 
@@ -108,6 +109,7 @@ struct TaskDTO: Decodable {
         self.timeCreated = TaskDTO.decodeDateTime(container: container, key: "timeCreated")
         self.activity = TaskDTO.decodeDateTime(container: container, key: "activity")
         self.lastCommentTimeCreated = TaskDTO.decodeDateTime(container: container, key: "lastCommentTimeCreated")
+        self.totalCommentsCount = container.decodeFlexibleInt(keys: ["commentsCount"], defaultValue: 0)
         self.unreadCommentsCount = container.decodeFlexibleInt(keys: ["unreadCommentsCount"], defaultValue: 0)
         if let value = try? container.decodeFlexibleString(keys: ["humanNumber"], defaultValue: nil),
            let intValue = Int(value) {
@@ -129,6 +131,7 @@ struct TaskDTO: Decodable {
             timeCreated: timeCreated?.value ?? .distantPast,
             activity: activity?.value,
             lastCommentTimeCreated: lastCommentTimeCreated?.value,
+            totalCommentsCount: totalCommentsCount,
             unreadCommentsCount: unreadCommentsCount,
             humanNumber: humanNumber
         )

@@ -12,6 +12,7 @@
       "status": "assigned",
       "humanNumber": 1001,
       "unreadCommentsCount": 3,
+      "commentsCount": 10,
       "responsible": {
         "contentType": "Employee",
         "id": "123",
@@ -38,6 +39,7 @@
       "status": "accepted",
       "humanNumber": 1002,
       "unreadCommentsCount": 0,
+      "commentsCount": 6,
       "responsible": {
         "contentType": "Employee",
         "id": "456",
@@ -60,6 +62,7 @@
       "status": "overdue",
       "humanNumber": 1003,
       "unreadCommentsCount": 1,
+      "commentsCount": 4,
       "responsible": {
         "contentType": "Employee",
         "id": "111",

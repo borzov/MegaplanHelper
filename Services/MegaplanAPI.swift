@@ -504,6 +504,7 @@ extension MegaplanAPI: TaskService, EmployeeService {
                 "timeCreated",
                 "lastCommentTimeCreated",
                 "unreadCommentsCount",
+                "commentsCount",
                 "humanNumber",
                 "status",
                 "name"
@@ -615,6 +616,7 @@ extension MegaplanAPI: TaskService, EmployeeService {
                 timeCreated: task.timeCreated,
                 activity: task.activity,
                 lastCommentTimeCreated: task.lastCommentTimeCreated,
+                totalCommentsCount: task.totalCommentsCount,
                 unreadCommentsCount: task.unreadCommentsCount,
                 humanNumber: task.humanNumber
             )
@@ -643,6 +645,7 @@ extension MegaplanAPI: TaskService, EmployeeService {
                 "timeCreated",
                 "lastCommentTimeCreated",
                 "unreadCommentsCount",
+                "commentsCount",
                 "humanNumber",
                 "status",
                 "name"

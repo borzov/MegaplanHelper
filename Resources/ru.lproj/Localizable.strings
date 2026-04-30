@@ -160,6 +160,11 @@
 "tasks.creator.none" = "Создатель неизвестен";
 "tasks.row.created" = "создано %@";
 "tasks.row.actorAndCreated" = "%@ · создано %@";
+"tasks.row.comments.separator" = " · ";
+"tasks.row.comments.new.one" = "%d новый";
+"tasks.row.comments.new.few" = "%d новые";
+"tasks.row.comments.new.many" = "%d новых";
+"tasks.row.comments.a11y.withUnread" = "%@, непрочитано %d";
 
 // Shared comments noun (russian plural rule)
 "comments.one" = "комментарий";
