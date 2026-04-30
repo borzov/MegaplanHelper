@@ -469,20 +469,23 @@
 /* Begin PBXShellScriptBuildPhase section */
 		C231F4322EBE67BD005A168E /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(PROJECT_DIR)/scripts/increment-build.sh",
 			);
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/build_number.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Автоматическое обновление build number\nBUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo \"1\")\nif [ \"$BUILD_NUMBER\" = \"1\" ] && ! git rev-parse --git-dir > /dev/null 2>&1; then\n    BUILD_NUMBER=$(date +%s)\nfi\nPROJECT_FILE=\"${PROJECT_DIR}/${PROJECT_NAME}.xcodeproj/project.pbxproj\"\nif [ -f \"$PROJECT_FILE\" ]; then\n    if [[ \"$OSTYPE\" == \"darwin\"* ]]; then\n        sed -i '' \"s/CURRENT_PROJECT_VERSION = 6[0-9]*/CURRENT_PROJECT_VERSION = 6${BUILD_NUMBER}/g\" \"$PROJECT_FILE\" 2>/dev/null && echo \"✅ Build number updated to: ${BUILD_NUMBER}\" || echo \"⚠️  Warning: Could not update build number\"\n    else\n        sed -i \"s/CURRENT_PROJECT_VERSION = 6[0-9]*/CURRENT_PROJECT_VERSION = 6${BUILD_NUMBER}/g\" \"$PROJECT_FILE\" 2>/dev/null && echo \"✅ Build number updated to: ${BUILD_NUMBER}\" || echo \"⚠️  Warning: Could not update build number\"\n    fi\nfi\n";
+			shellScript = "\"${PROJECT_DIR}/scripts/increment-build.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */

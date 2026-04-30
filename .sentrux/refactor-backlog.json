@@ -1,0 +1,141 @@
+{
+  "lookback_days": 120,
+  "cycle_count": 49,
+  "priority_backlog": [
+    {
+      "file": "AppState.swift",
+      "score": 378.35,
+      "lines": 1087,
+      "churn": 21,
+      "fan_out": 21,
+      "fan_in": 17,
+      "recommendation": "Split feature slices and isolate side effects behind protocol boundaries"
+    },
+    {
+      "file": "Services/MegaplanAPI.swift",
+      "score": 236.7,
+      "lines": 914,
+      "churn": 15,
+      "fan_out": 13,
+      "fan_in": 2,
+      "recommendation": "Split feature slices and isolate side effects behind protocol boundaries"
+    },
+    {
+      "file": "Views/NotificationListView.swift",
+      "score": 229.15,
+      "lines": 603,
+      "churn": 15,
+      "fan_out": 14,
+      "fan_in": 3,
+      "recommendation": "Split feature slices and isolate side effects behind protocol boundaries"
+    },
+    {
+      "file": "Utils/Constants.swift",
+      "score": 163.25,
+      "lines": 245,
+      "churn": 10,
+      "fan_out": 1,
+      "fan_in": 22,
+      "recommendation": "Reduce coupling with focused helper extraction"
+    },
+    {
+      "file": "Views/RootPopoverView.swift",
+      "score": 147.25,
+      "lines": 325,
+      "churn": 9,
+      "fan_out": 10,
+      "fan_in": 3,
+      "recommendation": "Reduce coupling with focused helper extraction"
+    },
+    {
+      "file": "Views/TaskListView.swift",
+      "score": 127.3,
+      "lines": 286,
+      "churn": 8,
+      "fan_out": 8,
+      "fan_in": 3,
+      "recommendation": "Reduce coupling with focused helper extraction"
+    },
+    {
+      "file": "Views/SettingsView.swift",
+      "score": 123.65,
+      "lines": 133,
+      "churn": 7,
+      "fan_out": 11,
+      "fan_in": 2,
+      "recommendation": "Reduce coupling with focused helper extraction"
+    },
+    {
+      "file": "Services/AvatarCacheManager.swift",
+      "score": 123.3,
+      "lines": 386,
+      "churn": 10,
+      "fan_out": 3,
+      "fan_in": 3,
+      "recommendation": "Reduce coupling with focused helper extraction"
+    },
+    {
+      "file": "ViewModels/NotificationListViewModel.swift",
+      "score": 114.15,
+      "lines": 303,
+      "churn": 8,
+      "fan_out": 4,
+      "fan_in": 5,
+      "recommendation": "Reduce coupling with focused helper extraction"
+    },
+    {
+      "file": "Views/AuthView.swift",
+      "score": 106.0,
+      "lines": 160,
+      "churn": 7,
+      "fan_out": 6,
+      "fan_in": 4,
+      "recommendation": "Reduce coupling with focused helper extraction"
+    },
+    {
+      "file": "MegaplanMenuBarApp.swift",
+      "score": 105.8,
+      "lines": 56,
+      "churn": 7,
+      "fan_out": 7,
+      "fan_in": 4,
+      "recommendation": "Reduce coupling with focused helper extraction"
+    },
+    {
+      "file": "Services/StatusBarController.swift",
+      "score": 94.9,
+      "lines": 418,
+      "churn": 5,
+      "fan_out": 5,
+      "fan_in": 3,
+      "recommendation": "Split feature slices and isolate side effects behind protocol boundaries"
+    },
+    {
+      "file": "Utils/SettingsWindowManager.swift",
+      "score": 94.35,
+      "lines": 87,
+      "churn": 7,
+      "fan_out": 5,
+      "fan_in": 3,
+      "recommendation": "Reduce coupling with focused helper extraction"
+    },
+    {
+      "file": "Services/UserInfoCache.swift",
+      "score": 80.5,
+      "lines": 90,
+      "churn": 7,
+      "fan_out": 1,
+      "fan_in": 5,
+      "recommendation": "Reduce coupling with focused helper extraction"
+    },
+    {
+      "file": "Views/Components/TaskRow.swift",
+      "score": 80.05,
+      "lines": 241,
+      "churn": 4,
+      "fan_out": 6,
+      "fan_in": 2,
+      "recommendation": "Reduce coupling with focused helper extraction"
+    }
+  ]
+}

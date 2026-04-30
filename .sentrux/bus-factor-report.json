@@ -1,0 +1,49 @@
+{
+  "critical_components": [
+    {
+      "file": "AppState.swift",
+      "owner_count": 1,
+      "owners": [
+        "Maxim Borzov"
+      ],
+      "risk": "critical",
+      "next_action": "Assign backup owner and require cross-review for every change"
+    },
+    {
+      "file": "Services/MegaplanAPI.swift",
+      "owner_count": 1,
+      "owners": [
+        "Maxim Borzov"
+      ],
+      "risk": "critical",
+      "next_action": "Assign backup owner and require cross-review for every change"
+    },
+    {
+      "file": "Services/NotificationManager.swift",
+      "owner_count": 1,
+      "owners": [
+        "Maxim Borzov"
+      ],
+      "risk": "critical",
+      "next_action": "Assign backup owner and require cross-review for every change"
+    },
+    {
+      "file": "Services/KeychainManager.swift",
+      "owner_count": 1,
+      "owners": [
+        "Maxim Borzov"
+      ],
+      "risk": "critical",
+      "next_action": "Assign backup owner and require cross-review for every change"
+    },
+    {
+      "file": "ViewModels/NotificationListViewModel.swift",
+      "owner_count": 1,
+      "owners": [
+        "Maxim Borzov"
+      ],
+      "risk": "critical",
+      "next_action": "Assign backup owner and require cross-review for every change"
+    }
+  ]
+}

@@ -166,42 +166,6 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         }
     }
 
-    private static func extractPaginationCount(from data: Data) -> Int? {
-        guard
-            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-            let meta = json["meta"] as? [String: Any],
-            let pagination = meta["pagination"] as? [String: Any]
-        else {
-            return nil
-        }
-
-        if let count = pagination["count"] as? Int {
-            return count
-        }
-        if let countString = pagination["count"] as? String {
-            return Int(countString)
-        }
-        return nil
-    }
-
-    private static func extractPaginationLimit(from data: Data) -> Int? {
-        guard
-            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-            let meta = json["meta"] as? [String: Any],
-            let pagination = meta["pagination"] as? [String: Any]
-        else {
-            return nil
-        }
-
-        if let limit = pagination["limit"] as? Int {
-            return limit
-        }
-        if let limitString = pagination["limit"] as? String {
-            return Int(limitString)
-        }
-        return nil
-    }
-    
     // MARK: - User Info Extraction and Caching
     
     private func extractUserInfoFromNotifications(data: Data) -> [String: (name: String?, avatarURL: URL?)] {

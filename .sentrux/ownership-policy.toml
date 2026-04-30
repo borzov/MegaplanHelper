@@ -1,0 +1,33 @@
+[policy]
+min_reviewers_for_critical_components = 2
+require_backup_owner = true
+
+[[critical_components]]
+path = "AppState.swift"
+primary_owner = "Maxim Borzov"
+backup_owner = "TBD"
+notes = "Core state orchestration and auth flow"
+
+[[critical_components]]
+path = "Services/MegaplanAPI.swift"
+primary_owner = "Maxim Borzov"
+backup_owner = "TBD"
+notes = "API transport and token lifecycle"
+
+[[critical_components]]
+path = "Services/NotificationManager.swift"
+primary_owner = "Maxim Borzov"
+backup_owner = "TBD"
+notes = "User notifications delivery path"
+
+[[critical_components]]
+path = "Services/KeychainManager.swift"
+primary_owner = "Maxim Borzov"
+backup_owner = "TBD"
+notes = "Credential and token storage"
+
+[[critical_components]]
+path = "ViewModels/NotificationListViewModel.swift"
+primary_owner = "Maxim Borzov"
+backup_owner = "TBD"
+notes = "Presentation orchestration for notifications"

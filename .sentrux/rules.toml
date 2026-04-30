@@ -1,0 +1,83 @@
+[constraints]
+min_quality = 0.70
+min_modularity = 0.35
+min_acyclicity = 0.90
+min_depth = 0.70
+min_equality = 0.60
+min_redundancy = 0.80
+
+max_cycles = 0
+max_cc = 25
+max_fn_lines = 100
+max_file_lines = 900
+no_god_files = true
+
+[[layers]]
+name = "models"
+paths = ["Models/*"]
+order = 0
+
+[[layers]]
+name = "utils"
+paths = ["Utils/*"]
+order = 0
+
+[[layers]]
+name = "services"
+paths = ["Services/*"]
+order = 1
+
+[[layers]]
+name = "state"
+paths = ["AppState.swift"]
+order = 2
+
+[[layers]]
+name = "viewmodels"
+paths = ["ViewModels/*"]
+order = 3
+
+[[layers]]
+name = "views"
+paths = ["Views/*"]
+order = 4
+
+[[layers]]
+name = "app"
+paths = ["MegaplanMenuBarApp.swift"]
+order = 5
+
+[[boundaries]]
+from = "Views/*"
+to = "Services/*"
+reason = "Views should consume ViewModels, not Services directly"
+
+[[boundaries]]
+from = "ViewModels/*"
+to = "Views/*"
+reason = "ViewModels must not depend on presentation layer"
+
+[[boundaries]]
+from = "Services/*"
+to = "Views/*"
+reason = "Services must not depend on presentation layer"
+
+[[boundaries]]
+from = "Services/*"
+to = "ViewModels/*"
+reason = "Services must stay independent from ViewModels"
+
+[[boundaries]]
+from = "Models/*"
+to = "Views/*"
+reason = "Domain models must not reference view layer"
+
+[[boundaries]]
+from = "Models/*"
+to = "ViewModels/*"
+reason = "Domain models must not reference ViewModels"
+
+[[boundaries]]
+from = "Models/*"
+to = "Services/*"
+reason = "Models should remain persistence and transport agnostic"

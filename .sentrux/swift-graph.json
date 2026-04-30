@@ -1,0 +1,839 @@
+{
+  "swift_files": 71,
+  "declared_symbols": 162,
+  "edge_count": 191,
+  "top_fan_out": [
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift",
+      21
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/NotificationListView.swift",
+      14
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI.swift",
+      13
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      11
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      10
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/TaskListView.swift",
+      8
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      7
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      6
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/TaskRow.swift",
+      6
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      5
+    ]
+  ],
+  "top_fan_in": [
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      22
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift",
+      17
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanTask.swift",
+      8
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanNotification.swift",
+      7
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/AuthState.swift",
+      6
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/NetworkError.swift",
+      5
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoCache.swift",
+      5
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/NotificationListViewModel.swift",
+      5
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      4
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI+Tasks.swift",
+      4
+    ]
+  ],
+  "cycle_count": 49,
+  "cycles": [
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/KeychainManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/KeychainManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/NotificationListViewModel.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/NotificationListViewModel.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AccountSettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/AccountCard.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AccountSettingsView.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/KeychainManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AccountSettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/KeychainManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/KeychainManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/SyncSettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AppearanceSettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/LivePreviewCard.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AppearanceSettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/LivePreviewCard.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AppearanceSettingsView.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/KeychainManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AboutView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/KeychainManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/StorageSettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/CacheStatsRow.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/StorageSettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/CacheStatsRow.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/AvatarCacheManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/StorageSettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/CacheStatsRow.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/AvatarCacheManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/StorageSettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/CacheStatsRow.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoCache.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/StorageSettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/CacheStatsRow.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift"
+    ],
+    [
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/KeychainManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/StorageSettingsView.swift",
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift"
+    ]
+  ],
+  "imports": {
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": [
+      "AppKit",
+      "Combine",
+      "Foundation",
+      "ServiceManagement",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Package.swift": [
+      "PackageDescription"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/TaskListViewModel.swift": [
+      "Combine",
+      "Foundation",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/NotificationListViewModel.swift": [
+      "Combine",
+      "Foundation",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": [
+      "Foundation",
+      "OSLog"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/NotificationGrouper.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/MarkdownCommentExporter.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift": [
+      "AppKit",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/DateFormatters.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/HTMLCleaner.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/StringExtensions.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/APILogger.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/URLValidator.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Pluralization.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/NetworkError.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/SettingsSection.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanCredentials.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/AuthState.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanNotification.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanTask.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanComment.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/TaskListView.swift": [
+      "AppKit",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift": [
+      "AppKit",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/NotificationListView.swift": [
+      "AppKit",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift": [
+      "AppKit",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/SettingsExporter.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanTaskFilterBuilder.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/SettingsSearchIndex.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/TaskDTO.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoResolver.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/KeychainManager.swift": [
+      "Foundation",
+      "Security"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI+Tasks.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoCache.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift": [
+      "AppKit",
+      "Combine",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/HotkeyManager.swift": [
+      "AppKit",
+      "Combine"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationManager.swift": [
+      "Foundation",
+      "UserNotifications"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationDTO.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/ErrorRecoveryService.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/AsyncSemaphore.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/CertificatePinning.swift": [
+      "CommonCrypto",
+      "Foundation",
+      "os"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/AvatarCacheManager.swift": [
+      "AppKit",
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/DomainProbeService.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationParser.swift": [
+      "Foundation"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AboutView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/StorageSettingsView.swift": [
+      "SwiftUI",
+      "UniformTypeIdentifiers"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/SyncSettingsView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AccountSettingsView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/NotificationsSettingsView.swift": [
+      "AppKit",
+      "SwiftUI",
+      "UserNotifications"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AppearanceSettingsView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/ShortcutsSettingsView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/AuthCredentialsStepView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/AuthDomainStepView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/EntityCardRow.swift": [
+      "AppKit",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/SkeletonView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/PopoverHeaderView.swift": [
+      "AppKit",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/ToastView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/TaskRow.swift": [
+      "AppKit",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/OfflineBannerView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/EmptyStateView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/LoadingStateView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/Components/InlineErrorBanner.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/Components/LockoutCountdownView.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/Components/WorkspaceHeaderRow.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/LivePreviewCard.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/RefreshIntervalSlider.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/ShortcutRecorderRow.swift": [
+      "AppKit",
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/CacheStatsRow.swift": [
+      "SwiftUI"
+    ],
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/AccountCard.swift": [
+      "SwiftUI"
+    ]
+  },
+  "graph": {
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/KeychainManager.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI.swift": 3,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoResolver.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/NetworkError.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 6,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/AccountCard.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanNotification.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanCredentials.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI+Tasks.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationManager.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoCache.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanTask.swift": 3,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/ErrorRecoveryService.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/MarkdownCommentExporter.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/DateFormatters.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/AuthState.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Pluralization.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AboutView.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/NotificationListViewModel.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/TaskListViewModel.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Package.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/TaskListViewModel.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/DateFormatters.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanTask.swift": 3,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 2
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/NotificationListViewModel.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/NotificationGrouper.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanNotification.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 2
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/NotificationGrouper.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanNotification.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/MarkdownCommentExporter.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanComment.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/HTMLCleaner.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/NotificationListViewModel.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/HTMLCleaner.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/MarkdownCommentExporter.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/URLValidator.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/AuthState.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/NetworkError.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanTask.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanComment.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI+Tasks.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/MarkdownCommentExporter.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/TaskListView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanTask.swift": 3,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/TaskListViewModel.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/SkeletonView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/OfflineBannerView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/PopoverHeaderView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/TaskRow.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/SettingsView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/SettingsSection.swift": 3,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AccountSettingsView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/SettingsSearchIndex.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/SyncSettingsView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/ShortcutsSettingsView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AppearanceSettingsView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/NotificationsSettingsView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AboutView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/StorageSettingsView.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/NotificationListViewModel.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/TaskListView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/TaskListViewModel.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/NotificationListView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/PopoverHeaderView.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/HotkeyManager.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/APILogger.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/NotificationListView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationParser.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/EntityCardRow.swift": 5,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/AvatarCacheManager.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/SkeletonView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanNotification.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/TaskListView.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoCache.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/NotificationListViewModel.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/PopoverHeaderView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/EmptyStateView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/OfflineBannerView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Pluralization.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/AuthState.swift": 4,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/AuthDomainStepView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/DomainProbeService.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/AuthCredentialsStepView.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanTaskFilterBuilder.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanTask.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/NetworkError.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/SettingsSearchIndex.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/SettingsSection.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/TaskDTO.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationDTO.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanTask.swift": 3
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoResolver.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoCache.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI+Tasks.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/KeychainManager.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 2
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI+Tasks.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanTask.swift": 3,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanComment.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoCache.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 3
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/StatusBarController.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/SettingsWindowManager.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/ViewModels/NotificationListViewModel.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationManager.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanNotification.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 3
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationParser.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanComment.swift": 4,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/NetworkError.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 3,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanNotification.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI+Tasks.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationDTO.swift": 4,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/APILogger.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoCache.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanTask.swift": 4,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/URLValidator.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/TaskDTO.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanTaskFilterBuilder.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationDTO.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationParser.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanNotification.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/HTMLCleaner.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/ErrorRecoveryService.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/NetworkError.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/CertificatePinning.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 4,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/MegaplanAPI.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/AvatarCacheManager.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 3,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/MegaplanMenuBarApp.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/AsyncSemaphore.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/DomainProbeService.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/AuthState.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/URLValidator.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationParser.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/NotificationDTO.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/URLValidator.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AboutView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/StorageSettingsView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/SettingsExporter.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/CacheStatsRow.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/SyncSettingsView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/RefreshIntervalSlider.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AccountSettingsView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/AccountCard.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AppearanceSettingsView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/LivePreviewCard.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/ShortcutsSettingsView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/HotkeyManager.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/ShortcutRecorderRow.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/AuthCredentialsStepView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/Components/LockoutCountdownView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/AuthState.swift": 4,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/Components/InlineErrorBanner.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/Components/WorkspaceHeaderRow.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/AuthDomainStepView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/AuthView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/AuthState.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/URLValidator.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/Components/InlineErrorBanner.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/EntityCardRow.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/NotificationListView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/TaskRow.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/PopoverHeaderView.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/TaskListView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/NotificationListView.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/TaskRow.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/EntityCardRow.swift": 4,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/DateFormatters.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/MegaplanTask.swift": 3,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoResolver.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/AvatarCacheManager.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Pluralization.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Auth/Components/WorkspaceHeaderRow.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Models/AuthState.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/LivePreviewCard.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/RootPopoverView.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AppearanceSettingsView.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/RefreshIntervalSlider.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Components/ToastView.swift": 1
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/ShortcutRecorderRow.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/HotkeyManager.swift": 3
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/CacheStatsRow.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/AppState.swift": 2,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/AvatarCacheManager.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Services/UserInfoCache.swift": 1,
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Utils/Constants.swift": 2
+    },
+    "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/Components/AccountCard.swift": {
+      "/Users/borzov/Develop/macOS/MegaplanMenuBarApp/Views/Settings/AccountSettingsView.swift": 1
+    }
+  }
+}

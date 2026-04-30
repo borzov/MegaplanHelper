@@ -53,12 +53,7 @@ final class AppState: ObservableObject {
         return DateFormatters.relative(lastSyncTime)
     }
 
-    /// Cached avatar of the currently signed-in user. Owned by AppState
-    /// (set by the avatar loader). AccountCard observes this for display.
-    /// TODO(Phase 2): wire up the loader once `EmployeeService` exposes the
-    /// avatar URL for the authenticated user. Until then, `AccountCard` shows
-    /// the initials gradient fallback — there is no functional regression
-    /// because the previous SettingsView never displayed an avatar either.
+    /// Cached avatar of the currently signed-in user.
     @Published private(set) var currentUserAvatar: NSImage?
 
     let api: AuthenticationService & NotificationService & TaskService & EmployeeService
@@ -145,7 +140,7 @@ final class AppState: ObservableObject {
             await UserInfoResolver.shared.configure(
                 api: resolverApi,
                 tokenProvider: { [weak self] in
-                    await MainActor.run { self?.accessToken }
+                    await self?.accessToken
                 }
             )
         }
@@ -576,7 +571,7 @@ final class AppState: ObservableObject {
             return
         }
 
-        restoreSnapshotIfAvailable(for: domain)
+        await restoreSnapshotIfAvailable(for: domain)
 
         (api as? MegaplanAPI)?.updateDomain(domain)
         do {
@@ -649,103 +644,15 @@ final class AppState: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
-        // Lazily resolve current user id once per session — used by the tasks endpoint filter.
-        if currentUserId == nil {
-            do {
-                currentUserId = try await api.fetchCurrentUserId(token: token)
-                AppLogger.debug("Resolved currentUserId: \(currentUserId ?? "nil")")
-            } catch {
-                AppLogger.warning("Failed to resolve currentUserId: \(error.localizedDescription)")
-            }
-        }
-
-        // Tasks fetch runs in parallel with notifications and is decoupled from retry logic
-        // so a tasks failure cannot block the notification refresh path.
-        let userIdForTasks = currentUserId
-        let sortKey = taskSortKey
-        let statusFilter = taskStatusFilter
-        let tasksTask = Task<[MegaplanTask]?, Never> { [weak self] in
-            guard let self, let uid = userIdForTasks, !uid.isEmpty else { return nil }
-            await MainActor.run { self.isTasksLoading = true }
-            defer {
-                Task { @MainActor in self.isTasksLoading = false }
-            }
-            do {
-                return try await self.api.fetchTasks(token: token,
-                                                     currentUserId: uid,
-                                                     sortBy: sortKey,
-                                                     statusFilter: statusFilter,
-                                                     limit: 100)
-            } catch {
-                AppLogger.warning("fetchTasks failed: \(error.localizedDescription)")
-                return nil
-            }
-        }
+        await resolveCurrentUserIDIfNeeded(token: token)
+        let tasksTask = startTasksRefreshTask(token: token)
 
         do {
-            // Используем retry механизм для загрузки уведомлений
-            let (fetchedNotifications, counter) = try await errorRecoveryService.executeWithRetry(
-                operation: {
-                    async let notificationsTask = self.api.fetchNotifications(token: token)
-                    async let counterTask = self.api.fetchUnreadCount(token: token)
-                    return try await (notificationsTask, counterTask)
-                },
-                onRetry: { attempt, delay in
-                    AppLogger.info("Retrying refresh after \(delay)s (attempt \(attempt))")
-                },
-                onFailure: { error in
-                    AppLogger.error("All retry attempts failed: \(error.localizedDescription)")
-                }
-            )
-
-            // Check for cancellation after async operation completes
+            let (fetchedNotifications, counter) = try await refreshNotificationsWithRetry(token: token)
             guard !Task.isCancelled else { return }
-
-            // Success - exit offline mode and clear session expired flag
-            isOffline = false
-            isSessionExpired = false
-            lastSyncTime = Date()
-
-            // Определяем новые непрочитанные уведомления
-            let previousNotificationIDs = Set(notifications.map { $0.id })
-            let newUnreadNotifications = fetchedNotifications.filter { notification in
-                !previousNotificationIDs.contains(notification.id) && !notification.isRead
-            }
-            
-            // Отправляем уведомления для новых непрочитанных
-            for notification in newUnreadNotifications {
-                notificationManager.sendNotification(for: notification)
-            }
-            
-            // Сохраняем успешные данные для оффлайн-режима
-            lastSuccessfulNotifications = fetchedNotifications
-            lastSuccessfulUnreadCount = counter
-            if let workspaceKey = Self.workspaceKey(from: domain) {
-                await snapshotStore.save(
-                    workspaceKey: workspaceKey,
-                    unreadCount: counter,
-                    notifications: fetchedNotifications
-                )
-            }
-            
-            withAnimation(.easeInOut) {
-                notifications = fetchedNotifications
-            }
-
-            apiUnreadCount = counter
-            AppLogger.debug("Refreshed: \(fetchedNotifications.count) notifications, \(counter) unread, \(newUnreadNotifications.count) new unread")
-
-            // Apply tasks result independently — failure here is non-fatal.
-            if let fetchedTasks = await tasksTask.value {
-                withAnimation(.easeInOut) {
-                    tasks = fetchedTasks
-                }
-                tasksUnreadCount = fetchedTasks.reduce(0) { $0 + $1.unreadCommentsCount }
-                lastTasksSyncTime = Date()
-                AppLogger.debug("Refreshed: \(fetchedTasks.count) tasks, \(tasksUnreadCount) unread comments")
-            }
+            await applySuccessfulRefresh(notifications: fetchedNotifications, unreadCounter: counter)
+            await applyTasksResult(from: tasksTask)
         } catch NetworkError.offline {
-            // Переход в оффлайн-режим без показа ошибки
             AppLogger.info("No internet connection, entering offline mode")
             isOffline = true
             restoreCachedNotifications()
@@ -766,11 +673,99 @@ final class AppState: ObservableObject {
             }
 
             AppLogger.error("Refresh failed: \(error.localizedDescription)")
-            // Не показываем ошибку для сетевых проблем в оффлайн-режиме
             if !isOffline {
                 presentError(mappedError)
             }
         }
+    }
+
+    private func resolveCurrentUserIDIfNeeded(token: String) async {
+        guard currentUserId == nil else { return }
+        do {
+            currentUserId = try await api.fetchCurrentUserId(token: token)
+            AppLogger.debug("Resolved currentUserId: \(currentUserId ?? "nil")")
+        } catch {
+            AppLogger.warning("Failed to resolve currentUserId: \(error.localizedDescription)")
+        }
+    }
+
+    private func startTasksRefreshTask(token: String) -> Task<[MegaplanTask]?, Never> {
+        let userIdForTasks = currentUserId
+        let sortKey = taskSortKey
+        let statusFilter = taskStatusFilter
+        return Task<[MegaplanTask]?, Never> { [weak self] in
+            guard let self, let uid = userIdForTasks, !uid.isEmpty else { return nil }
+            await MainActor.run { self.isTasksLoading = true }
+            defer {
+                Task { @MainActor in self.isTasksLoading = false }
+            }
+            do {
+                return try await self.api.fetchTasks(token: token,
+                                                     currentUserId: uid,
+                                                     sortBy: sortKey,
+                                                     statusFilter: statusFilter,
+                                                     limit: 100)
+            } catch {
+                AppLogger.warning("fetchTasks failed: \(error.localizedDescription)")
+                return nil
+            }
+        }
+    }
+
+    private func refreshNotificationsWithRetry(token: String) async throws -> ([MegaplanNotification], Int) {
+        try await errorRecoveryService.executeWithRetry(
+            operation: {
+                async let notificationsTask = self.api.fetchNotifications(token: token)
+                async let counterTask = self.api.fetchUnreadCount(token: token)
+                return try await (notificationsTask, counterTask)
+            },
+            onRetry: { attempt, delay in
+                AppLogger.info("Retrying refresh after \(delay)s (attempt \(attempt))")
+            },
+            onFailure: { error in
+                AppLogger.error("All retry attempts failed: \(error.localizedDescription)")
+            }
+        )
+    }
+
+    private func applySuccessfulRefresh(notifications fetchedNotifications: [MegaplanNotification], unreadCounter counter: Int) async {
+        isOffline = false
+        isSessionExpired = false
+        lastSyncTime = Date()
+
+        let previousNotificationIDs = Set(notifications.map { $0.id })
+        let newUnreadNotifications = fetchedNotifications.filter {
+            !previousNotificationIDs.contains($0.id) && !$0.isRead
+        }
+        for notification in newUnreadNotifications {
+            notificationManager.sendNotification(for: notification)
+        }
+
+        lastSuccessfulNotifications = fetchedNotifications
+        lastSuccessfulUnreadCount = counter
+        if let workspaceKey = Self.workspaceKey(from: domain) {
+            await snapshotStore.save(
+                workspaceKey: workspaceKey,
+                unreadCount: counter,
+                notifications: fetchedNotifications
+            )
+        }
+
+        withAnimation(.easeInOut) {
+            notifications = fetchedNotifications
+        }
+        apiUnreadCount = counter
+        AppLogger.debug("Refreshed: \(fetchedNotifications.count) notifications, \(counter) unread, \(newUnreadNotifications.count) new unread")
+    }
+
+    private func applyTasksResult(from task: Task<[MegaplanTask]?, Never>) async {
+        guard let fetchedTasks = await task.value else { return }
+        withAnimation(.easeInOut) {
+            tasks = fetchedTasks
+        }
+        tasksUnreadCount = fetchedTasks.reduce(0) { $0 + $1.unreadCommentsCount }
+        lastTasksSyncTime = Date()
+        AppLogger.debug("Refreshed: \(fetchedTasks.count) tasks, \(tasksUnreadCount) unread comments")
     }
 
     private func startRefreshTimer() {
@@ -836,21 +831,14 @@ final class AppState: ObservableObject {
         AppLogger.debug("Using cached data in offline mode (total: \(lastSuccessfulNotifications.count))")
     }
 
-    private func restoreSnapshotIfAvailable(for domain: String) {
+    private func restoreSnapshotIfAvailable(for domain: String) async {
         guard let workspaceKey = Self.workspaceKey(from: domain) else { return }
-
-        Task { [weak self] in
-            guard let self else { return }
-            guard let snapshot = await snapshotStore.load(workspaceKey: workspaceKey) else { return }
-
-            await MainActor.run {
-                self.lastSuccessfulNotifications = snapshot.notifications
-                self.lastSuccessfulUnreadCount = snapshot.unreadCount
-                if self.notifications.isEmpty {
-                    self.notifications = snapshot.notifications
-                    self.apiUnreadCount = snapshot.unreadCount
-                }
-            }
+        guard let snapshot = await snapshotStore.load(workspaceKey: workspaceKey) else { return }
+        lastSuccessfulNotifications = snapshot.notifications
+        lastSuccessfulUnreadCount = snapshot.unreadCount
+        if notifications.isEmpty {
+            notifications = snapshot.notifications
+            apiUnreadCount = snapshot.unreadCount
         }
     }
 
@@ -1017,9 +1005,6 @@ actor NotificationsSnapshotStore {
     }
 }
 
-// MARK: - RefreshScheduler
-
-/// Thread-safe refresh timer scheduler using actor
 actor RefreshScheduler {
     private var task: Task<Void, Never>?
     private var interval: TimeInterval
@@ -1029,38 +1014,28 @@ actor RefreshScheduler {
         self.interval = interval
     }
 
-    /// Starts the refresh timer with the given interval
-    /// - Parameters:
-    ///   - interval: Interval in seconds between refreshes
-    ///   - action: Async action to perform on each tick
     func start(interval: TimeInterval, action: @escaping @Sendable () async -> Void) {
-        // Cancel existing task first
         task?.cancel()
-
         self.interval = interval
         self.isRunning = true
 
         task = Task {
             while !Task.isCancelled {
                 guard !Task.isCancelled else { break }
-
                 do {
                     try await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
                 } catch {
-                    // Task was cancelled
                     break
                 }
-
                 guard !Task.isCancelled else { break }
                 await action()
             }
-            await self.markAsStopped()
+            self.markAsStopped()
         }
 
         AppLogger.debug("RefreshScheduler started with interval: \(interval)s")
     }
 
-    /// Stops the refresh timer
     func stop() {
         task?.cancel()
         task = nil
@@ -1068,7 +1043,6 @@ actor RefreshScheduler {
         AppLogger.debug("RefreshScheduler stopped")
     }
 
-    /// Updates the interval and restarts if currently running
     func updateInterval(_ newInterval: TimeInterval, action: @escaping @Sendable () async -> Void) {
         self.interval = newInterval
         if isRunning {
@@ -1076,9 +1050,8 @@ actor RefreshScheduler {
         }
     }
 
-    /// Returns whether the scheduler is currently running
     func getIsRunning() -> Bool {
-        return isRunning
+        isRunning
     }
 
     private func markAsStopped() {
