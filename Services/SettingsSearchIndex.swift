@@ -19,7 +19,6 @@ final class SettingsSearchIndex {
         .shortcuts: ["shortcuts", "горячие клавиши", "hotkey", "keyboard",
                      "клавиатура", "cmd", "опция"],
         .storage: ["storage", "хранилище", "cache", "кэш", "clear", "очистить",
-                   "reset", "сброс", "export", "экспорт", "import", "импорт",
                    "size", "размер"],
         .about: ["about", "о программе", "version", "версия", "help", "помощь",
                  "github", "feedback", "отзыв", "license", "лицензия"]

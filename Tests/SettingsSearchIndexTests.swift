@@ -44,9 +44,9 @@ final class SettingsSearchIndexTests: XCTestCase {
     }
 
     func testSearch_MultiToken_UnionOfMatches() {
-        let results = SettingsSearchIndex.shared.search("password reset")
+        let results = SettingsSearchIndex.shared.search("password cache")
         XCTAssertTrue(results.contains(.account), "'password' must match Account")
-        XCTAssertTrue(results.contains(.storage), "'reset' must match Storage")
+        XCTAssertTrue(results.contains(.storage), "'cache' must match Storage")
     }
 
     func testSearch_UpperCaseQuery_StillMatches() {

@@ -19,7 +19,6 @@
 		8190A3DBC7F15FB1A817ABB0 /* AuthCredentialsStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7B919B7DCD2A2926CF3E6B /* AuthCredentialsStepView.swift */; };
 		7ACCEEAD0F20CBDAB3E3DE36 /* SettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98C8CF8C41E261881D79D5F8 /* SettingsSection.swift */; };
 		7D14680480A40D1B04E3132B /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9A74F26D72DF02C69A4795 /* AboutView.swift */; };
-		8739F1D5F3EB5E1351BD4608 /* SettingsExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAECE12E74838A6114288FB4 /* SettingsExporter.swift */; };
 		89E3BB1FBD7E9BB38B68CB62 /* NotificationsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0C79DB212102A83657D543 /* NotificationsSettingsView.swift */; };
 		8C6BE38840E49591E23A6335 /* StorageSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABEFD3F002AF5970575EE6EB /* StorageSettingsView.swift */; };
 		A345707AF6425C6E2F1247DC /* SettingsSearchIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AC0443720F33CCB46B17D99 /* SettingsSearchIndex.swift */; };
@@ -114,7 +113,6 @@
 		AA00001C /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
 		AA00001D /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
 		AA00002A /* StringExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtensions.swift; sourceTree = "<group>"; };
-		AAECE12E74838A6114288FB4 /* SettingsExporter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsExporter.swift; sourceTree = "<group>"; };
 		ABEFD3F002AF5970575EE6EB /* StorageSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StorageSettingsView.swift; sourceTree = "<group>"; };
 		BB000010 /* MegaplanTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanTask.swift; sourceTree = "<group>"; };
 		BB000011 /* TaskDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDTO.swift; sourceTree = "<group>"; };
@@ -376,7 +374,6 @@
 			isa = PBXGroup;
 			children = (
 				2AC0443720F33CCB46B17D99 /* SettingsSearchIndex.swift */,
-				AAECE12E74838A6114288FB4 /* SettingsExporter.swift */,
 				CA881FB3C88262497EC1428C /* HotkeyManager.swift */,
 			);
 			name = Services;
@@ -551,7 +548,6 @@
 				8190A3DBC7F15FB1A817ABB0 /* AuthCredentialsStepView.swift in Sources */,
 				7ACCEEAD0F20CBDAB3E3DE36 /* SettingsSection.swift in Sources */,
 				A345707AF6425C6E2F1247DC /* SettingsSearchIndex.swift in Sources */,
-				8739F1D5F3EB5E1351BD4608 /* SettingsExporter.swift in Sources */,
 				208C00901227259EA1F986A4 /* HotkeyManager.swift in Sources */,
 				F466E3045C84824C45D7BF1C /* AccountCard.swift in Sources */,
 				B1F05B6A4F20A3DDC7F9DE4D /* RefreshIntervalSlider.swift in Sources */,

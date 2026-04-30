@@ -43,6 +43,9 @@ struct CacheStatsRow: View {
                         .foregroundStyle(.secondary)
                         .contentTransition(.numericText())
                         .animation(.snappy, value: avatarSizeBytes)
+                    Text(cacheIntro)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button(role: .destructive) {
@@ -57,7 +60,11 @@ struct CacheStatsRow: View {
                 .disabled(isClearing || !hasAnyCacheData)
             }
             StorageBar(used: avatarSizeBytes, limit: avatarLimit)
-                .accessibilityHidden(true)
+                .accessibilityLabel(String(localized: "settings.storage.avatarQuotaAccessibilityLabel"))
+                .accessibilityValue(avatarQuotaAccessibilityValue)
+            Text(avatarQuotaLine)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
 
             Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 8) {
                 GridRow {
@@ -104,6 +111,33 @@ struct CacheStatsRow: View {
         return String(format: String(localized: "settings.storage.totalSummary"),
                       Self.sizeFormatter.string(fromByteCount: diskTotal),
                       userInfoCount)
+    }
+
+    private var cacheIntro: String {
+        String(
+            format: String(localized: "settings.storage.cacheIntro"),
+            Self.sizeFormatter.string(fromByteCount: avatarLimit),
+            Constants.CacheConfig.maxUserInfoEntries,
+            Int(Constants.SnapshotConfig.notificationsTTL / 3600)
+        )
+    }
+
+    private var avatarQuotaLine: String {
+        String(
+            format: String(localized: "settings.storage.avatarQuotaLine"),
+            Self.sizeFormatter.string(fromByteCount: avatarSizeBytes),
+            Self.sizeFormatter.string(fromByteCount: avatarLimit)
+        )
+    }
+
+    private var avatarQuotaAccessibilityValue: String {
+        let percent = avatarLimit > 0 ? Int((Double(avatarSizeBytes) / Double(avatarLimit) * 100).rounded()) : 0
+        return String(
+            format: String(localized: "settings.storage.avatarQuotaAccessibilityValue"),
+            Self.sizeFormatter.string(fromByteCount: avatarSizeBytes),
+            Self.sizeFormatter.string(fromByteCount: avatarLimit),
+            percent
+        )
     }
 
     private var snapshotSummary: String {
