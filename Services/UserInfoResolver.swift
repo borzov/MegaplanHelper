@@ -13,7 +13,7 @@ import Foundation
 actor UserInfoResolver {
     static let shared = UserInfoResolver()
 
-    private var api: EmployeeService?
+    private var api: MegaplanAPI?
     private var tokenProvider: (@Sendable () async -> String?)?
     private var domainProvider: (@Sendable () async -> String)?
     private var inflight: [String: Task<(name: String?, avatarURL: URL?)?, Never>] = [:]
@@ -21,7 +21,7 @@ actor UserInfoResolver {
     private var avatarMisses: Set<String> = []
 
     func configure(
-        api: EmployeeService,
+        api: MegaplanAPI,
         tokenProvider: @escaping @Sendable () async -> String?,
         domainProvider: (@Sendable () async -> String)? = nil
     ) {
@@ -110,7 +110,7 @@ actor UserInfoResolver {
 
     private func lookup(
         id: String,
-        api: EmployeeService?,
+        api: MegaplanAPI?,
         tokenProvider: (@Sendable () async -> String?)?,
         domainProvider: (@Sendable () async -> String)?
     ) async -> (name: String?, avatarURL: URL?)? {
@@ -127,7 +127,7 @@ actor UserInfoResolver {
             let token = await tokenProvider()
             if let token, !token.isEmpty {
                 do {
-                    let result = try await api.fetchEmployee(id: id, token: token)
+                    let result = try await api.fetchEmployee(id: id)
                     if let fetched = Self.normalized(result.name) {
                         name = fetched
                     }

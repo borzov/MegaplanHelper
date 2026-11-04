@@ -7,18 +7,7 @@ struct ValidatedUser {
     let possibleActions: [String]
 }
 
-protocol AuthenticationService {
-    func authenticate(login: String, password: String) async throws -> String
-    func validateToken(token: String) async throws -> (isValid: Bool, firstName: String?, unreadCount: Int?, possibleActions: [String]?)
-}
-
-protocol NotificationService {
-    func fetchNotifications(token: String) async throws -> [MegaplanNotification]
-    func fetchUnreadCount(token: String) async throws -> Int
-    func markAsRead(id: String, token: String) async throws
-}
-
-final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
+final class MegaplanAPI: NSObject {
     private var baseURL: URL?
     /// True only after the lazy session has been materialized. deinit must not
     /// touch `pinnedLazySession` otherwise: the getter creates a URLSession that retains
@@ -49,18 +38,19 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         self.encoder.keyEncodingStrategy = .convertToSnakeCase
         super.init()
         if !domain.isEmpty {
-            updateDomain(domain)
+            baseURL = Self.makeBaseURL(from: domain)
+            AppLogger.debug("Updated domain to: \(domain), baseURL: \(baseURL?.absoluteString ?? "nil")")
         }
+    }
+
+    /// Новый экземпляр с тем же `sessionOverride`. Без подмены сессия снова ленивая, с pinning.
+    func withCredentials(domain: String, token: String?) -> MegaplanAPI {
+        MegaplanAPI(domain: domain, token: token, session: sessionOverride)
     }
 
     private func requiredToken() throws -> String {
         guard let storedToken, !storedToken.isEmpty else { throw NetworkError.missingToken }
         return storedToken
-    }
-
-    func updateDomain(_ domain: String) {
-        baseURL = Self.makeBaseURL(from: domain)
-        AppLogger.debug("Updated domain to: \(domain), baseURL: \(baseURL?.absoluteString ?? "nil")")
     }
 
     func authenticate(login: String, password: String) async throws -> String {
@@ -97,7 +87,8 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         return token
     }
 
-    func validateToken(token: String) async throws -> (isValid: Bool, firstName: String?, unreadCount: Int?, possibleActions: [String]?) {
+    func validateToken() async throws -> (isValid: Bool, firstName: String?, unreadCount: Int?, possibleActions: [String]?) {
+        let token = try requiredToken()
         let request = try makeRequest(
             path: "/api/v3/currentUser",
             method: "GET",
@@ -153,8 +144,9 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         }
     }
 
-    func fetchNotifications(token: String) async throws -> [MegaplanNotification] {
+    func fetchNotifications() async throws -> [MegaplanNotification] {
         do {
+            let token = try requiredToken()
             let limit = 1000
             let queryDict: [String: Any] = ["limit": limit, "isActive": true]
             let queryData = try JSONSerialization.data(withJSONObject: queryDict)
@@ -189,15 +181,11 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
     }
 
     func fetchUnreadCount() async throws -> Int {
-        try await fetchUnreadCount(token: try requiredToken())
-    }
-
-    func fetchUnreadCount(token: String) async throws -> Int {
         let request = try makeRequest(
             path: "/api/v3/notification/counter",
             method: "GET",
             body: nil,
-            token: token
+            token: try requiredToken()
         )
 
         do {
@@ -208,12 +196,12 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         }
     }
 
-    func markAsRead(id: String, token: String) async throws {
+    func markAsRead(id: String) async throws {
         let request = try makeRequest(
             path: "/api/v3/notification/\(id)",
             method: "DELETE",
             body: Data(),
-            token: token,
+            token: try requiredToken(),
             contentType: "application/json"
         )
 
@@ -335,14 +323,14 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
     }
 }
 
-// MARK: - Task endpoints (TaskService conformance)
+// MARK: - Task endpoints
 
-extension MegaplanAPI: TaskService, EmployeeService {
-    func fetchTasks(token: String,
-                    currentUserId: String,
+extension MegaplanAPI {
+    func fetchTasks(currentUserId: String,
                     sortBy: TaskSortKey,
                     statusFilter: TaskStatusFilter,
                     limit: Int = 100) async throws -> [MegaplanTask] {
+        let token = try requiredToken()
         guard !currentUserId.isEmpty else {
             throw NetworkError.missingToken
         }
@@ -406,7 +394,7 @@ extension MegaplanAPI: TaskService, EmployeeService {
                 // in parallel before publishing — keeps the UI free of placeholder
                 // "Создатель неизвестен" rows that never get resolved by the lazy task-row
                 // path.
-                let enriched = await self.enrichParticipants(in: envelope.items, token: token)
+                let enriched = await self.enrichParticipants(in: envelope.items)
 
                 return enriched
             } catch {
@@ -422,7 +410,7 @@ extension MegaplanAPI: TaskService, EmployeeService {
     /// whose `name` is missing in the list response. Hits each unique employee id
     /// at most once via `withTaskGroup`, then remembers the seeds so the
     /// in-row resolver has cache hits later.
-    private func enrichParticipants(in tasks: [MegaplanTask], token: String) async -> [MegaplanTask] {
+    private func enrichParticipants(in tasks: [MegaplanTask]) async -> [MegaplanTask] {
         var idsNeeded = Set<String>()
         for task in tasks {
             if let p = task.responsible, !p.id.isEmpty, p.name.isEmpty { idsNeeded.insert(p.id) }
@@ -436,7 +424,7 @@ extension MegaplanAPI: TaskService, EmployeeService {
             for id in idsNeeded {
                 group.addTask { [self] in
                     do {
-                        let result = try await self.fetchEmployee(id: id, token: token)
+                        let result = try await self.fetchEmployee(id: id)
                         return (id, result.name, result.avatarURL)
                     } catch {
                         AppLogger.warning("enrichParticipants fetchEmployee(\(id)) failed: \(error.localizedDescription)")
@@ -488,10 +476,10 @@ extension MegaplanAPI: TaskService, EmployeeService {
         }
     }
 
-    func searchTasks(token: String,
-                     currentUserId: String,
+    func searchTasks(currentUserId: String,
                      query: String,
                      limit: Int = 30) async throws -> [MegaplanTask] {
+        let token = try requiredToken()
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !currentUserId.isEmpty else {
             throw NetworkError.missingToken
@@ -535,7 +523,7 @@ extension MegaplanAPI: TaskService, EmployeeService {
                 let envelope = try decoder.decode(TaskListEnvelope.self, from: data)
                 await UserInfoResolver.shared.remember(seeds: ParticipantDirectory.seeds(fromTaskJSON: data))
                 AppLogger.debug("Server search '\(trimmed)' returned \(envelope.items.count) tasks")
-                let enriched = await self.enrichParticipants(in: envelope.items, token: token)
+                let enriched = await self.enrichParticipants(in: envelope.items)
                 return enriched
             } catch {
                 AppLogger.error("Failed to decode search response: \(error.localizedDescription)")
@@ -546,7 +534,8 @@ extension MegaplanAPI: TaskService, EmployeeService {
         }
     }
 
-    func fetchTaskComments(token: String, taskId: String) async throws -> TaskCommentsBundle {
+    func fetchTaskComments(taskId: String) async throws -> TaskCommentsBundle {
+        let token = try requiredToken()
         guard !taskId.isEmpty else { throw NetworkError.missingToken }
 
         // Step 1 — fetch the task with the inline comments array. We ask for
@@ -586,7 +575,7 @@ extension MegaplanAPI: TaskService, EmployeeService {
             for (idx, commentId) in commentIds.enumerated() {
                 group.addTask { [self] in
                     do {
-                        let comment = try await self.fetchSingleComment(id: commentId, token: token)
+                        let comment = try await self.fetchSingleComment(id: commentId)
                         return (idx, comment)
                     } catch {
                         AppLogger.warning("fetchSingleComment(\(commentId)) failed: \(error.localizedDescription)")
@@ -613,11 +602,11 @@ extension MegaplanAPI: TaskService, EmployeeService {
         return TaskCommentsBundle(taskName: taskName, humanNumber: humanNumber, comments: sorted)
     }
 
-    private func fetchSingleComment(id: String, token: String) async throws -> MegaplanComment {
+    private func fetchSingleComment(id: String) async throws -> MegaplanComment {
         let path = try Self.buildJSONQueryPath("/api/v3/comment/\(id)", query: ["fields": [
             "id", "content", "owner", "timeCreated", "attaches", "forwardFrom"
         ]])
-        let request = try makeRequest(path: path, method: "GET", body: nil, token: token)
+        let request = try makeRequest(path: path, method: "GET", body: nil, token: try requiredToken())
         let data = try await perform(request)
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let dict = json["data"] as? [String: Any] else {
@@ -686,8 +675,8 @@ extension MegaplanAPI: TaskService, EmployeeService {
         return nil
     }
 
-    func fetchEmployee(id: String, token: String) async throws -> (name: String?, avatarURL: URL?) {
-        let request = try makeRequest(path: "/api/v3/employee/\(id)", method: "GET", body: nil, token: token)
+    func fetchEmployee(id: String) async throws -> (name: String?, avatarURL: URL?) {
+        let request = try makeRequest(path: "/api/v3/employee/\(id)", method: "GET", body: nil, token: try requiredToken())
         let data = try await perform(request)
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let dataDict = json["data"] as? [String: Any] else {
@@ -698,8 +687,8 @@ extension MegaplanAPI: TaskService, EmployeeService {
         return (name, avatarURL)
     }
 
-    func fetchCurrentUserId(token: String) async throws -> String {
-        let request = try makeRequest(path: "/api/v3/currentUser", method: "GET", body: nil, token: token)
+    func fetchCurrentUserId() async throws -> String {
+        let request = try makeRequest(path: "/api/v3/currentUser", method: "GET", body: nil, token: try requiredToken())
         do {
             let data = try await perform(request)
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],

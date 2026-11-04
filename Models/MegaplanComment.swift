@@ -25,7 +25,7 @@ struct MegaplanComment: Identifiable, Hashable {
     }
 }
 
-/// Bundle returned by `TaskService.fetchTaskComments` — task title + all comments
+/// Bundle returned by `MegaplanAPI.fetchTaskComments` — task title + all comments
 /// flat-loaded so the UI can render or export them in one pass.
 struct TaskCommentsBundle {
     let taskName: String

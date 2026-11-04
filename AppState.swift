@@ -56,7 +56,11 @@ final class AppState: ObservableObject {
     /// Cached avatar of the currently signed-in user.
     @Published private(set) var currentUserAvatar: NSImage?
 
-    let api: AuthenticationService & NotificationService & TaskService & EmployeeService
+    private var api: MegaplanAPI
+    /// Домен и токен, уже записанные в `api`. nil — клиент ещё не пересоздавали.
+    private var installedDomain: String?
+    private var installedToken: String?
+    private var resolverConfiguration: Task<Void, Never>?
     private var currentUserId: String?
     private let keychain: KeychainStoring
     private let userDefaults: UserDefaults
@@ -79,7 +83,7 @@ final class AppState: ObservableObject {
     private var isSessionRestored = false
 
     init(
-        api: AuthenticationService & NotificationService & TaskService & EmployeeService = MegaplanAPI(),
+        api: MegaplanAPI = MegaplanAPI(),
         userDefaults: UserDefaults = .standard,
         snapshotStore: NotificationsSnapshotStore = .shared,
         keychain: KeychainStoring = KeychainManager()
@@ -120,9 +124,11 @@ final class AppState: ObservableObject {
             password: ""
         )
         
-        // Устанавливаем domain в API если доступен
-        if !self.domain.isEmpty {
-            (api as? MegaplanAPI)?.updateDomain(self.domain)
+        // Стартовый домен из UserDefaults — отдельный клиент, не мутация.
+        if !domainValue.isEmpty {
+            installAPI(domain: domainValue, token: nil)
+        } else {
+            bindResolver(to: api)
         }
         
         // Синхронизация unreadCount с счётчиком из API
@@ -136,21 +142,6 @@ final class AppState: ObservableObject {
             Task { [notificationManager] in
                 _ = await notificationManager.requestAuthorization()
             }
-        }
-
-        // Wire UserInfoResolver so any view can lazily look up an employee by id
-        // without holding a direct reference to the API or the access token.
-        let resolverApi = api
-        Task { [weak self] in
-            await UserInfoResolver.shared.configure(
-                api: resolverApi,
-                tokenProvider: { [weak self] in
-                    await self?.accessToken
-                },
-                domainProvider: { [weak self] in
-                    await self?.domain ?? ""
-                }
-            )
         }
 
         // Subscribe to certificate pinning failure notifications.
@@ -215,10 +206,14 @@ final class AppState: ObservableObject {
             return
         }
 
-        (api as? MegaplanAPI)?.updateDomain(trimmedDomain)
+        // Домен нужен запросу сразу, но неудачный логин установленный клиент не подменяет.
+        let authAPI = installedDomain == trimmedDomain
+            ? api
+            : api.withCredentials(domain: trimmedDomain, token: nil)
         do {
-            let token = try await api.authenticate(login: trimmedLogin, password: password)
+            let token = try await authAPI.authenticate(login: trimmedLogin, password: password)
             try persistCredentials(domain: trimmedDomain, login: trimmedLogin, password: password, token: token)
+            installAPI(domain: trimmedDomain, token: token)
             if previousWorkspaceKey != Self.workspaceKey(from: trimmedDomain) {
                 await snapshotStore.clear()
             }
@@ -227,7 +222,7 @@ final class AppState: ObservableObject {
 
             // Validate token and check admin permissions
             do {
-                let result = try await api.validateToken(token: token)
+                let result = try await api.validateToken()
                 applyTokenValidationResult(result)
                 AppLogger.info("Authentication succeeded for \(trimmedLogin). Admin: \(isAdmin)")
             } catch {
@@ -390,12 +385,12 @@ final class AppState: ObservableObject {
     /// transient banner so the user gets visible feedback either way.
     @discardableResult
     func copyTaskCommentsAsMarkdown(for task: MegaplanTask) async -> Int? {
-        guard let token = accessToken else {
+        guard accessToken != nil else {
             showTransientToast(String(localized: "tasks.markdown.failed"))
             return nil
         }
         do {
-            let bundle = try await api.fetchTaskComments(token: token, taskId: task.id)
+            let bundle = try await api.fetchTaskComments(taskId: task.id)
             guard !bundle.comments.isEmpty else {
                 showTransientToast(String(localized: "tasks.markdown.empty"))
                 return 0
@@ -444,15 +439,14 @@ final class AppState: ObservableObject {
     /// transport error — callers fall back to whatever is in the local cache.
     func searchTasks(query: String, limit: Int = 30) async -> [MegaplanTask] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let token = accessToken,
+        guard accessToken != nil,
               let userId = currentUserId,
               !userId.isEmpty,
               !trimmed.isEmpty else {
             return []
         }
         do {
-            return try await api.searchTasks(token: token,
-                                             currentUserId: userId,
+            return try await api.searchTasks(currentUserId: userId,
                                              query: trimmed,
                                              limit: limit)
         } catch {
@@ -490,7 +484,7 @@ final class AppState: ObservableObject {
     }
 
     func markNotificationAsRead(_ notification: MegaplanNotification) {
-        guard let token = accessToken else {
+        guard accessToken != nil else {
             presentError(.missingToken)
             return
         }
@@ -509,7 +503,7 @@ final class AppState: ObservableObject {
             }
 
             do {
-                try await self.api.markAsRead(id: notification.id, token: token)
+                try await self.api.markAsRead(id: notification.id)
                 AppLogger.debug("Notification \(notification.id) marked as read")
             } catch {
                 // Rollback on error
@@ -560,7 +554,6 @@ final class AppState: ObservableObject {
 
         await restoreSnapshotIfAvailable(for: domain)
 
-        (api as? MegaplanAPI)?.updateDomain(domain)
         do {
             if let token = try keychain.read(service: Constants.Keychain.service, account: Constants.Keychain.tokenAccount) {
                 accessToken = token
@@ -580,8 +573,9 @@ final class AppState: ObservableObject {
             return
         }
 
+        installAPI(domain: domain, token: token)
         do {
-            let result = try await api.validateToken(token: token)
+            let result = try await api.validateToken()
             if result.isValid {
                 isAuthenticated = true
                 isSessionRestored = true
@@ -623,7 +617,7 @@ final class AppState: ObservableObject {
 
     func refresh() async {
         guard !Task.isCancelled else { return }
-        guard let token = accessToken else {
+        guard accessToken != nil else {
             AppLogger.debug("Refresh called but no access token")
             return
         }
@@ -631,11 +625,11 @@ final class AppState: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
-        await resolveCurrentUserIDIfNeeded(token: token)
-        let tasksTask = startTasksRefreshTask(token: token)
+        await resolveCurrentUserIDIfNeeded()
+        let tasksTask = startTasksRefreshTask()
 
         do {
-            let (fetchedNotifications, counter) = try await refreshNotificationsWithRetry(token: token)
+            let (fetchedNotifications, counter) = try await refreshNotificationsWithRetry()
             guard !Task.isCancelled else { return }
             await applySuccessfulRefresh(notifications: fetchedNotifications, unreadCounter: counter)
             await applyTasksResult(from: tasksTask)
@@ -666,17 +660,17 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func resolveCurrentUserIDIfNeeded(token: String) async {
+    private func resolveCurrentUserIDIfNeeded() async {
         guard currentUserId == nil else { return }
         do {
-            currentUserId = try await api.fetchCurrentUserId(token: token)
+            currentUserId = try await api.fetchCurrentUserId()
             AppLogger.debug("Resolved currentUserId: \(currentUserId ?? "nil")")
         } catch {
             AppLogger.warning("Failed to resolve currentUserId: \(error.localizedDescription)")
         }
     }
 
-    private func startTasksRefreshTask(token: String) -> Task<[MegaplanTask]?, Never> {
+    private func startTasksRefreshTask() -> Task<[MegaplanTask]?, Never> {
         let userIdForTasks = currentUserId
         let sortKey = taskSortKey
         let statusFilter = taskStatusFilter
@@ -687,8 +681,7 @@ final class AppState: ObservableObject {
                 Task { @MainActor in self.isTasksLoading = false }
             }
             do {
-                return try await self.api.fetchTasks(token: token,
-                                                     currentUserId: uid,
+                return try await self.api.fetchTasks(currentUserId: uid,
                                                      sortBy: sortKey,
                                                      statusFilter: statusFilter,
                                                      limit: 100)
@@ -699,11 +692,11 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func refreshNotificationsWithRetry(token: String) async throws -> ([MegaplanNotification], Int) {
+    private func refreshNotificationsWithRetry() async throws -> ([MegaplanNotification], Int) {
         try await errorRecoveryService.executeWithRetry(
             operation: {
-                async let notificationsTask = self.api.fetchNotifications(token: token)
-                async let counterTask = self.api.fetchUnreadCount(token: token)
+                async let notificationsTask = self.api.fetchNotifications()
+                async let counterTask = self.api.fetchUnreadCount()
                 return try await (notificationsTask, counterTask)
             },
             onRetry: { attempt, delay in
@@ -774,6 +767,41 @@ final class AppState: ObservableObject {
         }
         refreshTask?.cancel()
         refreshTask = nil
+    }
+
+    /// Пересоздаёт клиент, только если домен или токен реально другие.
+    /// Подменённая сессия (мок в тестах) переносится через `withCredentials`.
+    private func installAPI(domain: String, token: String?) {
+        let normalized = Self.normalizedAPIToken(token)
+        if installedDomain == domain, installedToken == normalized {
+            return
+        }
+        installedDomain = domain
+        installedToken = normalized
+        let next = api.withCredentials(domain: domain, token: normalized)
+        api = next
+        bindResolver(to: next)
+    }
+
+    private func bindResolver(to client: MegaplanAPI) {
+        let previous = resolverConfiguration
+        resolverConfiguration = Task { [weak self] in
+            await previous?.value
+            await UserInfoResolver.shared.configure(
+                api: client,
+                tokenProvider: { [weak self] in
+                    await self?.accessToken
+                },
+                domainProvider: { [weak self] in
+                    await self?.domain ?? ""
+                }
+            )
+        }
+    }
+
+    private static func normalizedAPIToken(_ token: String?) -> String? {
+        guard let token, !token.isEmpty else { return nil }
+        return token
     }
 
     private func persistCredentials(domain: String, login: String, password: String, token: String) throws {
