@@ -21,10 +21,12 @@ protocol NotificationService {
 final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
     private var baseURL: URL?
     /// True only after the lazy session has been materialized. deinit must not
-    /// touch `session` otherwise: the getter creates a URLSession that retains
+    /// touch `pinnedLazySession` otherwise: the getter creates a URLSession that retains
     /// this delegate while the object is already deallocating (SIGSEGV).
     private var didCreateSession = false
-    private lazy var session: URLSession = {
+    private let sessionOverride: URLSession?
+    private var storedToken: String?
+    private lazy var pinnedLazySession: URLSession = {
         didCreateSession = true
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = Constants.NetworkTimeouts.requestTimeout
@@ -34,12 +36,26 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
 
-    override init() {
+    private var activeSession: URLSession {
+        sessionOverride ?? pinnedLazySession
+    }
+
+    init(domain: String = "", token: String? = nil, session: URLSession? = nil) {
+        self.storedToken = token
+        self.sessionOverride = session
         self.decoder = JSONDecoder()
         self.decoder.keyDecodingStrategy = .convertFromSnakeCase
         self.encoder = JSONEncoder()
         self.encoder.keyEncodingStrategy = .convertToSnakeCase
         super.init()
+        if !domain.isEmpty {
+            updateDomain(domain)
+        }
+    }
+
+    private func requiredToken() throws -> String {
+        guard let storedToken, !storedToken.isEmpty else { throw NetworkError.missingToken }
+        return storedToken
     }
 
     func updateDomain(_ domain: String) {
@@ -296,6 +312,10 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         }
     }
 
+    func fetchUnreadCount() async throws -> Int {
+        try await fetchUnreadCount(token: try requiredToken())
+    }
+
     func fetchUnreadCount(token: String) async throws -> Int {
         let request = try makeRequest(
             path: "/api/v3/notification/counter",
@@ -382,7 +402,7 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
         )
         
         do {
-            let (data, response) = try await session.data(for: request)
+            let (data, response) = try await activeSession.data(for: request)
             
             // Log the response
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
@@ -435,7 +455,7 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
 
     deinit {
         guard didCreateSession else { return }
-        session.invalidateAndCancel()
+        pinnedLazySession.invalidateAndCancel()
     }
 }
 
