@@ -96,15 +96,15 @@ open MegaplanHepler.xcodeproj
 
 ```bash
 git add .
-git commit -m "v2.0: Описание релиза"
+git commit -m "v2.1: Описание релиза"
 ```
 
 4. Создайте и отправьте тег:
 
 ```bash
-git tag -a v2.0 -m "Version 2.0: Описание релиза"
+git tag -a v2.1 -m "Version 2.1: Описание релиза"
 git push origin master
-git push origin v2.0
+git push origin v2.1
 ```
 
 После пуша тега workflow `.github/workflows/release.yml` автоматически собирает архив и публикует его в [GitHub Releases](https://github.com/borzov/MegaplanHelper/releases).
