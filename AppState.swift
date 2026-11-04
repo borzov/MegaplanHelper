@@ -9,10 +9,14 @@ final class AppState: ObservableObject {
     // Примечание: Некоторые свойства остаются публичными для поддержки SwiftUI Preview в DEBUG сборках
     #if DEBUG
     @Published var notifications: [MegaplanNotification] = []
-    @Published var isAuthenticated: Bool = false
+    @Published var isAuthenticated: Bool = false {
+        didSet { sync.isAuthenticated = isAuthenticated }
+    }
     #else
     @Published private(set) var notifications: [MegaplanNotification] = []
-    @Published private(set) var isAuthenticated: Bool = false
+    @Published private(set) var isAuthenticated: Bool = false {
+        didSet { sync.isAuthenticated = isAuthenticated }
+    }
     #endif
     @Published private(set) var unreadCount: Int = 0
     @Published private(set) var firstName: String = ""
@@ -30,7 +34,9 @@ final class AppState: ObservableObject {
     /// copied"). Auto-clears on its own; nil hides the banner.
     @Published var transientToast: String?
     @Published private(set) var certificatePinningFailed: Bool = false
-    @Published private(set) var domain: String
+    @Published private(set) var domain: String {
+        didSet { sync.domain = domain }
+    }
     @Published private(set) var username: String
     @Published private(set) var refreshInterval: Double
     @Published private(set) var autoLaunchEnabled: Bool
@@ -39,8 +45,12 @@ final class AppState: ObservableObject {
     // MARK: - Tasks tab state
     @Published private(set) var tasks: [MegaplanTask] = []
     @Published private(set) var isTasksLoading: Bool = false
-    @Published private(set) var taskSortKey: TaskSortKey = .activity
-    @Published private(set) var taskStatusFilter: TaskStatusFilter = .active
+    @Published private(set) var taskSortKey: TaskSortKey = .activity {
+        didSet { sync.taskSortKey = taskSortKey }
+    }
+    @Published private(set) var taskStatusFilter: TaskStatusFilter = .active {
+        didSet { sync.taskStatusFilter = taskStatusFilter }
+    }
     @Published private(set) var lastTasksSyncTime: Date?
     @Published private(set) var tasksUnreadCount: Int = 0
 
@@ -61,12 +71,10 @@ final class AppState: ObservableObject {
     private var installedDomain: String?
     private var installedToken: String?
     private var resolverConfiguration: Task<Void, Never>?
-    private var currentUserId: String?
     private let keychain: KeychainStoring
     private let userDefaults: UserDefaults
     private let snapshotStore: NotificationsSnapshotStore
-    private let notificationManager = NotificationManager.shared
-    private let errorRecoveryService = ErrorRecoveryService.shared
+    private let sync: WorkspaceSync
     private let refreshScheduler: RefreshScheduler
     private var refreshTask: Task<Void, Never>?
     private var certificatePinningObserver: (any NSObjectProtocol)?
@@ -77,8 +85,6 @@ final class AppState: ObservableObject {
     private static let lockoutDuration: TimeInterval = 15 * 60
     private var failedLoginAttempts = 0
     private var lastFailedLoginTime: Date?
-    private var lastSuccessfulNotifications: [MegaplanNotification] = []
-    private var lastSuccessfulUnreadCount: Int = 0
     private var isShuttingDown = false
     private var isSessionRestored = false
 
@@ -123,7 +129,18 @@ final class AppState: ObservableObject {
             login: usernameValue,
             password: ""
         )
-        
+        self.sync = WorkspaceSync(
+            api: api,
+            snapshotStore: snapshotStore,
+            poster: NotificationManagerPoster()
+        )
+        sync.domain = domainValue
+        sync.taskSortKey = taskSortKey
+        sync.taskStatusFilter = taskStatusFilter
+        sync.onChange = { [weak self] in
+            self?.publishSyncedFeed()
+        }
+
         // Стартовый домен из UserDefaults — отдельный клиент, не мутация.
         if !domainValue.isEmpty {
             installAPI(domain: domainValue, token: nil)
@@ -135,12 +152,10 @@ final class AppState: ObservableObject {
         $apiUnreadCount
             .assign(to: &$unreadCount)
 
-        // Запрашиваем разрешение на уведомления при запуске.
-        // Захватываем notificationManager локально — он singleton, weak self не нужен.
         // Хост модульных тестов не должен трогать разрешения, Keychain и сеть.
         if !LaunchContext.isUnitTestHost {
-            Task { [notificationManager] in
-                _ = await notificationManager.requestAuthorization()
+            Task {
+                _ = await NotificationManager.shared.requestAuthorization()
             }
         }
 
@@ -265,20 +280,12 @@ final class AppState: ObservableObject {
         accessToken = nil
         clearCachedPassword()
 
+        sync.reset()
         isAuthenticated = false
-        notifications = []
-        unreadCount = 0
         isAdmin = false
         firstName = ""
-        isOffline = false
-        isSessionExpired = false
         certificatePinningFailed = false
-        lastSuccessfulNotifications = []
-        lastSuccessfulUnreadCount = 0
-        tasks = []
-        tasksUnreadCount = 0
-        currentUserId = nil
-        lastTasksSyncTime = nil
+        publishSyncedFeed()
         stopRefreshTimer()
 
         isShuttingDown = false
@@ -362,9 +369,7 @@ final class AppState: ObservableObject {
         AppLogger.debug("Refresh interval updated to \(clampedInterval) seconds")
 
         Task {
-            await refreshScheduler.updateInterval(clampedInterval) { [weak self] in
-                await self?.refresh()
-            }
+            await refreshScheduler.updateInterval(clampedInterval, action: scheduledRefreshAction())
         }
     }
 
@@ -440,7 +445,7 @@ final class AppState: ObservableObject {
     func searchTasks(query: String, limit: Int = 30) async -> [MegaplanTask] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard accessToken != nil,
-              let userId = currentUserId,
+              let userId = sync.currentUserId,
               !userId.isEmpty,
               !trimmed.isEmpty else {
             return []
@@ -488,36 +493,11 @@ final class AppState: ObservableObject {
             presentError(.missingToken)
             return
         }
-        
-        // Save notification for potential rollback
-        let notificationCopy = notification
+
         Task { [weak self] in
             guard let self else { return }
-            // Optimistic UI update
-            await MainActor.run { [weak self] in
-                guard let self else { return }
-                withAnimation {
-                    self.notifications.removeAll { $0.id == notification.id }
-                    self.unreadCount = max(self.unreadCount - 1, 0)
-                }
-            }
-
-            do {
-                try await self.api.markAsRead(id: notification.id)
-                AppLogger.debug("Notification \(notification.id) marked as read")
-            } catch {
-                // Rollback on error
-                await MainActor.run { [weak self] in
-                    guard let self else { return }
-                    withAnimation {
-                        self.notifications.insert(notificationCopy, at: 0)
-                        self.unreadCount += 1
-                    }
-                }
-                AppLogger.error("Failed to mark notification as read: \(error.localizedDescription)")
-                await MainActor.run { [weak self] in
-                    self?.presentError(NetworkError(error))
-                }
+            if let error = await self.sync.markNotificationAsRead(notification) {
+                self.presentError(error)
             }
         }
     }
@@ -624,140 +604,61 @@ final class AppState: ObservableObject {
 
         isLoading = true
         defer { isLoading = false }
+        await sync.refresh()
+        finishSyncRefresh()
+    }
 
-        await resolveCurrentUserIDIfNeeded()
-        let tasksTask = startTasksRefreshTask()
+    private func setFeedLoading(_ loading: Bool) {
+        isLoading = loading
+    }
 
-        do {
-            let (fetchedNotifications, counter) = try await refreshNotificationsWithRetry()
-            guard !Task.isCancelled else { return }
-            await applySuccessfulRefresh(notifications: fetchedNotifications, unreadCounter: counter)
-            await applyTasksResult(from: tasksTask)
-        } catch NetworkError.offline {
-            AppLogger.info("No internet connection, entering offline mode")
-            isOffline = true
-            restoreCachedNotifications()
-        } catch NetworkError.unauthorized {
-            AppLogger.error("Unauthorized during refresh - session expired")
-            isSessionExpired = true
-            isAuthenticated = false
+    /// 401 гасит таймер здесь: таймер живёт в AppState, его действие зовёт `sync.refresh()`.
+    private func finishSyncRefresh() {
+        publishSyncedFeed()
+        if sync.isSessionExpired {
             accessToken = nil
+            isAuthenticated = false
             stopRefreshTimer()
-            presentError(.sessionExpired)
-        } catch {
-            let mappedError = NetworkError(error)
-            if isTransientNetworkFailure(mappedError) {
-                isOffline = true
-                restoreCachedNotifications()
-                AppLogger.info("Transient network issue detected during refresh, entering offline mode")
-                return
-            }
-
-            AppLogger.error("Refresh failed: \(error.localizedDescription)")
-            if !isOffline {
-                presentError(mappedError)
-            }
+        }
+        if let alert = sync.takePendingAlert() {
+            presentError(alert)
         }
     }
 
-    private func resolveCurrentUserIDIfNeeded() async {
-        guard currentUserId == nil else { return }
-        do {
-            currentUserId = try await api.fetchCurrentUserId()
-            AppLogger.debug("Resolved currentUserId: \(currentUserId ?? "nil")")
-        } catch {
-            AppLogger.warning("Failed to resolve currentUserId: \(error.localizedDescription)")
+    private func scheduledRefreshAction() -> @Sendable () async -> Void {
+        { [weak self] in
+            guard let self else { return }
+            // Требуется await для доступа к @MainActor свойству из actor контекста
+            if await self.isShuttingDown { return }
+            guard await self.accessToken != nil else { return }
+            await self.setFeedLoading(true)
+            await self.sync.refresh()
+            await self.finishSyncRefresh()
+            await self.setFeedLoading(false)
         }
     }
 
-    private func startTasksRefreshTask() -> Task<[MegaplanTask]?, Never> {
-        let userIdForTasks = currentUserId
-        let sortKey = taskSortKey
-        let statusFilter = taskStatusFilter
-        return Task<[MegaplanTask]?, Never> { [weak self] in
-            guard let self, let uid = userIdForTasks, !uid.isEmpty else { return nil }
-            await MainActor.run { self.isTasksLoading = true }
-            defer {
-                Task { @MainActor in self.isTasksLoading = false }
-            }
-            do {
-                return try await self.api.fetchTasks(currentUserId: uid,
-                                                     sortBy: sortKey,
-                                                     statusFilter: statusFilter,
-                                                     limit: 100)
-            } catch {
-                AppLogger.warning("fetchTasks failed: \(error.localizedDescription)")
-                return nil
-            }
-        }
-    }
-
-    private func refreshNotificationsWithRetry() async throws -> ([MegaplanNotification], Int) {
-        try await errorRecoveryService.executeWithRetry(
-            operation: {
-                async let notificationsTask = self.api.fetchNotifications()
-                async let counterTask = self.api.fetchUnreadCount()
-                return try await (notificationsTask, counterTask)
-            },
-            onRetry: { attempt, delay in
-                AppLogger.info("Retrying refresh after \(delay)s (attempt \(attempt))")
-            },
-            onFailure: { error in
-                AppLogger.error("All retry attempts failed: \(error.localizedDescription)")
-            }
-        )
-    }
-
-    private func applySuccessfulRefresh(notifications fetchedNotifications: [MegaplanNotification], unreadCounter counter: Int) async {
-        isOffline = false
-        isSessionExpired = false
-        lastSyncTime = Date()
-
-        let previousNotificationIDs = Set(notifications.map { $0.id })
-        let newUnreadNotifications = fetchedNotifications.filter {
-            !previousNotificationIDs.contains($0.id) && !$0.isRead
-        }
-        for notification in newUnreadNotifications {
-            notificationManager.sendNotification(for: notification)
-        }
-
-        lastSuccessfulNotifications = fetchedNotifications
-        lastSuccessfulUnreadCount = counter
-        if let workspaceKey = Self.workspaceKey(from: domain) {
-            await snapshotStore.save(
-                workspaceKey: workspaceKey,
-                unreadCount: counter,
-                notifications: fetchedNotifications
-            )
-        }
-
+    private func publishSyncedFeed() {
         withAnimation(.easeInOut) {
-            notifications = fetchedNotifications
+            notifications = sync.notifications
+            tasks = sync.tasks
+            unreadCount = sync.unreadCount
+            isOffline = sync.isOffline
+            isSessionExpired = sync.isSessionExpired
+            lastSyncTime = sync.lastSyncTime
+            tasksUnreadCount = sync.tasksUnreadCount
+            lastTasksSyncTime = sync.lastTasksSyncTime
+            isTasksLoading = sync.isTasksLoading
+            isAuthenticated = sync.isAuthenticated
         }
-        apiUnreadCount = counter
-        AppLogger.debug("Refreshed: \(fetchedNotifications.count) notifications, \(counter) unread, \(newUnreadNotifications.count) new unread")
-    }
-
-    private func applyTasksResult(from task: Task<[MegaplanTask]?, Never>) async {
-        guard let fetchedTasks = await task.value else { return }
-        withAnimation(.easeInOut) {
-            tasks = fetchedTasks
-        }
-        tasksUnreadCount = fetchedTasks.reduce(0) { $0 + $1.unreadCommentsCount }
-        lastTasksSyncTime = Date()
-        AppLogger.debug("Refreshed: \(fetchedTasks.count) tasks, \(tasksUnreadCount) unread comments")
+        apiUnreadCount = sync.unreadCount
     }
 
     private func startRefreshTimer() {
         guard isAuthenticated, !isShuttingDown else { return }
 
         Task {
-            await refreshScheduler.start(interval: refreshInterval) { [weak self] in
-                guard let self = self else { return }
-                // Требуется await для доступа к @MainActor свойству из actor контекста
-                if await self.isShuttingDown { return }
-                await self.refresh()
-            }
+            await refreshScheduler.start(interval: refreshInterval, action: scheduledRefreshAction())
         }
     }
 
@@ -780,6 +681,7 @@ final class AppState: ObservableObject {
         installedToken = normalized
         let next = api.withCredentials(domain: domain, token: normalized)
         api = next
+        sync.updateAPI(next)
         bindResolver(to: next)
     }
 
@@ -836,25 +738,10 @@ final class AppState: ObservableObject {
         self.isAdmin = Constants.AdminPermissions.isAdministrator(result.possibleActions)
     }
 
-    private func restoreCachedNotifications() {
-        guard !lastSuccessfulNotifications.isEmpty else { return }
-
-        withAnimation(.easeInOut) {
-            notifications = lastSuccessfulNotifications
-        }
-        apiUnreadCount = lastSuccessfulUnreadCount
-        AppLogger.debug("Using cached data in offline mode (total: \(lastSuccessfulNotifications.count))")
-    }
-
     private func restoreSnapshotIfAvailable(for domain: String) async {
-        guard let workspaceKey = Self.workspaceKey(from: domain) else { return }
-        guard let snapshot = await snapshotStore.load(workspaceKey: workspaceKey) else { return }
-        lastSuccessfulNotifications = snapshot.notifications
-        lastSuccessfulUnreadCount = snapshot.unreadCount
-        if notifications.isEmpty {
-            notifications = snapshot.notifications
-            apiUnreadCount = snapshot.unreadCount
-        }
+        sync.domain = domain
+        await sync.restoreSnapshotIfAvailable()
+        publishSyncedFeed()
     }
 
     static func workspaceKey(from domain: String) -> String? {
