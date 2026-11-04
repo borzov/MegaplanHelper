@@ -43,7 +43,7 @@ struct AuthView: View {
                     password: $password,
                     isPasswordVisible: $isPasswordVisible,
                     focus: $focus,
-                    isLoading: appState.isLoading,
+                    isLoading: appState.isSigningIn,
                     lockoutState: appState.lockoutState,
                     lastError: appState.lastAuthError,
                     onBack: handleBack,

@@ -29,6 +29,7 @@
 		6CEDDA800BBE200F08B3F1E3 /* AuthFieldErrorMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8648880EF1E3315127EA3138 /* AuthFieldErrorMappingTests.swift */; };
 		715C7039A3DC40F0ACB9F715 /* LockoutCountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97746327155942608151D4AE /* LockoutCountdownView.swift */; };
 		71C95436DFFA1DB4A8FC5131 /* DomainProbeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74EDE4F112623FCE231B1C0F /* DomainProbeServiceTests.swift */; };
+		790A72E802C6A5C7E1660E3D /* SessionGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62001C9BA952CAD92C8A17B3 /* SessionGate.swift */; };
 		79D650CD88053A6BF503A7DA /* HotkeyManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBB562698CAC6EB1161D8CCB /* HotkeyManagerTests.swift */; };
 		7AC1E2D30F20CBDAB3E3DE36 /* AuthState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98C1E2D341E261881D79D5F8 /* AuthState.swift */; };
 		7ACCEEAD0F20CBDAB3E3DE36 /* SettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98C8CF8C41E261881D79D5F8 /* SettingsSection.swift */; };
@@ -142,6 +143,7 @@
 		4D07A7812F9E213FC48CA77E /* LivePreviewCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LivePreviewCard.swift; sourceTree = "<group>"; };
 		51E9E98EBD5A8877BF7DB9D7 /* PluralizationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PluralizationTests.swift; sourceTree = "<group>"; };
 		5996CBFACCEDF418588C1139 /* URLProtocolMock.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = URLProtocolMock.swift; sourceTree = "<group>"; };
+		62001C9BA952CAD92C8A17B3 /* SessionGate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionGate.swift; sourceTree = "<group>"; };
 		65229A241E0ECE4A1216CD3A /* AuthStateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthStateTests.swift; sourceTree = "<group>"; };
 		6C7147788677A7E626EAACD3 /* SessionLockoutTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionLockoutTests.swift; sourceTree = "<group>"; };
 		6F0AD8F16D4A0F329DD2FE56 /* TaskDTOTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TaskDTOTests.swift; sourceTree = "<group>"; };
@@ -526,6 +528,7 @@
 				12D42B93B4CA3B31CEFEB91A /* ParticipantDirectory.swift */,
 				FD128996538130E561625677 /* WorkspaceSync.swift */,
 				8322175DFDA7B449BF05D045 /* NotificationPoster.swift */,
+				62001C9BA952CAD92C8A17B3 /* SessionGate.swift */,
 			);
 			name = Services;
 			path = Services;
@@ -787,6 +790,7 @@
 				39F21860FABE3F634AA6B03F /* ParticipantDirectory.swift in Sources */,
 				A4504621D3AC3D7FD7BCE2F7 /* WorkspaceSync.swift in Sources */,
 				58B23F38E964394E4A27A3A2 /* NotificationPoster.swift in Sources */,
+				790A72E802C6A5C7E1660E3D /* SessionGate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

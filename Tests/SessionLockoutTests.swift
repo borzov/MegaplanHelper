@@ -53,6 +53,35 @@ final class SessionLockoutTests: XCTestCase {
         XCTAssertNotNil(state.lockoutState)
         XCTAssertEqual(counter.count, 3)
     }
+
+    func testSignInLoadingDoesNotFlipFeedLoading() async {
+        let state = AppState(api: slowAPI, userDefaults: isolatedDefaults(), keychain: InMemoryKeychain())
+        let task = Task { await state.signIn(domain: "demo.megaplan.ru", login: "a@b.co", password: "secret") }
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertTrue(state.isSigningIn)
+        XCTAssertFalse(state.isLoading)
+        await task.value
+    }
+
+    /// Blocks 200 ms, then returns a token body `authenticate` already decodes.
+    /// The mock handler is synchronous, so the wait cannot be `Task.sleep`.
+    private var slowAPI: MegaplanAPI {
+        URLProtocolMock.handler = { request in
+            Thread.sleep(forTimeInterval: 0.2)
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: nil
+            )!
+            return (response, Data(#"{"access_token":"token-1"}"#.utf8))
+        }
+        return MegaplanAPI(
+            domain: "demo.megaplan.ru",
+            token: nil,
+            session: URLProtocolMock.makeSession()
+        )
+    }
 }
 
 private func isolatedDefaults() -> UserDefaults {

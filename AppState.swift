@@ -9,35 +9,42 @@ final class AppState: ObservableObject {
     // Примечание: Некоторые свойства остаются публичными для поддержки SwiftUI Preview в DEBUG сборках
     #if DEBUG
     @Published var notifications: [MegaplanNotification] = []
-    @Published var isAuthenticated: Bool = false {
-        didSet { sync.isAuthenticated = isAuthenticated }
+    var isAuthenticated: Bool {
+        get { session.isAuthenticated }
+        set { commitAuthenticated(newValue) }
     }
     #else
     @Published private(set) var notifications: [MegaplanNotification] = []
-    @Published private(set) var isAuthenticated: Bool = false {
-        didSet { sync.isAuthenticated = isAuthenticated }
+    private(set) var isAuthenticated: Bool {
+        get { session.isAuthenticated }
+        set { commitAuthenticated(newValue) }
     }
     #endif
     @Published private(set) var unreadCount: Int = 0
-    @Published private(set) var firstName: String = ""
+    @Published var firstName: String = ""
     @Published private(set) var apiUnreadCount: Int = 0
-    @Published private(set) var isAdmin: Bool = false
+    @Published var isAdmin: Bool = false
     @Published private(set) var isLoading: Bool = false
-    @Published private(set) var isOffline: Bool = false
+    /// True while sign-in is in flight. Feed refresh keeps using `isLoading`.
+    var isSigningIn: Bool { session.isSigningIn }
+    @Published var isOffline: Bool = false
     @Published private(set) var isSessionExpired: Bool = false
     @Published private(set) var lastSyncTime: Date?
     @Published var alertItem: AlertItem?
-    @Published private(set) var lockoutState: LockoutState?
+    var lockoutState: LockoutState? { session.lockoutState }
     /// Not private(set): AuthView clears this when the user edits a field, so a binding-friendly setter is required.
-    @Published var lastAuthError: AuthFieldError?
+    var lastAuthError: AuthFieldError? {
+        get { session.lastAuthError }
+        set { session.lastAuthError = newValue }
+    }
     /// Transient banner message shown briefly in the popover (e.g. "comments
     /// copied"). Auto-clears on its own; nil hides the banner.
     @Published var transientToast: String?
-    @Published private(set) var certificatePinningFailed: Bool = false
-    @Published private(set) var domain: String {
+    @Published var certificatePinningFailed: Bool = false
+    @Published var domain: String {
         didSet { sync.domain = domain }
     }
-    @Published private(set) var username: String
+    @Published var username: String
     @Published private(set) var refreshInterval: Double
     @Published private(set) var autoLaunchEnabled: Bool
     @Published var tempCredentials: MegaplanCredentials
@@ -66,27 +73,22 @@ final class AppState: ObservableObject {
     /// Cached avatar of the currently signed-in user.
     @Published private(set) var currentUserAvatar: NSImage?
 
-    private var api: MegaplanAPI
+    var api: MegaplanAPI
     /// Домен и токен, уже записанные в `api`. nil — клиент ещё не пересоздавали.
-    private var installedDomain: String?
+    var installedDomain: String?
     private var installedToken: String?
     private var resolverConfiguration: Task<Void, Never>?
-    private let keychain: KeychainStoring
-    private let userDefaults: UserDefaults
-    private let snapshotStore: NotificationsSnapshotStore
-    private let sync: WorkspaceSync
+    /// Вход и токен. Лента и таймер остаются здесь.
+    private let session: SessionGate
+    let userDefaults: UserDefaults
+    let snapshotStore: NotificationsSnapshotStore
+    let sync: WorkspaceSync
     private let refreshScheduler: RefreshScheduler
     private var refreshTask: Task<Void, Never>?
     private var certificatePinningObserver: (any NSObjectProtocol)?
-    private var accessToken: String?
-    private var cachedPasswordData: Data?
     private var lastRefreshTime: Date?
     private let minimumRefreshInterval: TimeInterval = 5.0
-    private static let lockoutDuration: TimeInterval = 15 * 60
-    private var failedLoginAttempts = 0
-    private var lastFailedLoginTime: Date?
-    private var isShuttingDown = false
-    private var isSessionRestored = false
+    var isShuttingDown = false
 
     init(
         api: MegaplanAPI = MegaplanAPI(),
@@ -97,7 +99,7 @@ final class AppState: ObservableObject {
         self.api = api
         self.userDefaults = userDefaults
         self.snapshotStore = snapshotStore
-        self.keychain = keychain
+        self.session = SessionGate(keychain: keychain)
         let domainValue = userDefaults.string(forKey: Constants.UserDefaultsKeys.domain) ?? ""
         let usernameValue = userDefaults.string(forKey: Constants.UserDefaultsKeys.username) ?? ""
         self.domain = domainValue
@@ -140,6 +142,7 @@ final class AppState: ObservableObject {
         sync.onChange = { [weak self] in
             self?.publishSyncedFeed()
         }
+        session.attach(self)
 
         // Стартовый домен из UserDefaults — отдельный клиент, не мутация.
         if !domainValue.isEmpty {
@@ -180,148 +183,17 @@ final class AppState: ObservableObject {
             }
 
             Task { [weak self] in
-                await self?.restoreSession()
+                await self?.session.restoreSession()
             }
         }
     }
 
     func signIn(domain: String, login: String, password: String) async {
-        // Brute force protection: 15 minutes lockout after 3 failed attempts
-        if failedLoginAttempts >= 3,
-           let lastTime = lastFailedLoginTime {
-            if Date().timeIntervalSince(lastTime) < Self.lockoutDuration {
-                lastAuthError = .lockout
-                recomputeLockoutState()
-                return
-            } else {
-                // Lockout period has expired, reset the counter
-                failedLoginAttempts = 0
-                lastFailedLoginTime = nil
-                recomputeLockoutState()
-            }
-        }
-        
-        isLoading = true
-        defer { isLoading = false }
-
-        let trimmedDomain = domain.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedLogin = login.trimmingCharacters(in: .whitespacesAndNewlines)
-        let previousWorkspaceKey = Self.workspaceKey(from: self.domain)
-
-        if trimmedDomain.isEmpty {
-            lastAuthError = .domain(.invalidFormat)
-            return
-        }
-        if !trimmedLogin.isValidEmail() {
-            lastAuthError = .credentials(.invalidEmail)
-            return
-        }
-        if password.isEmpty {
-            lastAuthError = .credentials(.emptyPassword)
-            return
-        }
-
-        // Домен нужен запросу сразу, но неудачный логин установленный клиент не подменяет.
-        let authAPI = installedDomain == trimmedDomain
-            ? api
-            : api.withCredentials(domain: trimmedDomain, token: nil)
-        do {
-            let token = try await authAPI.authenticate(login: trimmedLogin, password: password)
-            try persistCredentials(domain: trimmedDomain, login: trimmedLogin, password: password, token: token)
-            installAPI(domain: trimmedDomain, token: token)
-            if previousWorkspaceKey != Self.workspaceKey(from: trimmedDomain) {
-                await snapshotStore.clear()
-            }
-            lastAuthError = nil
-            isAuthenticated = true
-
-            // Validate token and check admin permissions
-            do {
-                let result = try await api.validateToken()
-                applyTokenValidationResult(result)
-                AppLogger.info("Authentication succeeded for \(trimmedLogin). Admin: \(isAdmin)")
-            } catch {
-                AppLogger.warning("Failed to validate token after authentication: \(error.localizedDescription)")
-                // Continue anyway, admin check will happen on next token validation
-            }
-
-            // Reset failed attempts on success
-            failedLoginAttempts = 0
-            lastFailedLoginTime = nil
-            recomputeLockoutState()
-
-            // Clear cached password after successful authentication if session was already restored
-            // This reduces the time password stays in memory
-            if isSessionRestored {
-                AppLogger.info("Clearing cached password after successful authentication")
-                clearCachedPassword()
-            }
-
-            startRefreshTimer()
-            await refresh()
-        } catch {
-            // Increment failed attempts
-            failedLoginAttempts += 1
-            lastFailedLoginTime = Date()
-            recomputeLockoutState()
-
-            let networkError = NetworkError(error)
-            AppLogger.error("Authentication failed: \(networkError.localizedDescription)")
-            lastAuthError = AuthFieldError(networkError: networkError)
-        }
+        await session.signIn(domain: domain, login: login, password: password)
     }
 
     func logout() {
-        isShuttingDown = true
-
-        let currentUsername = username
-        let currentDomain = domain
-
-        accessToken = nil
-        clearCachedPassword()
-
-        sync.reset()
-        isAuthenticated = false
-        isAdmin = false
-        firstName = ""
-        certificatePinningFailed = false
-        publishSyncedFeed()
-        stopRefreshTimer()
-
-        isShuttingDown = false
-
-        // Reset certificate pinning state for next session
-        MegaplanAPI.resetPinningState()
-        
-        // Clear user info cache
-        Task {
-            await UserInfoCache.shared.clearCache()
-            await UserInfoResolver.shared.clearAvatarMisses()
-            AppLogger.debug("Cleared user info cache")
-        }
-        Task {
-            await snapshotStore.clear()
-        }
-
-        do {
-            try keychain.delete(service: Constants.Keychain.service, account: Constants.Keychain.tokenAccount)
-            if !currentUsername.isEmpty {
-                let account = Constants.Keychain.passwordAccount(for: currentUsername, domain: currentDomain)
-                try keychain.delete(service: Constants.Keychain.service, account: account)
-            }
-            AppLogger.info("User logged out")
-        } catch {
-            AppLogger.error("Failed to clear keychain during logout: \(error.localizedDescription)")
-        }
-
-        // Очистка пароля из tempCredentials для безопасности, сохраняя domain/login для удобства
-        tempCredentials.password = ""
-
-        domain = ""
-        username = ""
-
-        userDefaults.removeObject(forKey: Constants.UserDefaultsKeys.domain)
-        userDefaults.removeObject(forKey: Constants.UserDefaultsKeys.username)
+        session.logout()
     }
 
     // MARK: - Admin diagnostics (Settings → About → Quick links)
@@ -390,7 +262,7 @@ final class AppState: ObservableObject {
     /// transient banner so the user gets visible feedback either way.
     @discardableResult
     func copyTaskCommentsAsMarkdown(for task: MegaplanTask) async -> Int? {
-        guard accessToken != nil else {
+        guard session.token != nil else {
             showTransientToast(String(localized: "tasks.markdown.failed"))
             return nil
         }
@@ -444,7 +316,7 @@ final class AppState: ObservableObject {
     /// transport error — callers fall back to whatever is in the local cache.
     func searchTasks(query: String, limit: Int = 30) async -> [MegaplanTask] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard accessToken != nil,
+        guard session.token != nil,
               let userId = sync.currentUserId,
               !userId.isEmpty,
               !trimmed.isEmpty else {
@@ -489,7 +361,7 @@ final class AppState: ObservableObject {
     }
 
     func markNotificationAsRead(_ notification: MegaplanNotification) {
-        guard accessToken != nil else {
+        guard session.token != nil else {
             presentError(.missingToken)
             return
         }
@@ -506,98 +378,12 @@ final class AppState: ObservableObject {
     /// currently-stored credentials, otherwise nil. Used by AuthView wizard
     /// to restore the password field when the user returns to Step 2.
     func loadSavedCredentialsFromKeychain(domain: String, login: String) async -> String? {
-        let trimmedDomain = domain.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let trimmedLogin = login.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard !trimmedDomain.isEmpty, !trimmedLogin.isEmpty else { return nil }
-
-        let rawStoredDomain = userDefaults.string(forKey: Constants.UserDefaultsKeys.domain) ?? ""
-        let storedDomain = rawStoredDomain.lowercased()
-        let storedLogin = userDefaults.string(forKey: Constants.UserDefaultsKeys.username) ?? ""
-
-        guard storedDomain == trimmedDomain, storedLogin == trimmedLogin else { return nil }
-
-        let account = Constants.Keychain.passwordAccount(for: storedLogin, domain: rawStoredDomain)
-        do {
-            return try keychain.read(service: Constants.Keychain.service, account: account)
-        } catch {
-            AppLogger.warning("Keychain read failed in loadSavedCredentialsFromKeychain: \(error.localizedDescription)")
-            return nil
-        }
-    }
-
-    private func restoreSession() async {
-        guard !domain.isEmpty else {
-            AppLogger.debug("No stored domain, skipping session restore")
-            return
-        }
-
-        await restoreSnapshotIfAvailable(for: domain)
-
-        do {
-            if let token = try keychain.read(service: Constants.Keychain.service, account: Constants.Keychain.tokenAccount) {
-                accessToken = token
-            }
-            if !username.isEmpty {
-                let account = Constants.Keychain.passwordAccount(for: username, domain: domain)
-                if let passwordString = try? keychain.read(service: Constants.Keychain.service, account: account) {
-                    cachedPasswordData = passwordString.data(using: .utf8)
-                }
-            }
-        } catch {
-            AppLogger.error("Failed to read credentials from keychain: \(error.localizedDescription)")
-        }
-
-        guard let token = accessToken else {
-            AppLogger.debug("No token available, showing auth view")
-            return
-        }
-
-        installAPI(domain: domain, token: token)
-        do {
-            let result = try await api.validateToken()
-            if result.isValid {
-                isAuthenticated = true
-                isSessionRestored = true
-                applyTokenValidationResult(result)
-                AppLogger.info("Token validation succeeded, restoring session. Admin: \(isAdmin)")
-                startRefreshTimer()
-                await refresh()
-
-                // Clear cached password after successful session restore to minimize exposure time
-                AppLogger.info("Clearing cached password after successful session restore")
-                clearCachedPassword()
-            } else if let passwordData = cachedPasswordData,
-                      let password = String(data: passwordData, encoding: .utf8) {
-                AppLogger.debug("Token invalid, attempting re-authentication")
-                await signIn(domain: domain, login: username, password: password)
-            } else {
-                AppLogger.debug("Token invalid and no password cached")
-                logout()
-            }
-        } catch NetworkError.unauthorized {
-            AppLogger.debug("Token unauthorized, attempting re-authentication")
-            if let passwordData = cachedPasswordData,
-               let password = String(data: passwordData, encoding: .utf8) {
-                await signIn(domain: domain, login: username, password: password)
-            } else {
-                logout()
-            }
-        } catch {
-            let mappedError = NetworkError(error)
-            if isTransientNetworkFailure(mappedError) {
-                isOffline = true
-                AppLogger.info("Token validation failed due to transient network issue: \(mappedError.localizedDescription)")
-                return
-            }
-            AppLogger.error("Token validation failed: \(error.localizedDescription)")
-            presentError(mappedError)
-        }
+        await session.loadSavedCredentialsFromKeychain(domain: domain, login: login)
     }
 
     func refresh() async {
         guard !Task.isCancelled else { return }
-        guard accessToken != nil else {
+        guard session.token != nil else {
             AppLogger.debug("Refresh called but no access token")
             return
         }
@@ -613,10 +399,11 @@ final class AppState: ObservableObject {
     }
 
     /// 401 гасит таймер здесь: таймер живёт в AppState, его действие зовёт `sync.refresh()`.
+    /// Токен обнуляется на gate, второго флага сессии на AppState нет.
     private func finishSyncRefresh() {
         publishSyncedFeed()
         if sync.isSessionExpired {
-            accessToken = nil
+            session.token = nil
             isAuthenticated = false
             stopRefreshTimer()
         }
@@ -630,7 +417,7 @@ final class AppState: ObservableObject {
             guard let self else { return }
             // Требуется await для доступа к @MainActor свойству из actor контекста
             if await self.isShuttingDown { return }
-            guard await self.accessToken != nil else { return }
+            guard await self.session.token != nil else { return }
             await self.setFeedLoading(true)
             await self.sync.refresh()
             await self.finishSyncRefresh()
@@ -638,7 +425,14 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func publishSyncedFeed() {
+    /// Единственная запись флага сессии: хранилище на gate, зеркало на sync.
+    func commitAuthenticated(_ value: Bool) {
+        objectWillChange.send()
+        session.setStoredAuthenticated(value)
+        sync.isAuthenticated = value
+    }
+
+    func publishSyncedFeed() {
         withAnimation(.easeInOut) {
             notifications = sync.notifications
             tasks = sync.tasks
@@ -654,7 +448,7 @@ final class AppState: ObservableObject {
         apiUnreadCount = sync.unreadCount
     }
 
-    private func startRefreshTimer() {
+    func startRefreshTimer() {
         guard isAuthenticated, !isShuttingDown else { return }
 
         Task {
@@ -662,7 +456,7 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func stopRefreshTimer() {
+    func stopRefreshTimer() {
         Task {
             await refreshScheduler.stop()
         }
@@ -672,7 +466,7 @@ final class AppState: ObservableObject {
 
     /// Пересоздаёт клиент, только если домен или токен реально другие.
     /// Подменённая сессия (мок в тестах) переносится через `withCredentials`.
-    private func installAPI(domain: String, token: String?) {
+    func installAPI(domain: String, token: String?) {
         let normalized = Self.normalizedAPIToken(token)
         if installedDomain == domain, installedToken == normalized {
             return
@@ -692,7 +486,7 @@ final class AppState: ObservableObject {
             await UserInfoResolver.shared.configure(
                 api: client,
                 tokenProvider: { [weak self] in
-                    await self?.accessToken
+                    await self?.session.token
                 },
                 domainProvider: { [weak self] in
                     await self?.domain ?? ""
@@ -706,29 +500,7 @@ final class AppState: ObservableObject {
         return token
     }
 
-    private func persistCredentials(domain: String, login: String, password: String, token: String) throws {
-        accessToken = token
-        cachedPasswordData = password.data(using: .utf8)
-
-        username = login
-        self.domain = domain
-
-        userDefaults.set(domain, forKey: Constants.UserDefaultsKeys.domain)
-        userDefaults.set(login, forKey: Constants.UserDefaultsKeys.username)
-
-        try keychain.save(token, service: Constants.Keychain.service, account: Constants.Keychain.tokenAccount)
-        let account = Constants.Keychain.passwordAccount(for: login, domain: domain)
-        try keychain.save(password, service: Constants.Keychain.service, account: account)
-    }
-    
-    private func clearCachedPassword() {
-        // Securely clear password from memory
-        guard var data = cachedPasswordData else { return }
-        data.resetBytes(in: 0..<data.count)
-        cachedPasswordData = nil
-    }
-
-    private func applyTokenValidationResult(_ result: (isValid: Bool, firstName: String?, unreadCount: Int?, possibleActions: [String]?)) {
+    func applyTokenValidationResult(_ result: (isValid: Bool, firstName: String?, unreadCount: Int?, possibleActions: [String]?)) {
         if let firstName = result.firstName {
             self.firstName = firstName
         }
@@ -738,7 +510,7 @@ final class AppState: ObservableObject {
         self.isAdmin = Constants.AdminPermissions.isAdministrator(result.possibleActions)
     }
 
-    private func restoreSnapshotIfAvailable(for domain: String) async {
+    func restoreSnapshotIfAvailable(for domain: String) async {
         sync.domain = domain
         await sync.restoreSnapshotIfAvailable()
         publishSyncedFeed()
@@ -752,29 +524,16 @@ final class AppState: ObservableObject {
         return URL(string: normalized)?.host?.lowercased()
     }
 
-    private func presentError(_ error: NetworkError) {
+    func presentError(_ error: NetworkError) {
         alertItem = AlertItem(message: error.localizedDescription)
     }
 
-    private func isTransientNetworkFailure(_ error: NetworkError) -> Bool {
+    func isTransientNetworkFailure(_ error: NetworkError) -> Bool {
         switch error {
         case .offline, .timedOut:
             return true
         default:
             return false
-        }
-    }
-
-    private func recomputeLockoutState() {
-        if failedLoginAttempts >= 3,
-           let lastTime = lastFailedLoginTime,
-           Date().timeIntervalSince(lastTime) < Self.lockoutDuration {
-            lockoutState = LockoutState(
-                lockedUntil: lastTime.addingTimeInterval(Self.lockoutDuration),
-                attemptCount: failedLoginAttempts
-            )
-        } else {
-            lockoutState = nil
         }
     }
 

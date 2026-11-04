@@ -75,7 +75,7 @@ struct AccountSettingsView: View {
                         }
                     } label: {
                         HStack(spacing: 6) {
-                            if appState.isLoading {
+                            if appState.isSigningIn {
                                 ProgressView().controlSize(.small)
                             }
                             Text(String(localized: "settings.account.reauthenticate"))
@@ -83,7 +83,7 @@ struct AccountSettingsView: View {
                     }
                     .controlSize(.large)
                     .buttonStyle(.borderedProminent)
-                    .disabled(domain.isEmpty || login.isEmpty || password.isEmpty || appState.isLoading)
+                    .disabled(domain.isEmpty || login.isEmpty || password.isEmpty || appState.isSigningIn)
 
                     Spacer()
 
