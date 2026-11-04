@@ -100,6 +100,23 @@ mkdir -p "${ARCHIVE_DIR}"
 mkdir -p "${EXPORT_DIR}"
 
 echo "📦 Создание Archive..."
+# Локальная сборка без сертификата остаётся ad-hoc.
+# CODESIGN_IDENTITY выставляет релизный workflow: Developer ID, hardened runtime, метка времени.
+SIGN_IDENTITY="-"
+SIGN_TEAM=""
+EXTRA_SIGN=()
+if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
+    echo "🔏 Подпись Developer ID"
+    SIGN_IDENTITY="${CODESIGN_IDENTITY}"
+    SIGN_TEAM="4C524G83X7"
+    EXTRA_SIGN=(
+        CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
+        ENABLE_HARDENED_RUNTIME=YES
+        OTHER_CODE_SIGN_FLAGS="--timestamp"
+    )
+fi
+
+set +e
 xcodebuild archive \
     -project "${PROJECT_NAME}.xcodeproj" \
     -scheme "${SCHEME_NAME}" \
@@ -108,14 +125,22 @@ xcodebuild archive \
     -destination "generic/platform=macOS" \
     SKIP_INSTALL=NO \
     BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
-    CODE_SIGN_IDENTITY="-" \
+    CODE_SIGN_IDENTITY="${SIGN_IDENTITY}" \
     CODE_SIGN_STYLE="Manual" \
-    DEVELOPMENT_TEAM="" \
-    2>&1 | grep -v "warning:" || true
+    DEVELOPMENT_TEAM="${SIGN_TEAM}" \
+    "${EXTRA_SIGN[@]}" \
+    >"${BUILD_DIR}/xcodebuild-archive.log" 2>&1
+archive_status=$?
+set -e
+if [[ "$archive_status" -ne 0 ]]; then
+    echo "❌ xcodebuild archive завершился с кодом ${archive_status}"
+    tail -n 80 "${BUILD_DIR}/xcodebuild-archive.log"
+    exit "$archive_status"
+fi
 
 echo "📤 Экспорт приложения..."
-# Пробуем экспортировать через exportOptions.plist
-if [ -f "exportOptions.plist" ]; then
+# exportOptions.plist подписывает ad-hoc и затёр бы Developer ID.
+if [[ -z "${CODESIGN_IDENTITY:-}" && -f "exportOptions.plist" ]]; then
     xcodebuild -exportArchive \
         -archivePath "${ARCHIVE_DIR}/${PROJECT_NAME}.xcarchive" \
         -exportPath "${EXPORT_DIR}" \
@@ -137,6 +162,13 @@ if [ ! -d "$APP_PATH" ]; then
 fi
 
 if [ -d "$APP_PATH" ]; then
+    if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
+        codesign --force --options runtime --timestamp \
+            --entitlements "${PROJECT_ROOT}/MegaplanMenuBarApp.entitlements" \
+            --sign "${CODESIGN_IDENTITY}" \
+            "${APP_PATH}"
+        codesign --verify --strict --verbose=2 "${APP_PATH}"
+    fi
     echo "✅ Приложение создано: ${APP_PATH}"
     echo "📊 Размер: $(du -sh "${APP_PATH}" | cut -f1)"
     echo "🏗️  Архитектуры: $(lipo -info "${APP_PATH}/Contents/MacOS/${PROJECT_NAME}" 2>/dev/null || echo 'N/A')"

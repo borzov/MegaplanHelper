@@ -28,9 +28,42 @@ jobs:
       with:
         xcode-version: latest-stable
 
+    - name: Import Developer ID certificate
+      env:
+        DEVELOPER_ID_P12_BASE64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+        DEVELOPER_ID_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+      run: |
+        set -euo pipefail
+        if [[ -z "${DEVELOPER_ID_P12_BASE64}" || -z "${DEVELOPER_ID_P12_PASSWORD}" ]]; then
+          echo "Developer ID signing secrets are not configured" >&2
+          exit 1
+        fi
+        keychain="$RUNNER_TEMP/megaplan-signing.keychain-db"
+        certificate="$RUNNER_TEMP/developer_id.p12"
+        intermediate="$RUNNER_TEMP/DeveloperIDG2CA.cer"
+        keychain_password="$(openssl rand -base64 32)"
+        CERTIFICATE_PATH="$certificate" python3 -c 'import base64, os, pathlib; pathlib.Path(os.environ["CERTIFICATE_PATH"]).write_bytes(base64.b64decode(os.environ["DEVELOPER_ID_P12_BASE64"]))'
+        chmod 600 "$certificate"
+        curl -fsSL -o "$intermediate" https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+        openssl x509 -inform DER -in "$intermediate" -noout -subject | grep -F "Developer ID Certification Authority"
+        security create-keychain -p "$keychain_password" "$keychain"
+        security set-keychain-settings -lut 21600 "$keychain"
+        security unlock-keychain -p "$keychain_password" "$keychain"
+        security import "$intermediate" -k "$keychain" >/dev/null
+        security import "$certificate" -P "$DEVELOPER_ID_P12_PASSWORD" -A -t cert -f pkcs12 -k "$keychain" >/dev/null
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$keychain_password" "$keychain" >/dev/null
+        security list-keychains -d user -s "$keychain"
+        identity="$(security find-identity -v -p codesigning "$keychain" | sed -n 's/.*"\(Developer ID Application:.*\)"/\1/p' | head -n 1)"
+        if [[ -z "$identity" ]]; then
+          echo "Developer ID identity was not imported" >&2
+          exit 1
+        fi
+        echo "CODESIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+        rm -f "$certificate"
+
     - name: Build universal binary
       run: |
-        chmod +x ./scripts/build-universal.sh
+        chmod +x ./scripts/build-universal.sh ./scripts/notarize-app.sh
         ./scripts/build-universal.sh
 
     - name: Verify app exists
@@ -42,41 +75,43 @@ jobs:
         fi
         echo "✅ Приложение найдено: build/export/MegaplanHepler.app"
         du -sh build/export/MegaplanHepler.app
+        codesign --display --verbose=2 build/export/MegaplanHepler.app
 
     - name: Notarize application
       env:
-        APPLE_ID: ${{ secrets.APPLE_ID }}
-        APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      run: |
-        if [ -z "$APPLE_ID" ] || [ -z "$APPLE_TEAM_ID" ] || [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ]; then
-          echo "ℹ️ Notarization skipped: required Apple secrets are not configured."
-          exit 0
-        fi
-
-        chmod +x ./scripts/notarize-app.sh
-        ./scripts/notarize-app.sh "${{ github.workspace }}/build/export/MegaplanHepler.app"
-
-    - name: Create release archive
-      env:
+        APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
         RELEASE_TAG_INPUT: ${{ inputs.tag }}
       run: |
+        set -euo pipefail
+        if [[ -z "${APPLE_API_KEY_ID}" || -z "${APPLE_API_ISSUER}" || -z "${APPLE_API_KEY_P8_BASE64}" ]]; then
+          echo "Notarization secrets are not configured" >&2
+          exit 1
+        fi
         if [ -n "$RELEASE_TAG_INPUT" ]; then
           VERSION="${RELEASE_TAG_INPUT#v}"
         else
           VERSION="${GITHUB_REF#refs/tags/v}"
         fi
+        key_path="$RUNNER_TEMP/AuthKey.p8"
+        trap 'rm -f "$key_path"' EXIT
+        APPLE_API_KEY_PATH="$key_path" python3 -c 'import base64, os, pathlib; pathlib.Path(os.environ["APPLE_API_KEY_PATH"]).write_bytes(base64.b64decode(os.environ["APPLE_API_KEY_P8_BASE64"]))'
+        chmod 600 "$key_path"
+        APPLE_API_KEY_PATH="$key_path" ./scripts/notarize-app.sh \
+          build/export/MegaplanHepler.app \
+          "build/export/MegaplanHelper-v${VERSION}.zip"
 
-        cd build/export
-        zip -r "MegaplanHelper-v${VERSION}.zip" MegaplanHepler.app
-        cd ../..
-        echo "✅ Архив создан: build/export/MegaplanHelper-v${VERSION}.zip"
-        ls -lh build/export/*.zip
+    - name: Remove temporary keychain
+      if: always()
+      run: security delete-keychain "$RUNNER_TEMP/megaplan-signing.keychain-db" || true
 
     - name: Upload release asset
       uses: softprops/action-gh-release@v1
       with:
-        files: build/export/MegaplanHelper-v*.zip
+        files: |
+          build/export/MegaplanHelper-v*.zip
+          build/export/MegaplanHelper-v*.zip.sha256
         draft: false
         prerelease: false
         tag_name: ${{ inputs.tag != '' && inputs.tag || github.ref_name }}
