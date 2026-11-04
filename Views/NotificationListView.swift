@@ -366,92 +366,52 @@ private struct NotificationRow: View {
     }
     
     private func loadAvatar() async {
-        // Проверяем отмену задачи перед началом
         guard !Task.isCancelled else { return }
-        
+
         await MainActor.run {
             isLoadingAvatar = true
         }
-        
+
         defer {
             Task { @MainActor in
                 isLoadingAvatar = false
             }
         }
-        
+
         guard let senderId = notification.senderId else {
             AppLogger.debug("No senderId in notification")
             extractSenderNameFromContent()
             return
         }
-        
-        // Проверяем отмену перед загрузкой из кеша
+
         guard !Task.isCancelled else { return }
-        
-        // Try to load from cache first (быстрая операция)
-        if await loadAvatarFromCache(senderId: senderId) {
-            extractSenderNameFromContent()
-            return
+
+        let dtoName = notification.senderName
+        if let dtoName, !dtoName.isEmpty {
+            await MainActor.run { cachedSenderName = dtoName }
         }
-        
-        // Проверяем отмену перед загрузкой из сети
-        guard !Task.isCancelled else { return }
-        
-        // Try to load from provided URL
+
+        var didLoadAvatar = false
         if let avatarURL = notification.senderAvatarURL {
             let finalURL = buildFullAvatarURL(from: avatarURL)
-            if await loadAvatarFromURL(finalURL, userId: senderId) {
-                extractSenderNameFromContent()
-                return
-            }
+            didLoadAvatar = await loadAvatarFromURL(finalURL, userId: senderId)
         }
-        
-        // Проверяем отмену перед fallback загрузкой
+
         guard !Task.isCancelled else { return }
-        
-        // Try fallback if domain is available
-        if !appState.domain.isEmpty {
-            await tryFallbackAvatarLoad(senderId: senderId)
-        } else {
-            AppLogger.debug("Cannot load avatar - missing domain")
+
+        let needsName = dtoName?.isEmpty ?? true
+        if needsName || !didLoadAvatar {
+            if let info = await UserInfoResolver.shared.resolve(id: senderId) {
+                if needsName, let name = info.name, !name.isEmpty {
+                    await MainActor.run { cachedSenderName = name }
+                }
+                if !didLoadAvatar, let url = info.avatarURL {
+                    _ = await loadAvatarFromURL(url, userId: senderId)
+                }
+            }
         }
-        
+
         extractSenderNameFromContent()
-    }
-    
-    private func loadAvatarFromCache(senderId: String) async -> Bool {
-        guard let cached = await UserInfoCache.shared.getUserInfo(for: senderId) else {
-            AppLogger.debug("No cached user info found for \(senderId)")
-            return false
-        }
-        
-        // Update cached sender name if notification doesn't have it
-        if notification.senderName == nil, let cachedName = cached.name {
-            await MainActor.run {
-                self.cachedSenderName = cachedName
-                AppLogger.debug("Updated sender name from cache: \(cachedName)")
-            }
-        }
-        
-        // Use cached avatar URL if available
-        guard let cachedAvatarURL = cached.avatarURL else {
-            AppLogger.debug("User \(senderId) has no avatar (cached)")
-            return true // Return true to indicate we checked cache
-        }
-        
-        AppLogger.debug("Loading avatar from cache for \(senderId) from URL: \(cachedAvatarURL.absoluteString)")
-        let image = await AvatarCacheManager.shared.loadImage(from: cachedAvatarURL, for: senderId)
-        
-        await MainActor.run {
-            self.avatarImage = image
-            if image == nil {
-                AppLogger.debug("Failed to load avatar from cache for \(senderId)")
-            } else {
-                AppLogger.debug("Successfully loaded avatar from cache for \(senderId)")
-            }
-        }
-        
-        return image != nil
     }
     
     private func buildFullAvatarURL(from avatarURL: URL) -> URL {
@@ -502,79 +462,6 @@ private struct NotificationRow: View {
         }
     }
     
-    private func tryFallbackAvatarLoad(senderId: String) async {
-        guard !Task.isCancelled else { return }
-        
-        // Check if we already tried and cached this user
-        if let cached = await UserInfoCache.shared.getUserInfo(for: senderId) {
-            // Update cached sender name if notification doesn't have it
-            if notification.senderName == nil, let cachedName = cached.name {
-                await MainActor.run {
-                    self.cachedSenderName = cachedName
-                    AppLogger.debug("Updated sender name from cache in fallback: \(cachedName)")
-                }
-            }
-            
-            if cached.avatarURL == nil {
-                AppLogger.debug("User \(senderId) has no avatar (cached)")
-                return
-            }
-        }
-        
-        // resolve оставляет только path, поэтому query у запасных путей клеится отдельно.
-        let baseURL = URL(string: "/").flatMap { root in
-            WorkspaceAddress.resolve(link: root, domain: appState.domain)
-        }
-
-        // Try multiple avatar endpoint formats
-        let avatarPaths = [
-            "/api/v3/user/\(senderId)/avatar/thumbnail?size=64x64",
-            "/api/v3/user/\(senderId)/avatar",
-            "/api/v3/employee/\(senderId)/avatar/thumbnail?size=64x64",
-            "/BumsCommonBundle/images/personal/noavatar_64x64.jpg" // Default avatar
-        ]
-        
-        for avatarPath in avatarPaths {
-            guard !Task.isCancelled else { return }
-            
-            if let baseURL,
-               let avatarURL = URL(string: avatarPath, relativeTo: baseURL) {
-                AppLogger.debug("Trying fallback avatar URL for senderId \(senderId): \(avatarURL.absoluteString)")
-                
-                // Используем приоритетную задачу для fallback загрузки
-                let image = await Task(priority: .utility) {
-                    await AvatarCacheManager.shared.loadImage(from: avatarURL, for: senderId)
-                }.value
-                
-                guard !Task.isCancelled else { return }
-                
-                if let image = image {
-                    await MainActor.run {
-                        self.avatarImage = image
-                    }
-                    
-                    // Cache the successful URL
-                    await UserInfoCache.shared.cacheUserInfo(
-                        userId: senderId,
-                        name: notification.senderName,
-                        avatarURL: avatarURL
-                    )
-                    
-                    AppLogger.debug("Successfully loaded fallback avatar for senderId \(senderId)")
-                    return
-                }
-            }
-        }
-        
-        // Cache that this user has no avatar
-        await UserInfoCache.shared.cacheUserInfo(
-            userId: senderId,
-            name: notification.senderName,
-            avatarURL: nil
-        )
-        
-        AppLogger.debug("Failed to load fallback avatar for senderId \(senderId) from all endpoints")
-    }
 }
 
 #if DEBUG

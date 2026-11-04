@@ -146,6 +146,9 @@ final class AppState: ObservableObject {
                 api: resolverApi,
                 tokenProvider: { [weak self] in
                     await self?.accessToken
+                },
+                domainProvider: { [weak self] in
+                    await self?.domain ?? ""
                 }
             )
         }
@@ -291,6 +294,7 @@ final class AppState: ObservableObject {
         // Clear user info cache
         Task {
             await UserInfoCache.shared.clearCache()
+            await UserInfoResolver.shared.clearAvatarMisses()
             AppLogger.debug("Cleared user info cache")
         }
         Task {

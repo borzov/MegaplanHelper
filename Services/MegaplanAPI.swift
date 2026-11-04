@@ -176,139 +176,15 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
             let envelope = try decoder.decode(NotificationsEnvelope.self, from: data)
             let notifications = envelope.items.map(\.domainModel)
                 .sorted { $0.createdAt > $1.createdAt }
-            let userInfoMap = extractUserInfoFromNotifications(data: data)
+            let seeds = ParticipantDirectory.seeds(fromNotificationJSON: data)
+                + ParticipantDirectory.seeds(fromParsed: notifications)
+            await UserInfoResolver.shared.remember(seeds: seeds)
 
             AppLogger.debug("Parsed \(notifications.count) active notifications (single request, limit=\(limit))")
-            await cacheUserInfoFromNotifications(userInfoMap: userInfoMap, notifications: notifications)
             return notifications
         } catch {
             AppLogger.error("Failed to fetch notifications: \(error.localizedDescription)")
             throw NetworkError(error)
-        }
-    }
-
-    // MARK: - User Info Extraction and Caching
-    
-    private func extractUserInfoFromNotifications(data: Data) -> [String: (name: String?, avatarURL: URL?)] {
-        var userInfoMap: [String: (name: String?, avatarURL: URL?)] = [:]
-        
-        // Extract user info from all notifications (including from subject fields)
-        // We need to parse the raw JSON to extract user info from nested fields
-        guard let jsonData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let dataArray = jsonData["data"] as? [[String: Any]] else {
-            return userInfoMap
-        }
-        
-        for notificationDict in dataArray {
-            // Extract from sender
-            if let sender = notificationDict["sender"] as? [String: Any],
-               let senderId = sender["id"] as? String {
-                extractAndStoreUserInfo(from: sender, userId: senderId, into: &userInfoMap, source: "sender")
-            }
-            
-            // Extract from subject (can be Task, Deal, or Comment)
-            if let subject = notificationDict["subject"] as? [String: Any] {
-                extractUserInfoFromSubject(subject, into: &userInfoMap)
-            }
-        }
-        
-        return userInfoMap
-    }
-    
-    private func extractAndStoreUserInfo(from dict: [String: Any], userId: String, into userInfoMap: inout [String: (name: String?, avatarURL: URL?)], source: String) {
-        let name = NotificationParser.extractName(from: dict)
-        let avatarURL = NotificationParser.extractAvatarURL(from: dict)
-        
-        if let name = name, let avatarURL = avatarURL {
-            if userInfoMap[userId] == nil || userInfoMap[userId]?.avatarURL == nil {
-                userInfoMap[userId] = (name, avatarURL)
-                AppLogger.debug("Extracted user info from \(source) for \(userId) - Name: \(name), Avatar: \(avatarURL.absoluteString)")
-            }
-        }
-    }
-    
-    /// Extract Task owner and responsible user info
-    private func extractTaskUserInfo(from task: [String: Any], into userInfoMap: inout [String: (name: String?, avatarURL: URL?)], sourcePrefix: String) {
-        if let owner = task["owner"] as? [String: Any],
-           let ownerId = owner["id"] as? String {
-            extractAndStoreUserInfo(from: owner, userId: ownerId, into: &userInfoMap, source: "\(sourcePrefix).owner")
-        }
-
-        if let responsible = task["responsible"] as? [String: Any],
-           let responsibleId = responsible["id"] as? String {
-            extractAndStoreUserInfo(from: responsible, userId: responsibleId, into: &userInfoMap, source: "\(sourcePrefix).responsible")
-        }
-    }
-
-    /// Extract Deal manager user info
-    private func extractDealUserInfo(from deal: [String: Any], into userInfoMap: inout [String: (name: String?, avatarURL: URL?)], sourcePrefix: String) {
-        if let manager = deal["manager"] as? [String: Any],
-           let managerId = manager["id"] as? String {
-            extractAndStoreUserInfo(from: manager, userId: managerId, into: &userInfoMap, source: "\(sourcePrefix).manager")
-        }
-    }
-
-    private func extractUserInfoFromSubject(_ subject: [String: Any], into userInfoMap: inout [String: (name: String?, avatarURL: URL?)]) {
-        let subjectType = subject["contentType"] as? String
-
-        // Handle Task directly
-        if subjectType == "Task" {
-            extractTaskUserInfo(from: subject, into: &userInfoMap, sourcePrefix: "subject.task")
-        }
-
-        // Handle Deal directly
-        if subjectType == "Deal" {
-            extractDealUserInfo(from: subject, into: &userInfoMap, sourcePrefix: "subject.deal")
-        }
-
-        // Handle Comment -> Task/Deal (nested structure)
-        if subjectType == "Comment",
-           let nestedSubject = subject["subject"] as? [String: Any] {
-            let nestedSubjectType = nestedSubject["contentType"] as? String
-
-            // Comment -> Task -> owner/responsible
-            if nestedSubjectType == "Task" {
-                extractTaskUserInfo(from: nestedSubject, into: &userInfoMap, sourcePrefix: "subject.comment.task")
-            }
-
-            // Comment -> Deal -> manager
-            if nestedSubjectType == "Deal" {
-                extractDealUserInfo(from: nestedSubject, into: &userInfoMap, sourcePrefix: "subject.comment.deal")
-            }
-        }
-    }
-    
-    private func cacheUserInfoFromNotifications(userInfoMap: [String: (name: String?, avatarURL: URL?)], notifications: [MegaplanNotification]) async {
-        // Cache all collected user info from JSON parsing
-        for (userId, info) in userInfoMap {
-            if let name = info.name, let avatarURL = info.avatarURL {
-                await UserInfoCache.shared.cacheUserInfo(
-                    userId: userId,
-                    name: name,
-                    avatarURL: avatarURL
-                )
-                AppLogger.debug("Cached user info for \(userId) from notification parsing (with avatar) - Name: \(name), Avatar: \(avatarURL.absoluteString)")
-            }
-        }
-        
-        // Also cache from parsed notifications (for backward compatibility)
-        for notification in notifications {
-            if let senderId = notification.senderId {
-                if let senderName = notification.senderName,
-                   let senderAvatarURL = notification.senderAvatarURL {
-                    // Only cache if not already cached
-                    if await UserInfoCache.shared.getUserInfo(for: senderId) == nil {
-                        await UserInfoCache.shared.cacheUserInfo(
-                            userId: senderId,
-                            name: senderName,
-                            avatarURL: senderAvatarURL
-                        )
-                        AppLogger.debug("Cached user info for \(senderId) from notification parsing (with avatar) - Name: \(senderName), Avatar: \(senderAvatarURL.absoluteString)")
-                    }
-                } else {
-                    AppLogger.debug("Skipping cache for \(senderId) - missing data: name=\(notification.senderName ?? "nil"), avatar=\(notification.senderAvatarURL?.absoluteString ?? "nil")")
-                }
-            }
         }
     }
 
@@ -521,10 +397,8 @@ extension MegaplanAPI: TaskService, EmployeeService {
                 let envelope = try decoder.decode(TaskListEnvelope.self, from: data)
                 AppLogger.debug("Parsed \(envelope.items.count) tasks")
 
-                // Seed UserInfoCache with whatever participant data the response did include —
-                // partial info is still useful (some tasks expose name+avatar even when the
-                // base TaskFilter request doesn't ask for nested avatar fields).
-                Self.seedUserInfoCacheFromTasks(data: data)
+                // Имя и аватар из ответа кладём в справочник, не в ящик напрямую.
+                await UserInfoResolver.shared.remember(seeds: ParticipantDirectory.seeds(fromTaskJSON: data))
 
                 // Megaplan v3 returns `responsible` / `owner` as a `{id, contentType}`
                 // ContentLink for most tasks (only a handful expose the full Employee
@@ -546,7 +420,7 @@ extension MegaplanAPI: TaskService, EmployeeService {
 
     /// Resolves the names + avatars of every `responsible` / `owner` participant
     /// whose `name` is missing in the list response. Hits each unique employee id
-    /// at most once via `withTaskGroup`, also seeding `UserInfoCache` so the
+    /// at most once via `withTaskGroup`, then remembers the seeds so the
     /// in-row resolver has cache hits later.
     private func enrichParticipants(in tasks: [MegaplanTask], token: String) async -> [MegaplanTask] {
         var idsNeeded = Set<String>()
@@ -577,9 +451,10 @@ extension MegaplanAPI: TaskService, EmployeeService {
             return out
         }
 
-        for (id, value) in resolved {
-            await UserInfoCache.shared.cacheUserInfo(userId: id, name: value.name, avatarURL: value.avatarURL)
+        let seeds = resolved.map { id, value in
+            ParticipantSeed(id: id, name: value.name, avatarURL: value.avatarURL)
         }
+        await UserInfoResolver.shared.remember(seeds: seeds)
         AppLogger.debug("enrichParticipants resolved \(resolved.count)/\(idsNeeded.count) employees")
 
         func merge(_ p: TaskParticipant?) -> TaskParticipant? {
@@ -658,7 +533,7 @@ extension MegaplanAPI: TaskService, EmployeeService {
             let data = try await perform(request)
             do {
                 let envelope = try decoder.decode(TaskListEnvelope.self, from: data)
-                Self.seedUserInfoCacheFromTasks(data: data)
+                await UserInfoResolver.shared.remember(seeds: ParticipantDirectory.seeds(fromTaskJSON: data))
                 AppLogger.debug("Server search '\(trimmed)' returned \(envelope.items.count) tasks")
                 let enriched = await self.enrichParticipants(in: envelope.items, token: token)
                 return enriched
@@ -821,45 +696,6 @@ extension MegaplanAPI: TaskService, EmployeeService {
         let name = NotificationParser.extractName(from: dataDict)
         let avatarURL = NotificationParser.extractAvatarURL(from: dataDict)
         return (name, avatarURL)
-    }
-
-    /// Walks the raw task-list JSON and pushes any usable {name + avatar} pairs
-    /// into the shared `UserInfoCache`. Mirrors `extractUserInfoFromNotifications`
-    /// — same cache, same key (employee id), so a user observed in either tab
-    /// instantly has avatars in the other.
-    private static func seedUserInfoCacheFromTasks(data: Data) {
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let array = json["data"] as? [[String: Any]] else { return }
-
-        Task {
-            for taskDict in array {
-                let participantKeys = ["responsible", "owner"]
-                for key in participantKeys {
-                    if let dict = taskDict[key] as? [String: Any],
-                       let id = dict["id"] as? String,
-                       let name = NotificationParser.extractName(from: dict),
-                       let avatarURL = NotificationParser.extractAvatarURL(from: dict) {
-                        if await UserInfoCache.shared.getUserInfo(for: id) == nil {
-                            await UserInfoCache.shared.cacheUserInfo(userId: id, name: name, avatarURL: avatarURL)
-                        }
-                    }
-                }
-                // arrays
-                let arrayKeys = ["auditors", "executors", "participants"]
-                for key in arrayKeys {
-                    if let participants = taskDict[key] as? [[String: Any]] {
-                        for dict in participants {
-                            if let id = dict["id"] as? String,
-                               let name = NotificationParser.extractName(from: dict),
-                               let avatarURL = NotificationParser.extractAvatarURL(from: dict),
-                               await UserInfoCache.shared.getUserInfo(for: id) == nil {
-                                await UserInfoCache.shared.cacheUserInfo(userId: id, name: name, avatarURL: avatarURL)
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     func fetchCurrentUserId(token: String) async throws -> String {
