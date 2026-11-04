@@ -34,6 +34,32 @@ actor UserInfoResolver {
         avatarMisses.removeAll()
     }
 
+    /// Test hook. Pass nil to restore the avatar-cache download.
+    func setImageProbe(_ probe: (@Sendable (URL, String) async -> Bool)?) {
+        imageProbe = probe ?? Self.loadsImage
+    }
+
+    /// Another avatar URL when `failedURL` did not download. Does not call `fetchEmployee`.
+    func replacementAvatar(id: String, failedURL: URL) async -> URL? {
+        guard !id.isEmpty else { return nil }
+        let domain = await domainProvider?() ?? ""
+        guard !domain.isEmpty else { return nil }
+
+        for url in Self.absoluteFallbackAvatarURLs(userId: id, domain: domain) where !Self.sameAvatarURL(url, failedURL) {
+            guard await imageProbe(url, id) else { continue }
+            let existing = await UserInfoCache.shared.getUserInfo(for: id)
+            await remember(seeds: [ParticipantSeed(id: id, name: existing?.name, avatarURL: url)])
+            return url
+        }
+        return nil
+    }
+
+    private var imageProbe: @Sendable (URL, String) async -> Bool = UserInfoResolver.loadsImage
+
+    private static func loadsImage(_ url: URL, _ userId: String) async -> Bool {
+        await AvatarCacheManager.shared.loadImage(from: url, for: userId) != nil
+    }
+
     /// Merges seeds into the cache. An incoming nil does not wipe a known name or avatar.
     /// An empty seed (no name and no avatar) records a negative row only when nothing is stored yet.
     func remember(seeds: [ParticipantSeed]) async {
@@ -173,11 +199,15 @@ actor UserInfoResolver {
 
     private func firstWorkingFallbackAvatar(userId: String, domain: String) async -> URL? {
         for url in Self.absoluteFallbackAvatarURLs(userId: userId, domain: domain) {
-            if await AvatarCacheManager.shared.loadImage(from: url, for: userId) != nil {
+            if await imageProbe(url, userId) {
                 return url
             }
         }
         return nil
+    }
+
+    private static func sameAvatarURL(_ lhs: URL, _ rhs: URL) -> Bool {
+        lhs.scheme == rhs.scheme && lhs.host == rhs.host && lhs.path == rhs.path && lhs.query == rhs.query
     }
 
     /// `WorkspaceAddress.resolve` keeps the path and drops the query, so `size=64x64`

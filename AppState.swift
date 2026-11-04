@@ -83,7 +83,7 @@ final class AppState: ObservableObject {
     let userDefaults: UserDefaults
     let snapshotStore: NotificationsSnapshotStore
     let sync: WorkspaceSync
-    private let refreshScheduler: RefreshScheduler
+    let refreshScheduler: RefreshScheduler
     private var refreshTask: Task<Void, Never>?
     private var certificatePinningObserver: (any NSObjectProtocol)?
     private var lastRefreshTime: Date?
@@ -192,8 +192,8 @@ final class AppState: ObservableObject {
         await session.signIn(domain: domain, login: login, password: password)
     }
 
-    func logout() {
-        session.logout()
+    func logout() async {
+        await session.logout()
     }
 
     // MARK: - Admin diagnostics (Settings → About → Quick links)
@@ -391,7 +391,7 @@ final class AppState: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         await sync.refresh()
-        finishSyncRefresh()
+        await finishSyncRefresh()
     }
 
     private func setFeedLoading(_ loading: Bool) {
@@ -400,12 +400,13 @@ final class AppState: ObservableObject {
 
     /// 401 гасит таймер здесь: таймер живёт в AppState, его действие зовёт `sync.refresh()`.
     /// Токен обнуляется на gate, второго флага сессии на AppState нет.
-    private func finishSyncRefresh() {
+    private func finishSyncRefresh() async {
         publishSyncedFeed()
         if sync.isSessionExpired {
             session.token = nil
             isAuthenticated = false
-            stopRefreshTimer()
+            installAPI(domain: domain, token: nil)
+            await stopRefreshTimer()
         }
         if let alert = sync.takePendingAlert() {
             presentError(alert)
@@ -448,18 +449,13 @@ final class AppState: ObservableObject {
         apiUnreadCount = sync.unreadCount
     }
 
-    func startRefreshTimer() {
+    func startRefreshTimer() async {
         guard isAuthenticated, !isShuttingDown else { return }
-
-        Task {
-            await refreshScheduler.start(interval: refreshInterval, action: scheduledRefreshAction())
-        }
+        await refreshScheduler.start(interval: refreshInterval, action: scheduledRefreshAction())
     }
 
-    func stopRefreshTimer() {
-        Task {
-            await refreshScheduler.stop()
-        }
+    func stopRefreshTimer() async {
+        await refreshScheduler.stop()
         refreshTask?.cancel()
         refreshTask = nil
     }

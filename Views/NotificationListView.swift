@@ -425,25 +425,29 @@ private struct NotificationRow: View {
         return fullURL
     }
     
-    private func loadAvatarFromURL(_ url: URL, userId: String) async -> Bool {
+    private func loadAvatarFromURL(_ url: URL, userId: String, allowReplacement: Bool = true) async -> Bool {
         guard !Task.isCancelled else { return false }
-        
+
         AppLogger.debug("Loading avatar for user \(userId) from URL: \(url.absoluteString)")
-        
-        // Используем приоритетную задачу для загрузки
+
         let image = await Task(priority: .userInitiated) {
             await AvatarCacheManager.shared.loadImage(from: url, for: userId)
         }.value
-        
+
         guard !Task.isCancelled else { return false }
-        
+
+        if image == nil, allowReplacement,
+           let next = await UserInfoResolver.shared.replacementAvatar(id: userId, failedURL: url) {
+            return await loadAvatarFromURL(next, userId: userId, allowReplacement: false)
+        }
+
         await MainActor.run {
             self.avatarImage = image
             if image == nil {
                 AppLogger.debug("Failed to load avatar for user \(userId) from provided URL")
             }
         }
-        
+
         return image != nil
     }
     

@@ -30,8 +30,8 @@ final class AvatarCacheManagerTests: XCTestCase {
         XCTAssertEqual(count, 0, "Empty cache must report 0 entries")
     }
 
-    func testEntryCount_AfterSingleCacheImage_ReturnsOne() async {
-        let rep = NSBitmapImageRep(
+    func testEntryCount_AfterSingleCacheImage_ReturnsOne() async throws {
+        let rep = try XCTUnwrap(NSBitmapImageRep(
             bitmapDataPlanes: nil,
             pixelsWide: 1,
             pixelsHigh: 1,
@@ -42,7 +42,7 @@ final class AvatarCacheManagerTests: XCTestCase {
             colorSpaceName: .deviceRGB,
             bytesPerRow: 0,
             bitsPerPixel: 0
-        )!
+        ))
         let image = NSImage(size: NSSize(width: 1, height: 1))
         image.addRepresentation(rep)
         let url = URL(string: "https://example.com/avatar.png")!

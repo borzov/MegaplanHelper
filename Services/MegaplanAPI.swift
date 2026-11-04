@@ -48,6 +48,11 @@ final class MegaplanAPI: NSObject {
         MegaplanAPI(domain: domain, token: token, session: sessionOverride)
     }
 
+    var hasCredential: Bool {
+        guard let storedToken, !storedToken.isEmpty else { return false }
+        return true
+    }
+
     private func requiredToken() throws -> String {
         guard let storedToken, !storedToken.isEmpty else { throw NetworkError.missingToken }
         return storedToken

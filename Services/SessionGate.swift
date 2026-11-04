@@ -114,7 +114,7 @@ final class SessionGate {
                 clearCachedPassword()
             }
 
-            host.startRefreshTimer()
+            await host.startRefreshTimer()
             await host.refresh()
         } catch {
             // Increment failed attempts
@@ -128,7 +128,7 @@ final class SessionGate {
         }
     }
 
-    func logout() {
+    func logout() async {
         guard let host else { return }
         host.isShuttingDown = true
 
@@ -136,6 +136,7 @@ final class SessionGate {
         let currentDomain = host.domain
 
         token = nil
+        host.installAPI(domain: currentDomain, token: nil)
         clearCachedPassword()
 
         host.sync.reset()
@@ -144,7 +145,7 @@ final class SessionGate {
         host.firstName = ""
         host.certificatePinningFailed = false
         host.publishSyncedFeed()
-        host.stopRefreshTimer()
+        await host.stopRefreshTimer()
 
         host.isShuttingDown = false
 
@@ -243,7 +244,7 @@ final class SessionGate {
                 isSessionRestored = true
                 host.applyTokenValidationResult(result)
                 AppLogger.info("Token validation succeeded, restoring session. Admin: \(host.isAdmin)")
-                host.startRefreshTimer()
+                await host.startRefreshTimer()
                 await host.refresh()
 
                 // Clear cached password after successful session restore to minimize exposure time
@@ -255,7 +256,7 @@ final class SessionGate {
                 await signIn(domain: host.domain, login: host.username, password: password)
             } else {
                 AppLogger.debug("Token invalid and no password cached")
-                logout()
+                await logout()
             }
         } catch NetworkError.unauthorized {
             AppLogger.debug("Token unauthorized, attempting re-authentication")
@@ -263,7 +264,7 @@ final class SessionGate {
                let password = String(data: passwordData, encoding: .utf8) {
                 await signIn(domain: host.domain, login: host.username, password: password)
             } else {
-                logout()
+                await logout()
             }
         } catch {
             let mappedError = NetworkError(error)

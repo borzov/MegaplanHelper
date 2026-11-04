@@ -27,7 +27,13 @@ final class WorkspaceSyncTests: XCTestCase {
     func testOfflineKeepsPreviousNotifications() async {
         let api = MegaplanAPI(domain: "demo.megaplan.ru", token: "t", session: session)
         let store = NotificationsSnapshotStore(fileURL: tempURL)
-        let sync = WorkspaceSync(api: api, snapshotStore: store, poster: RecordingPoster(), now: { Date(timeIntervalSince1970: 1_700_000_000) })
+        let sync = WorkspaceSync(
+            api: api,
+            snapshotStore: store,
+            poster: RecordingPoster(),
+            now: { Date(timeIntervalSince1970: 1_700_000_000) },
+            sleep: { _ in }
+        )
 
         URLProtocolMock.handler = { _ in successNotifications(id: "a") }
         await sync.refresh()

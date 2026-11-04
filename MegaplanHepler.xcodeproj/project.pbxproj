@@ -21,6 +21,8 @@
 		451B31A917542D05427EED45 /* URLProtocolMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5996CBFACCEDF418588C1139 /* URLProtocolMock.swift */; };
 		46671A932FBFB62C0982ACDF /* TaskFilterBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4812DAC9D6863ABC7DC1C27F /* TaskFilterBuilderTests.swift */; };
 		49303AB66FED504CB27E01B5 /* LaunchContextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C12B9E07E1790C3DBA090E0D /* LaunchContextTests.swift */; };
+		A11CE002B2C3D4E5F6071829 /* UserInfoResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11CE001B2C3D4E5F6071829 /* UserInfoResolverTests.swift */; };
+		A11CE004B2C3D4E5F6071829 /* SessionCredentialTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11CE003B2C3D4E5F6071829 /* SessionCredentialTests.swift */; };
 		4979A679FD0B76F97A7E44DC /* NotificationsSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D8A2EE8FC0A9C3DFE5C814 /* NotificationsSnapshotStore.swift */; };
 		4B6079AB7B6BDE7282D644D0 /* NotificationEventTypeFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69EAFC976D27C6BE01D5753 /* NotificationEventTypeFilterTests.swift */; };
 		4CEAA5E4325899E7AFD6CAB8 /* AppStateFormattersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3594B6EF026552B3702F245 /* AppStateFormattersTests.swift */; };
@@ -70,7 +72,6 @@
 		BB000020 /* MegaplanTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000010 /* MegaplanTask.swift */; };
 		BB000021 /* TaskDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000011 /* TaskDTO.swift */; };
 		BB000022 /* MegaplanTaskFilterBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000012 /* MegaplanTaskFilterBuilder.swift */; };
-		BB000023 /* MegaplanAPI+Tasks.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000013 /* MegaplanAPI+Tasks.swift */; };
 		BB000024 /* TaskListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000014 /* TaskListViewModel.swift */; };
 		BB000025 /* RootPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000015 /* RootPopoverView.swift */; };
 		BB000026 /* TaskListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000016 /* TaskListView.swift */; };
@@ -185,7 +186,6 @@
 		BB000010 /* MegaplanTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanTask.swift; sourceTree = "<group>"; };
 		BB000011 /* TaskDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDTO.swift; sourceTree = "<group>"; };
 		BB000012 /* MegaplanTaskFilterBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanTaskFilterBuilder.swift; sourceTree = "<group>"; };
-		BB000013 /* MegaplanAPI+Tasks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MegaplanAPI+Tasks.swift"; sourceTree = "<group>"; };
 		BB000014 /* TaskListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskListViewModel.swift; sourceTree = "<group>"; };
 		BB000015 /* RootPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootPopoverView.swift; sourceTree = "<group>"; };
 		BB000016 /* TaskListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskListView.swift; sourceTree = "<group>"; };
@@ -200,6 +200,8 @@
 		BE7B919B7DCD2A2926CF3E6B /* AuthCredentialsStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthCredentialsStepView.swift; sourceTree = "<group>"; };
 		BFECD95730D4117F635F4525 /* AppearanceSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppearanceSettingsView.swift; sourceTree = "<group>"; };
 		C12B9E07E1790C3DBA090E0D /* LaunchContextTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LaunchContextTests.swift; sourceTree = "<group>"; };
+		A11CE001B2C3D4E5F6071829 /* UserInfoResolverTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UserInfoResolverTests.swift; sourceTree = "<group>"; };
+		A11CE003B2C3D4E5F6071829 /* SessionCredentialTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionCredentialTests.swift; sourceTree = "<group>"; };
 		C23AC9B92F0E7FCA001FD92E /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		C23AC9BA2F0E7FCA001FD92E /* OfflineBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineBannerView.swift; sourceTree = "<group>"; };
 		C23AC9BB2F0E7FCA001FD92E /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
@@ -270,7 +272,6 @@
 		1D80A65A4B08B1E7FA10DAC0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				EE986B5CAC1F3F1019BA215B /* OS X */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -339,19 +340,11 @@
 				6C7147788677A7E626EAACD3 /* SessionLockoutTests.swift */,
 				140271223AB922202ECA4F12 /* ParticipantDirectoryTests.swift */,
 				D3B19155145A7159C62000AC /* WorkspaceSyncTests.swift */,
+				A11CE001B2C3D4E5F6071829 /* UserInfoResolverTests.swift */,
+				A11CE003B2C3D4E5F6071829 /* SessionCredentialTests.swift */,
 			);
 			name = Tests;
 			path = Tests;
-			sourceTree = "<group>";
-		};
-		8A5FC2A8D46C0DD14C30A349 /* Utils */ = {
-			isa = PBXGroup;
-			children = (
-				02CDA92674558F0F664D5743 /* LaunchContext.swift */,
-				F10FDE518659D16F003E210F /* WorkspaceAddress.swift */,
-			);
-			name = Utils;
-			path = Utils;
 			sourceTree = "<group>";
 		};
 		AA00001F = {
@@ -364,7 +357,6 @@
 				1293AA6D585B519680DE7283 /* Views */,
 				1D80A65A4B08B1E7FA10DAC0 /* Frameworks */,
 				7D9FD5620BE8942A2CCDC0D3 /* Tests */,
-				8A5FC2A8D46C0DD14C30A349 /* Utils */,
 			);
 			sourceTree = "<group>";
 		};
@@ -417,7 +409,6 @@
 				C2AA00022EC50002004AEF47 /* AsyncSemaphore.swift */,
 				AA000014 /* KeychainManager.swift */,
 				AA000015 /* MegaplanAPI.swift */,
-				BB000013 /* MegaplanAPI+Tasks.swift */,
 				BB000011 /* TaskDTO.swift */,
 				BB000012 /* MegaplanTaskFilterBuilder.swift */,
 				BB00001A /* UserInfoResolver.swift */,
@@ -434,6 +425,8 @@
 				C23E0D3A2EACCBE4007DD134 /* HTMLCleaner.swift */,
 				C23E0D3B2EACCBE4007DD135 /* APILogger.swift */,
 				AA000016 /* Constants.swift */,
+				02CDA92674558F0F664D5743 /* LaunchContext.swift */,
+				F10FDE518659D16F003E210F /* WorkspaceAddress.swift */,
 				AA000017 /* NetworkError.swift */,
 				AA00002A /* StringExtensions.swift */,
 				BB000019 /* DateFormatters.swift */,
@@ -532,13 +525,6 @@
 			);
 			name = Services;
 			path = Services;
-			sourceTree = "<group>";
-		};
-		EE986B5CAC1F3F1019BA215B /* OS X */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = "OS X";
 			sourceTree = "<group>";
 		};
 		FF3D72BE03FCD638D11C0BC9 /* Settings */ = {
@@ -691,6 +677,8 @@
 				385FBADFAD9C1F5E99123E51 /* HTMLCleanerTests.swift in Sources */,
 				79D650CD88053A6BF503A7DA /* HotkeyManagerTests.swift in Sources */,
 				49303AB66FED504CB27E01B5 /* LaunchContextTests.swift in Sources */,
+				A11CE002B2C3D4E5F6071829 /* UserInfoResolverTests.swift in Sources */,
+				A11CE004B2C3D4E5F6071829 /* SessionCredentialTests.swift in Sources */,
 				1F3240936BF28A234FDDF0D5 /* NetworkErrorTests.swift in Sources */,
 				4B6079AB7B6BDE7282D644D0 /* NotificationEventTypeFilterTests.swift in Sources */,
 				43EF5704555EEC4D7C7EC76C /* NotificationsSnapshotStoreTests.swift in Sources */,
@@ -748,7 +736,6 @@
 				BB000020 /* MegaplanTask.swift in Sources */,
 				BB000021 /* TaskDTO.swift in Sources */,
 				BB000022 /* MegaplanTaskFilterBuilder.swift in Sources */,
-				BB000023 /* MegaplanAPI+Tasks.swift in Sources */,
 				BB000024 /* TaskListViewModel.swift in Sources */,
 				BB000025 /* RootPopoverView.swift in Sources */,
 				BB000026 /* TaskListView.swift in Sources */,

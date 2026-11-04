@@ -236,6 +236,15 @@ struct TaskRow: View {
         }
         if let loaded = await AvatarCacheManager.shared.loadImage(from: url, for: id) {
             await MainActor.run { avatarImage = loaded }
+            return
+        }
+        guard let next = await UserInfoResolver.shared.replacementAvatar(id: id, failedURL: url),
+              let loaded = await AvatarCacheManager.shared.loadImage(from: next, for: id) else {
+            return
+        }
+        await MainActor.run {
+            resolvedCreatorAvatarURL = next
+            avatarImage = loaded
         }
     }
 }

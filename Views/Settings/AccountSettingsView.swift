@@ -106,7 +106,7 @@ struct AccountSettingsView: View {
         .onChange(of: appState.username) { _, new in login = new }
         .alert(String(localized: "settings.account.signOutConfirm"), isPresented: $showingLogoutAlert) {
             Button(String(localized: "settings.account.signOut"), role: .destructive) {
-                appState.logout()
+                Task { await appState.logout() }
             }
             Button(String(localized: "general.cancel"), role: .cancel) {}
         }

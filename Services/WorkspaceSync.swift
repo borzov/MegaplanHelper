@@ -212,7 +212,6 @@ final class WorkspaceSync {
 
                 let delay = min(baseDelay * pow(2.0, Double(attempt - 1)), maxDelay)
                 AppLogger.info("Retrying refresh after \(delay)s (attempt \(attempt))")
-                AppLogger.info("Retry attempt \(attempt)/\(maxRetries) after \(delay)s delay")
                 try await sleep(delay)
             }
         }
