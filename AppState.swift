@@ -58,7 +58,7 @@ final class AppState: ObservableObject {
 
     let api: AuthenticationService & NotificationService & TaskService & EmployeeService
     private var currentUserId: String?
-    private let keychain = KeychainManager()
+    private let keychain: KeychainStoring
     private let userDefaults: UserDefaults
     private let snapshotStore: NotificationsSnapshotStore
     private let notificationManager = NotificationManager.shared
@@ -81,11 +81,13 @@ final class AppState: ObservableObject {
     init(
         api: AuthenticationService & NotificationService & TaskService & EmployeeService = MegaplanAPI(),
         userDefaults: UserDefaults = .standard,
-        snapshotStore: NotificationsSnapshotStore = .shared
+        snapshotStore: NotificationsSnapshotStore = .shared,
+        keychain: KeychainStoring = KeychainManager()
     ) {
         self.api = api
         self.userDefaults = userDefaults
         self.snapshotStore = snapshotStore
+        self.keychain = keychain
         let domainValue = userDefaults.string(forKey: Constants.UserDefaultsKeys.domain) ?? ""
         let usernameValue = userDefaults.string(forKey: Constants.UserDefaultsKeys.username) ?? ""
         self.domain = domainValue
