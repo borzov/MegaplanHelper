@@ -20,6 +20,17 @@ unless target
   target.add_dependency(app)
 end
 
+# new_target records Cocoa.framework against the SDK directory that is
+# installed right now (sourceTree = DEVELOPER_DIR, path under *.sdk/).
+# The link is required, so another Xcode fails the test-target link.
+# A hosted Swift bundle does not need that framework. Runs on create and
+# on later invocations; a later run does not call new_target again.
+sdk_pinned = target.frameworks_build_phase.files.filter_map do |build_file|
+  ref = build_file.file_ref
+  ref if ref&.path.to_s.include?(".sdk/")
+end
+sdk_pinned.uniq.each(&:remove_from_project)
+
 # Applied on every run. This project stores app settings on the shared
 # project configuration, so a new test target inherits Info.plist — including
 # NSPrincipalClass. XCTest then allocates a second NSApplication and crashes

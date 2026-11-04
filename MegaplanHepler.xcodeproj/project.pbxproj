@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		0A5D8BAAE4529C8A486D5CB1 /* AppearanceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFECD95730D4117F635F4525 /* AppearanceSettingsView.swift */; };
-		134194C9B8DF7D5C39B63DB3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A1E81AA0D84D38F8089B7FB /* Cocoa.framework */; };
 		1F3240936BF28A234FDDF0D5 /* NetworkErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC8769F70C8201D92AD7CF09 /* NetworkErrorTests.swift */; };
 		208C00901227259EA1F986A4 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA881FB3C88262497EC1428C /* HotkeyManager.swift */; };
 		2AA943BF4E8CEB647DADDCA4 /* ShortcutsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DB06BE2CEA6060FF2C6D8C7 /* ShortcutsSettingsView.swift */; };
@@ -141,7 +140,6 @@
 		97746327155942608151D4AE /* LockoutCountdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockoutCountdownView.swift; sourceTree = "<group>"; };
 		98C1E2D341E261881D79D5F8 /* AuthState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthState.swift; sourceTree = "<group>"; };
 		98C8CF8C41E261881D79D5F8 /* SettingsSection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSection.swift; sourceTree = "<group>"; };
-		9A1E81AA0D84D38F8089B7FB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		9A211A7B5E5BBFA23C56CBE7 /* CacheStatsRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CacheStatsRow.swift; sourceTree = "<group>"; };
 		AA00000F /* MegaplanHepler.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MegaplanHepler.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA000010 /* MegaplanMenuBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MegaplanMenuBarApp.swift; sourceTree = "<group>"; };
@@ -223,7 +221,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				134194C9B8DF7D5C39B63DB3 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -504,7 +501,6 @@
 		EE986B5CAC1F3F1019BA215B /* OS X */ = {
 			isa = PBXGroup;
 			children = (
-				9A1E81AA0D84D38F8089B7FB /* Cocoa.framework */,
 			);
 			name = "OS X";
 			sourceTree = "<group>";
