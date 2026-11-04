@@ -318,50 +318,26 @@ final class AppState: ObservableObject {
 
     // MARK: - Admin diagnostics (Settings → About → Quick links)
 
-    /// Copies a sanitised diagnostic log to the system pasteboard.
-    /// Admin-only convenience for support tickets. Stub for now — full log
-    /// pipeline can be wired up later without breaking AboutView.
+    /// Copies the API diagnostic log to the system pasteboard.
     func copyLogToPasteboard() {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        let summary = """
-        MegaplanHelper diagnostic snapshot
-        Domain: \(domain)
-        User: \(username)
-        Authenticated: \(isAuthenticated)
-        Last sync: \(lastSyncTime?.description ?? "never")
-        Notifications: \(notifications.count)
-        Tasks: \(tasks.count)
-        """
-        pasteboard.setString(summary, forType: .string)
+        pasteboard.setString(WorkspaceAddress.diagnosticText(), forType: .string)
     }
 
-    /// Optional URL for the workspace's knowledge base. Returns nil unless
-    /// the workspace exposes one — Phase 1 returns nil pending integration.
+    /// Workspace knowledge base. Nil when the domain is empty or not a host.
     var knowledgeBaseURL: URL? {
-        guard !domain.isEmpty,
-              let host = URL(string: domain.hasPrefix("http") ? domain : "https://\(domain)")?.host else {
-            return nil
-        }
-        return URL(string: "https://\(host)/knowledge")
+        WorkspaceAddress.page(.knowledge, domain: domain)
     }
 
-    /// Workspace deals dashboard URL.
+    /// Workspace deals list. Nil when the domain is empty or not a host.
     var dealsURL: URL? {
-        guard !domain.isEmpty,
-              let host = URL(string: domain.hasPrefix("http") ? domain : "https://\(domain)")?.host else {
-            return nil
-        }
-        return URL(string: "https://\(host)/deals")
+        WorkspaceAddress.page(.deals, domain: domain)
     }
 
-    /// Workspace tasks dashboard URL.
+    /// Workspace task list. Nil when the domain is empty or not a host.
     var tasksURL: URL? {
-        guard !domain.isEmpty,
-              let host = URL(string: domain.hasPrefix("http") ? domain : "https://\(domain)")?.host else {
-            return nil
-        }
-        return URL(string: "https://\(host)/tasks")
+        WorkspaceAddress.page(.tasks, domain: domain)
     }
 
     func refreshNow() {

@@ -103,6 +103,8 @@
 		C6270A9DBBD1C1B14F64780B /* MegaplanAPISessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 355ED1E55C40E1F77E028F3A /* MegaplanAPISessionTests.swift */; };
 		CC81A6B8FBEA5D47F5BB4B72 /* AccountSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA55AA33EF9474EBB89A98BE /* AccountSettingsView.swift */; };
 		DA8730F7328B975D5B598F0A /* TaskDateDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4CD90888B5A92D40F2A5B2 /* TaskDateDecodingTests.swift */; };
+		E32C72F03527EB4FDB5BA04A /* WorkspaceAddressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0654EF26EA028EB8DD56D22C /* WorkspaceAddressTests.swift */; };
+		EB3D19F3BACAE34A9FB18BFD /* WorkspaceAddress.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10FDE518659D16F003E210F /* WorkspaceAddress.swift */; };
 		F466E3045C84824C45D7BF1C /* AccountCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CC9D9A77F2E44D71FF5FFD8 /* AccountCard.swift */; };
 		F873D70847FABB895121D96A /* TaskSortingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BB38B5895C387A9DEE4FD7 /* TaskSortingTests.swift */; };
 		F8B705C905DF866831133302 /* ShortcutRecorderRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79D7EA83467C10A676111BE5 /* ShortcutRecorderRow.swift */; };
@@ -120,6 +122,7 @@
 
 /* Begin PBXFileReference section */
 		02CDA92674558F0F664D5743 /* LaunchContext.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LaunchContext.swift; sourceTree = "<group>"; };
+		0654EF26EA028EB8DD56D22C /* WorkspaceAddressTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkspaceAddressTests.swift; sourceTree = "<group>"; };
 		0AE39EAC826706D401B90C1B /* HTMLCleanerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HTMLCleanerTests.swift; sourceTree = "<group>"; };
 		1D9A74F26D72DF02C69A4795 /* AboutView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		2AC0443720F33CCB46B17D99 /* SettingsSearchIndex.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsSearchIndex.swift; sourceTree = "<group>"; };
@@ -219,6 +222,7 @@
 		E78604E13DAF89B18A4330C9 /* AppStateLockoutTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppStateLockoutTests.swift; sourceTree = "<group>"; };
 		EA0C79DB212102A83657D543 /* NotificationsSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsSettingsView.swift; sourceTree = "<group>"; };
 		EC8769F70C8201D92AD7CF09 /* NetworkErrorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetworkErrorTests.swift; sourceTree = "<group>"; };
+		F10FDE518659D16F003E210F /* WorkspaceAddress.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkspaceAddress.swift; sourceTree = "<group>"; };
 		F4FD0327E807B439AA1828D1 /* MegaplanHeplerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MegaplanHeplerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -317,6 +321,7 @@
 				E203B2410F7A7544054C49F5 /* TaskURLTests.swift */,
 				5996CBFACCEDF418588C1139 /* URLProtocolMock.swift */,
 				355ED1E55C40E1F77E028F3A /* MegaplanAPISessionTests.swift */,
+				0654EF26EA028EB8DD56D22C /* WorkspaceAddressTests.swift */,
 			);
 			name = Tests;
 			path = Tests;
@@ -326,6 +331,7 @@
 			isa = PBXGroup;
 			children = (
 				02CDA92674558F0F664D5743 /* LaunchContext.swift */,
+				F10FDE518659D16F003E210F /* WorkspaceAddress.swift */,
 			);
 			name = Utils;
 			path = Utils;
@@ -676,6 +682,7 @@
 				4371AB8708C704A725406338 /* TaskURLTests.swift in Sources */,
 				451B31A917542D05427EED45 /* URLProtocolMock.swift in Sources */,
 				C6270A9DBBD1C1B14F64780B /* MegaplanAPISessionTests.swift in Sources */,
+				E32C72F03527EB4FDB5BA04A /* WorkspaceAddressTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -755,6 +762,7 @@
 				848129175FC8AF905E34BA6B /* LaunchContext.swift in Sources */,
 				4979A679FD0B76F97A7E44DC /* NotificationsSnapshotStore.swift in Sources */,
 				8CE51126F341D568A814E8E9 /* RefreshScheduler.swift in Sources */,
+				EB3D19F3BACAE34A9FB18BFD /* WorkspaceAddress.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

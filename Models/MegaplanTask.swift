@@ -31,15 +31,7 @@ struct MegaplanTask: Identifiable, Equatable, Hashable {
     /// Builds the browser URL for the task card on the configured Megaplan host.
     /// - Parameter host: domain or full URL string from `AppState.domain`.
     func webURL(host: String) -> URL? {
-        guard !id.isEmpty else { return nil }
-        let trimmed = host.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-
-        let normalized = trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://")
-            ? trimmed
-            : "https://\(trimmed)"
-        let cleaned = normalized.hasSuffix("/") ? String(normalized.dropLast()) : normalized
-        return URL(string: "\(cleaned)/task/\(id)/card/")
+        WorkspaceAddress.taskCard(id: id, domain: host)
     }
 }
 

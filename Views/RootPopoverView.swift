@@ -253,10 +253,7 @@ struct RootPopoverView: View {
         HStack(spacing: 14) {
             if appState.isAdmin {
                 Button {
-                    let logContent = APILogger.getLogContent()
-                    let pasteboard = NSPasteboard.general
-                    pasteboard.clearContents()
-                    pasteboard.setString(logContent, forType: .string)
+                    appState.copyLogToPasteboard()
                 } label: {
                     Image(systemName: "doc.on.clipboard")
                         .font(.system(size: metrics.iconMedium))
@@ -265,7 +262,7 @@ struct RootPopoverView: View {
                 .accessibilityLabel(Text(String(localized: "settings.about.copyLog")))
 
                 Button {
-                    if let url = URL(string: "https://\(appState.domain)/knowledge/") {
+                    if let url = appState.knowledgeBaseURL {
                         NSWorkspace.shared.open(url)
                     }
                 } label: {
@@ -276,7 +273,7 @@ struct RootPopoverView: View {
                 .accessibilityLabel(Text(String(localized: "settings.about.knowledgeBase")))
 
                 Button {
-                    if let url = URL(string: "https://\(appState.domain)/deals/list/") {
+                    if let url = appState.dealsURL {
                         NSWorkspace.shared.open(url)
                     }
                 } label: {
@@ -287,7 +284,7 @@ struct RootPopoverView: View {
                 .accessibilityLabel(Text(String(localized: "settings.about.deals")))
 
                 Button {
-                    if let url = URL(string: "https://\(appState.domain)/task/") {
+                    if let url = appState.tasksURL {
                         NSWorkspace.shared.open(url)
                     }
                 } label: {

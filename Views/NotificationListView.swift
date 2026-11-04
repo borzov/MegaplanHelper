@@ -333,26 +333,19 @@ private struct NotificationRow: View {
     private func openNotificationLink() {
         guard let link = notification.link else { return }
         
-        // Проверяем, что URL валидный перед открытием
-        var finalURL = link
-        
-        // Если URL относительный (нет схемы или хоста), строим полный URL
-        if link.scheme == nil || link.host == nil {
-            if link.path.hasPrefix("/") {
-                // Относительный URL - строим полный URL используя домен
-                let domain = appState.domain.hasPrefix("http") ? appState.domain : "https://\(appState.domain)"
-                if let baseURL = URL(string: domain),
-                   let fullURL = URL(string: link.path, relativeTo: baseURL) {
-                    finalURL = fullURL
-                    AppLogger.debug("Constructed full URL from relative path: \(link.path) -> \(finalURL.absoluteString)")
-                } else {
-                    AppLogger.error("Failed to construct full URL from relative path: \(link.path), domain: \(domain)")
-                    return
-                }
-            } else {
-                AppLogger.error("Invalid notification link (no scheme/host and not relative): \(link.absoluteString)")
+        let finalURL: URL
+        if link.scheme != nil, link.host != nil {
+            finalURL = link
+        } else if link.path.hasPrefix("/") {
+            guard let resolved = WorkspaceAddress.resolve(link: link, domain: appState.domain) else {
+                AppLogger.error("Failed to construct full URL from relative path: \(link.path), domain: \(appState.domain)")
                 return
             }
+            finalURL = resolved
+            AppLogger.debug("Constructed full URL from relative path: \(link.path) -> \(finalURL.absoluteString)")
+        } else {
+            AppLogger.error("Invalid notification link (no scheme/host and not relative): \(link.absoluteString)")
+            return
         }
         
         // Проверяем, что финальный URL валидный
@@ -462,18 +455,14 @@ private struct NotificationRow: View {
     }
     
     private func buildFullAvatarURL(from avatarURL: URL) -> URL {
-        // Handle relative URLs
-        if avatarURL.scheme == nil || avatarURL.host == nil {
-            if !appState.domain.isEmpty {
-                let domainURL = appState.domain.hasPrefix("http") ? appState.domain : "https://\(appState.domain)"
-                if let baseURL = URL(string: domainURL),
-                   let fullURL = URL(string: avatarURL.path, relativeTo: baseURL) {
-                    AppLogger.debug("Constructed full avatar URL from relative path: \(avatarURL.path) -> \(fullURL.absoluteString)")
-                    return fullURL
-                }
-            }
+        guard avatarURL.scheme == nil || avatarURL.host == nil else {
+            return avatarURL
         }
-        return avatarURL
+        guard let fullURL = WorkspaceAddress.resolve(link: avatarURL, domain: appState.domain) else {
+            return avatarURL
+        }
+        AppLogger.debug("Constructed full avatar URL from relative path: \(avatarURL.path) -> \(fullURL.absoluteString)")
+        return fullURL
     }
     
     private func loadAvatarFromURL(_ url: URL, userId: String) async -> Bool {
@@ -532,8 +521,11 @@ private struct NotificationRow: View {
             }
         }
         
-        let domainURL = appState.domain.hasPrefix("http") ? appState.domain : "https://\(appState.domain)"
-        
+        // resolve оставляет только path, поэтому query у запасных путей клеится отдельно.
+        let baseURL = URL(string: "/").flatMap { root in
+            WorkspaceAddress.resolve(link: root, domain: appState.domain)
+        }
+
         // Try multiple avatar endpoint formats
         let avatarPaths = [
             "/api/v3/user/\(senderId)/avatar/thumbnail?size=64x64",
@@ -545,7 +537,7 @@ private struct NotificationRow: View {
         for avatarPath in avatarPaths {
             guard !Task.isCancelled else { return }
             
-            if let baseURL = URL(string: domainURL),
+            if let baseURL,
                let avatarURL = URL(string: avatarPath, relativeTo: baseURL) {
                 AppLogger.debug("Trying fallback avatar URL for senderId \(senderId): \(avatarURL.absoluteString)")
                 
