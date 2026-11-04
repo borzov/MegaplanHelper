@@ -3,9 +3,9 @@ import Foundation
 /// Single entry point for "give me name + avatar for user id X".
 ///
 /// Strategy:
-/// 1. Hit `UserInfoCache.shared` when the row already has both name and avatar.
-/// 2. On a gap, call `EmployeeService.fetchEmployee(id:)` and, if the avatar is
-///    still missing, probe `ParticipantDirectory.fallbackAvatarPaths`.
+/// 1. Any `UserInfoCache` row is a hit, even when the avatar URL is nil.
+/// 2. Only when the id is absent from the cache, call `fetchEmployee` and then
+///    probe `ParticipantDirectory.fallbackAvatarPaths`.
 /// 3. De-duplicates concurrent requests for the same id so a screenful of rows
 ///    asking about the same user produces one network round-trip.
 ///
@@ -98,18 +98,12 @@ actor UserInfoResolver {
     }
 
     private func decide(id: String) async -> CacheDecision {
-        if avatarMisses.contains(id) {
-            if let cached = await UserInfoCache.shared.getUserInfo(for: id) {
-                return .ready((cached.name, cached.avatarURL))
-            }
-            avatarMisses.remove(id)
-        }
-
+        // Имя без картинки — тоже попадание. Догрузка только если строки ещё нет.
         if let cached = await UserInfoCache.shared.getUserInfo(for: id) {
-            let hasName = Self.normalized(cached.name) != nil
-            if hasName, cached.avatarURL != nil {
-                return .ready((cached.name, cached.avatarURL))
-            }
+            return .ready((cached.name, cached.avatarURL))
+        }
+        if avatarMisses.contains(id) {
+            avatarMisses.remove(id)
         }
         return .lookup
     }
