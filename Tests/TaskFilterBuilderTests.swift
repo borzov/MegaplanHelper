@@ -50,6 +50,7 @@ final class TaskFilterBuilderTests: XCTestCase {
         let json = try MegaplanTaskFilterBuilder.serializeStatuses(["created", "assigned"])
         let data = try XCTUnwrap(json.data(using: .utf8))
         let parsed = try JSONSerialization.jsonObject(with: data) as? [String]
-        XCTAssertEqual(parsed, ["assigned", "created"])  // sortedKeys
+        // sortedKeys orders object keys, not array elements. Payload keeps input order.
+        XCTAssertEqual(parsed, ["created", "assigned"])
     }
 }

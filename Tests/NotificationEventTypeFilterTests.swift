@@ -15,10 +15,10 @@ final class NotificationEventTypeFilterTests: XCTestCase {
         viewModel.updateGroupedNotifications()
 
         XCTAssertEqual(viewModel.typeFilterOptions.count, 3)
-        XCTAssertEqual(viewModel.typeFilterOptions.first?.typeKey, "BumsTaskN_TaskAccepted")
-        XCTAssertEqual(viewModel.typeFilterOptions.first?.count, 2)
+        let accepted = viewModel.typeFilterOptions.first { $0.typeKey == "BumsTaskN_TaskAccepted" }
+        XCTAssertEqual(accepted?.count, 2)
 
-        let untyped = viewModel.typeFilterOptions.first(where: { $0.typeKey.isEmpty })
+        let untyped = viewModel.typeFilterOptions.first { $0.typeKey.isEmpty }
         XCTAssertEqual(untyped?.count, 1)
     }
 

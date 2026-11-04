@@ -129,8 +129,11 @@ final class AppState: ObservableObject {
 
         // Запрашиваем разрешение на уведомления при запуске.
         // Захватываем notificationManager локально — он singleton, weak self не нужен.
-        Task { [notificationManager] in
-            _ = await notificationManager.requestAuthorization()
+        // Хост модульных тестов не должен трогать разрешения, Keychain и сеть.
+        if !LaunchContext.isUnitTestHost {
+            Task { [notificationManager] in
+                _ = await notificationManager.requestAuthorization()
+            }
         }
 
         // Wire UserInfoResolver so any view can lazily look up an employee by id
@@ -148,24 +151,26 @@ final class AppState: ObservableObject {
         // Subscribe to certificate pinning failure notifications.
         // Сохраняем токен наблюдателя, чтобы корректно снять подписку в deinit.
         // Closure доставляется на main queue → используем assumeIsolated для @MainActor мутаций.
-        certificatePinningObserver = NotificationCenter.default.addObserver(
-            forName: .certificatePinningFailed,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            guard let self = self else { return }
-            let host = notification.userInfo?["host"] as? String ?? "unknown"
-            AppLogger.warning("Certificate pinning failed for \(host) — showing warning to user")
-            MainActor.assumeIsolated {
-                self.certificatePinningFailed = true
-                self.alertItem = AlertItem(
-                    message: String(localized: "security.pinning.warning")
-                )
+        if !LaunchContext.isUnitTestHost {
+            certificatePinningObserver = NotificationCenter.default.addObserver(
+                forName: .certificatePinningFailed,
+                object: nil,
+                queue: .main
+            ) { [weak self] notification in
+                guard let self = self else { return }
+                let host = notification.userInfo?["host"] as? String ?? "unknown"
+                AppLogger.warning("Certificate pinning failed for \(host) — showing warning to user")
+                MainActor.assumeIsolated {
+                    self.certificatePinningFailed = true
+                    self.alertItem = AlertItem(
+                        message: String(localized: "security.pinning.warning")
+                    )
+                }
             }
-        }
 
-        Task { [weak self] in
-            await self?.restoreSession()
+            Task { [weak self] in
+                await self?.restoreSession()
+            }
         }
     }
 

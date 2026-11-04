@@ -33,6 +33,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppLogger.info("AppDelegate: applicationDidFinishLaunching")
 
+        if LaunchContext.isUnitTestHost {
+            return
+        }
+
         let contentView = RootPopoverView()
             .environmentObject(appState)
             .environmentObject(notificationListViewModel)

@@ -31,7 +31,20 @@ final class AvatarCacheManagerTests: XCTestCase {
     }
 
     func testEntryCount_AfterSingleCacheImage_ReturnsOne() async {
-        let image = NSImage(size: NSSize(width: 32, height: 32))
+        let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: 1,
+            pixelsHigh: 1,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        )!
+        let image = NSImage(size: NSSize(width: 1, height: 1))
+        image.addRepresentation(rep)
         let url = URL(string: "https://example.com/avatar.png")!
         await manager.cacheImage(image, for: "test-user-1", from: url)
 

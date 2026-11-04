@@ -71,8 +71,8 @@ struct HTMLCleaner {
     static func cleanHTML(_ htmlString: String) -> String {
         var cleaned = htmlString
 
-        // Удаляем HTML-теги (using cached regex)
-        cleaned = applyRegex(htmlTagsRegex, to: cleaned, replacement: "")
+        // Пробел, а не пустая строка: иначе <br/> склеивает соседние слова.
+        cleaned = applyRegex(htmlTagsRegex, to: cleaned, replacement: " ")
 
         // Decode HTML entities in single pass using cached regex
         // IMPORTANT: &amp; must be decoded LAST to prevent XSS via double encoding
@@ -101,16 +101,14 @@ struct HTMLCleaner {
     /// Полная очистка HTML с обработкой всех специальных случаев
     static func fullClean(_ htmlString: String) -> String {
         var cleaned = htmlString
-        
+
         // Сначала обрабатываем упоминания
         cleaned = processMentions(cleaned)
-        
-        // Затем извлекаем текст из ссылок
-        cleaned = extractTextFromLinks(cleaned)
-        
-        // И наконец очищаем от всех остальных HTML-тегов
-        cleaned = cleanHTML(cleaned)
-        
-        return cleaned
+
+        // Текст ссылок, без второго прохода cleanHTML.
+        // extractTextFromLinks сам вызывает cleanHTML; повторный вызов
+        // декодирует &amp;lt; во второй раз и собирает живой <script>.
+        cleaned = applyRegex(linksRegex, to: cleaned, replacement: "$1")
+        return cleanHTML(cleaned)
     }
 }

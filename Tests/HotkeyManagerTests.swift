@@ -37,13 +37,12 @@ final class HotkeyManagerTests: XCTestCase {
     }
 
     func testHotkeyShortcut_DecodeStripsExtraneousModifiers() {
-        // Construct an encoded value whose modifier rawValue includes bits outside
-        // .deviceIndependentFlagsMask (e.g. .numericPad = 1 << 21 = 2097152).
-        // After decode, only the device-independent bits should remain.
-        let extraneous = NSEvent.ModifierFlags.numericPad.rawValue
+        // numericPad and bit 30 both sit inside deviceIndependentFlagsMask (0xffff0000).
+        // Bits 0...15 are outside the mask and must be dropped.
+        let extraneous: UInt = 1 << 3
         let encoded = "15:\(extraneous)"
         let decoded = HotkeyShortcut.decode(encoded)
         XCTAssertNotNil(decoded)
-        XCTAssertEqual(decoded?.modifiers, [], "numericPad bit must be stripped on decode")
+        XCTAssertEqual(decoded?.modifiers, [], "bits outside deviceIndependentFlagsMask must be stripped on decode")
     }
 }

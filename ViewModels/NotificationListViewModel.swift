@@ -8,6 +8,7 @@ final class NotificationListViewModel: ObservableObject {
         var id: String { typeKey }
         let typeKey: String
         let title: String
+        let count: Int
 
         var isUntyped: Bool { typeKey.isEmpty }
     }
@@ -188,11 +189,13 @@ final class NotificationListViewModel: ObservableObject {
     }
 
     private func buildTypeFilterOptions(from notifications: [MegaplanNotification]) -> [NotificationTypeFilterOption] {
-        let typeKeys = Set(notifications.map { Self.normalizedTypeKey($0.type) })
-        return typeKeys.map { key in
+        let typeKeys = notifications.map { Self.normalizedTypeKey($0.type) }
+        let counts = Dictionary(grouping: typeKeys, by: { $0 }).mapValues(\.count)
+        return counts.map { key, count in
             NotificationTypeFilterOption(
                 typeKey: key,
-                title: NotificationEventTypeCatalog.title(for: key.isEmpty ? nil : key)
+                title: NotificationEventTypeCatalog.title(for: key.isEmpty ? nil : key),
+                count: count
             )
         }
         .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }

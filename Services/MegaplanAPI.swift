@@ -20,7 +20,12 @@ protocol NotificationService {
 
 final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
     private var baseURL: URL?
+    /// True only after the lazy session has been materialized. deinit must not
+    /// touch `session` otherwise: the getter creates a URLSession that retains
+    /// this delegate while the object is already deallocating (SIGSEGV).
+    private var didCreateSession = false
     private lazy var session: URLSession = {
+        didCreateSession = true
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = Constants.NetworkTimeouts.requestTimeout
         configuration.timeoutIntervalForResource = Constants.NetworkTimeouts.resourceTimeout
@@ -429,6 +434,7 @@ final class MegaplanAPI: NSObject, AuthenticationService, NotificationService {
     }
 
     deinit {
+        guard didCreateSession else { return }
         session.invalidateAndCancel()
     }
 }

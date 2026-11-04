@@ -52,12 +52,17 @@ actor DomainProbeService {
         let state: DomainProbeState
         do {
             let (_, response) = try await session.data(for: request)
-            if response is HTTPURLResponse {
-                let info = WorkspaceInfo(canonicalDomain: baseURL.host ?? trimmed,
-                                         displayName: nil,
-                                         faviconURL: baseURL.appendingPathComponent("favicon.ico"),
-                                         supportsSSO: false)
-                state = .online(info)
+            if let http = response as? HTTPURLResponse {
+                // 5xx — хост не ответил как живое рабочее пространство.
+                if http.statusCode >= 500 {
+                    state = .unreachable
+                } else {
+                    let info = WorkspaceInfo(canonicalDomain: baseURL.host ?? trimmed,
+                                             displayName: nil,
+                                             faviconURL: baseURL.appendingPathComponent("favicon.ico"),
+                                             supportsSSO: false)
+                    state = .online(info)
+                }
             } else {
                 state = .unreachable
             }
