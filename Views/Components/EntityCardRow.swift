@@ -166,20 +166,39 @@ struct EntityCardRow<Trailing: View>: View {
         .gesture(pressGesture)
     }
 
+    @ViewBuilder
     private var plateBody: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            headerAndText
-                .padding(.horizontal, 12)
-                .padding(.top, 10)
-                .padding(.bottom, showsPlateFooter ? 8 : 10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
+        let card = plateStack
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color(nsColor: .controlBackgroundColor))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(plateStroke, lineWidth: tint == .overdue ? 1 : 0.5)
+            )
+            .opacity(isVisited ? 0.65 : 1.0)
+            .animation(.easeInOut(duration: 0.3), value: isVisited)
+
+        if hasTrailing {
+            card
+        } else {
+            // У задач в нижней полосе нет отдельной кнопки, поэтому открывается вся карточка.
+            card
+                .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .brightness(isPressed ? -0.04 : 0)
                 .animation(.easeOut(duration: 0.12), value: isPressed)
                 .gesture(pressGesture)
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isButton)
                 .accessibilityAction { onTap() }
+        }
+    }
+
+    private var plateStack: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            plateHeader
 
             if showsPlateFooter {
                 Rectangle()
@@ -198,17 +217,33 @@ struct EntityCardRow<Trailing: View>: View {
                 .padding(.vertical, 8)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
-        )
-        .opacity(isVisited ? 0.65 : 1.0)
-        .animation(.easeInOut(duration: 0.3), value: isVisited)
+    }
+
+    private var plateHeader: some View {
+        let header = headerAndText
+            .padding(.horizontal, 12)
+            .padding(.top, 10)
+            .padding(.bottom, showsPlateFooter ? 8 : 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+
+        return Group {
+            if hasTrailing {
+                header
+                    .brightness(isPressed ? -0.04 : 0)
+                    .animation(.easeOut(duration: 0.12), value: isPressed)
+                    .gesture(pressGesture)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction { onTap() }
+            } else {
+                header
+            }
+        }
+    }
+
+    private var plateStroke: Color {
+        tint == .overdue ? Color.red.opacity(0.55) : Color(nsColor: .separatorColor)
     }
 
     private var headerAndText: some View {

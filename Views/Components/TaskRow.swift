@@ -143,6 +143,7 @@ struct TaskRow: View {
             badge: badge,
             tint: tint,
             isVisited: isVisited,
+            chrome: .plate,
             onTap: handleTap
         )
         .task(id: headerParticipantId ?? "") {

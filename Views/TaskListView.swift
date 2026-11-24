@@ -119,7 +119,6 @@ struct TaskListView: View {
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.isSearchActive)
         .animation(.easeInOut(duration: 0.2), value: viewModel.isFilterPanelActive)
-        .animation(.easeInOut(duration: 0.3), value: viewModel.groupedTasks.count)
         .onAppear {
             if appState.isAuthenticated, appState.tasks.isEmpty {
                 Task { await viewModel.refresh() }
@@ -213,7 +212,8 @@ struct TaskListView: View {
                         if !group.title.isEmpty {
                             SectionHeaderText(title: group.title)
                                 .padding(.horizontal, 4)
-                                .padding(.vertical, 7)
+                                .padding(.top, 6)
+                                .padding(.bottom, 2)
                         }
 
                         ForEach(group.tasks) { task in
@@ -226,18 +226,21 @@ struct TaskListView: View {
                                     Task { await viewModel.copyCommentsAsMarkdown(for: task) }
                                 }
                             )
-                            .transition(.asymmetric(
-                                insertion: .opacity.combined(with: .move(edge: .top)),
-                                removal: .opacity
-                            ))
                         }
                     }
                 }
                 .padding(.vertical, 2)
+                .animation(.easeOut(duration: 0.22), value: taskFeedIDs)
             }
             .refreshable {
                 await viewModel.refresh()
             }
+        }
+    }
+
+    private var taskFeedIDs: [String] {
+        viewModel.groupedTasks.flatMap { group in
+            [group.id] + group.tasks.map(\.id)
         }
     }
 
