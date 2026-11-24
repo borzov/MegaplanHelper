@@ -35,6 +35,9 @@ final class WorkspaceSync {
     private var lastSuccessfulNotifications: [MegaplanNotification] = []
     private var lastSuccessfulUnreadCount: Int = 0
     private var pendingAlert: NetworkError?
+    /// Уже отмеченные прочитанными локально. Свежий ответ ленты может ещё содержать их,
+    /// пока DELETE не догнал сервер. Пока id есть в ответе, карточку не показываем.
+    private var locallyReadIDs: Set<String> = []
 
     init(
         api: MegaplanAPI,
@@ -76,6 +79,7 @@ final class WorkspaceSync {
         lastSuccessfulNotifications = []
         lastSuccessfulUnreadCount = 0
         pendingAlert = nil
+        locallyReadIDs = []
     }
 
     func restoreSnapshotIfAvailable() async {
@@ -128,6 +132,7 @@ final class WorkspaceSync {
 
     func markNotificationAsRead(_ notification: MegaplanNotification) async -> NetworkError? {
         let notificationCopy = notification
+        locallyReadIDs.insert(notification.id)
         notifications.removeAll { $0.id == notification.id }
         unreadCount = max(unreadCount - 1, 0)
         onChange?()
@@ -137,6 +142,7 @@ final class WorkspaceSync {
             AppLogger.debug("Notification \(notification.id) marked as read")
             return nil
         } catch {
+            locallyReadIDs.remove(notification.id)
             notifications.insert(notificationCopy, at: 0)
             unreadCount += 1
             onChange?()
@@ -257,27 +263,37 @@ final class WorkspaceSync {
         isSessionExpired = false
         lastSyncTime = now()
 
+        let fetchedIDs = Set(fetchedNotifications.map(\.id))
+        locallyReadIDs.formIntersection(fetchedIDs)
+        let visibleNotifications = fetchedNotifications.filter { !locallyReadIDs.contains($0.id) }
+        let hiddenUnread = fetchedNotifications.reduce(into: 0) { count, item in
+            if locallyReadIDs.contains(item.id), !item.isRead {
+                count += 1
+            }
+        }
+        let visibleUnread = max(counter - hiddenUnread, 0)
+
         let previousNotificationIDs = Set(notifications.map(\.id))
-        let newUnreadNotifications = fetchedNotifications.filter {
+        let newUnreadNotifications = visibleNotifications.filter {
             !previousNotificationIDs.contains($0.id) && !$0.isRead
         }
         for notification in newUnreadNotifications {
             poster.send(notification)
         }
 
-        lastSuccessfulNotifications = fetchedNotifications
-        lastSuccessfulUnreadCount = counter
+        lastSuccessfulNotifications = visibleNotifications
+        lastSuccessfulUnreadCount = visibleUnread
         if let workspaceKey = AppState.workspaceKey(from: domain) {
             await snapshotStore.save(
                 workspaceKey: workspaceKey,
-                unreadCount: counter,
-                notifications: fetchedNotifications
+                unreadCount: visibleUnread,
+                notifications: visibleNotifications
             )
         }
 
-        notifications = fetchedNotifications
-        unreadCount = counter
-        AppLogger.debug("Refreshed: \(fetchedNotifications.count) notifications, \(counter) unread, \(newUnreadNotifications.count) new unread")
+        notifications = visibleNotifications
+        unreadCount = visibleUnread
+        AppLogger.debug("Refreshed: \(visibleNotifications.count) notifications, \(visibleUnread) unread, \(newUnreadNotifications.count) new unread")
     }
 
     private func applyTasksResult(from task: Task<[MegaplanTask]?, Never>) async {

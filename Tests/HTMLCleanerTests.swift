@@ -82,6 +82,45 @@ final class HTMLCleanerTests: XCTestCase {
 
     // MARK: - Link Extraction Tests
 
+    func testStrippingLeadingTaskLabel_RemovesWordAtStart() {
+        XCTAssertEqual(
+            HTMLCleaner.strippingLeadingTaskLabel("задача Подготовка договора"),
+            "Подготовка договора"
+        )
+        XCTAssertEqual(
+            HTMLCleaner.strippingLeadingTaskLabel("Задача: Подготовка договора"),
+            "Подготовка договора"
+        )
+        XCTAssertEqual(
+            HTMLCleaner.strippingLeadingTaskLabel("задача --Подготовка договора"),
+            "--Подготовка договора"
+        )
+    }
+
+    func testStrippingLeadingTaskLabel_LeavesOtherTitles() {
+        XCTAssertEqual(
+            HTMLCleaner.strippingLeadingTaskLabel("Движимое Недвижимое от MANUFAQTURY"),
+            "Движимое Недвижимое от MANUFAQTURY"
+        )
+        XCTAssertEqual(HTMLCleaner.strippingLeadingTaskLabel("задача"), "задача")
+    }
+
+    func testTaskSubjectTitleDropsLeadingTaskWord() throws {
+        let json = """
+        {"id":"1","type":"BumsTaskN_TaskNewComment","content":"комментарий","subject":{"contentType":"Task","name":"задача Подготовка договора"}}
+        """.data(using: .utf8)!
+        let dto = try JSONDecoder().decode(NotificationDTO.self, from: json)
+        XCTAssertEqual(dto.title, "Подготовка договора")
+    }
+
+    func testDealSubjectTitleKeepsItsName() throws {
+        let json = """
+        {"id":"2","type":"BumsTradeN_DealScenarioNotification","content":"срок","subject":{"contentType":"Deal","name":"Движимое Недвижимое"}}
+        """.data(using: .utf8)!
+        let dto = try JSONDecoder().decode(NotificationDTO.self, from: json)
+        XCTAssertEqual(dto.title, "Движимое Недвижимое")
+    }
+
     func testExtractTextFromLinks_BasicLink() {
         let input = "<a href=\"https://example.com\">Click here</a>"
         let output = HTMLCleaner.extractTextFromLinks(input)

@@ -7,6 +7,8 @@
 "notifications.empty" = "Нет новых уведомлений";
 "notifications.open" = "Открыть";
 "notifications.markRead" = "Отметить прочитанным";
+"notifications.readAction" = "Прочитано";
+"notifications.markAllInGroup" = "Прочитать все";
 "notifications.untitled" = "Уведомление";
 "notifications.search" = "Поиск";
 "notifications.search.placeholder" = "Поиск уведомлений...";

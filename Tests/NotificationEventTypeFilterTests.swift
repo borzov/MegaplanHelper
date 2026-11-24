@@ -60,6 +60,29 @@ final class NotificationEventTypeFilterTests: XCTestCase {
         XCTAssertTrue(viewModel.selectedTypeFilterKeys.isEmpty)
     }
 
+    func testGroupMarkReadSelectionSkipsAlreadyRead() {
+        let today = NotificationGroup(
+            id: "today",
+            title: "Today",
+            notifications: [
+                makeNotification(id: "read", type: nil, isRead: true),
+                makeNotification(id: "unread", type: nil, isRead: false)
+            ],
+            date: Date()
+        )
+        let yesterday = NotificationGroup(
+            id: "yesterday",
+            title: "Yesterday",
+            notifications: [
+                makeNotification(id: "other-day", type: nil, isRead: false)
+            ],
+            date: Date().addingTimeInterval(-86_400)
+        )
+
+        XCTAssertEqual(today.unreadNotifications.map(\.id), ["unread"])
+        XCTAssertEqual(yesterday.unreadNotifications.map(\.id), ["other-day"])
+    }
+
     func testApplyingMultipleTypesKeepsNotificationsForEverySelectedType() {
         let viewModel = makeViewModel()
         viewModel.notifications = [

@@ -187,7 +187,8 @@ struct NotificationDTO: Decodable {
             if let subjectType = try? subjectContainer.decodeFlexibleString(keys: ["contentType"], defaultValue: nil) {
                 if subjectType == "Task" || subjectType == "Deal" {
                     if let rawName = try? subjectContainer.decodeFlexibleString(keys: ["name"], defaultValue: nil) {
-                        parsedTitle = HTMLCleaner.extractTextFromLinks(rawName)
+                        let name = HTMLCleaner.extractTextFromLinks(rawName)
+                        parsedTitle = subjectType == "Task" ? HTMLCleaner.strippingLeadingTaskLabel(name) : name
                     }
                 }
             }

@@ -5,6 +5,11 @@ struct NotificationGroup: Identifiable {
     let title: String
     let notifications: [MegaplanNotification]
     let date: Date
+
+    /// Уведомления этой группы, которые ещё можно отметить прочитанными.
+    var unreadNotifications: [MegaplanNotification] {
+        notifications.filter { !$0.isRead }
+    }
 }
 
 enum NotificationGrouper {

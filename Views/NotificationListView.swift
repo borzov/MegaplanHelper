@@ -14,7 +14,6 @@ struct NotificationListView: View {
     @Environment(\.popoverFontMetrics) private var metrics
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var viewModel: NotificationListViewModel
-    @State private var showToast = false
     @FocusState private var isSearchFieldFocused: Bool
 
     var body: some View {
@@ -55,7 +54,12 @@ struct NotificationListView: View {
         }
         // Примечание: ViewModel уже подписан на appState.$notifications через Combine
         // Не добавляйте .onChange здесь чтобы избежать дублирования обновлений
-        .toast(isShowing: $showToast, message: String(localized: "toast.markedAsRead"))
+    }
+
+    private func markGroupAsRead(_ group: NotificationGroup) {
+        for notification in group.unreadNotifications {
+            viewModel.markAsRead(notification)
+        }
     }
 
     private var searchBar: some View {
@@ -166,43 +170,53 @@ struct NotificationListView: View {
 
                     ForEach(viewModel.groupedNotifications) { group in
                         if !group.title.isEmpty {
-                            SectionHeaderText(title: group.title)
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 7)
+                            notificationGroupHeader(group)
                         }
 
                         ForEach(group.notifications) { notification in
                             NotificationRow(notification: notification, onMarkRead: {
                                 viewModel.markAsRead(notification)
-                                withAnimation {
-                                    showToast = true
-                                }
                             })
                             .environmentObject(viewModel)
-                            .transition(.asymmetric(
-                                insertion: .opacity.combined(with: .scale(scale: 0.95)).combined(with: .move(edge: .top)),
-                                removal: .opacity.combined(with: .scale(scale: 0.95))
-                            ))
                         }
                     }
                 }
                 .padding(.vertical, 2)
+                .animation(.easeOut(duration: 0.22), value: notificationFeedIDs)
             }
             .refreshable {
                 await viewModel.refresh()
             }
-            .animation(.easeInOut(duration: 0.3), value: viewModel.groupedNotifications.count)
         }
+    }
+
+    private var notificationFeedIDs: [String] {
+        viewModel.groupedNotifications.flatMap { group in
+            [group.id] + group.notifications.map(\.id)
+        }
+    }
+
+    private func notificationGroupHeader(_ group: NotificationGroup) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            SectionHeaderText(title: group.title)
+            Spacer(minLength: 8)
+            if !group.unreadNotifications.isEmpty {
+                NotificationMarkAllButton {
+                    markGroupAsRead(group)
+                }
+            }
+        }
+        .padding(.horizontal, 4)
+        .padding(.top, 6)
+        .padding(.bottom, 2)
     }
 }
 
 private struct NotificationRow: View {
-    @Environment(\.popoverFontMetrics) private var metrics
     let notification: MegaplanNotification
     let onMarkRead: () -> Void
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var viewModel: NotificationListViewModel
-    @State private var isMarkingAsRead = false
     @State private var avatarImage: NSImage?
     @State private var isLoadingAvatar = false
     @State private var cachedSenderName: String?
@@ -235,13 +249,6 @@ private struct NotificationRow: View {
         .init(systemName: categoryIconName, color: categoryColor)
     }
 
-    private var tint: EntityCardTint {
-        if notification.isMention { return .mention }
-        if notification.isCommentNotification { return .comment }
-        if notification.isStatusChangeNotification { return .statusChange }
-        return .neutral
-    }
-
     private var commentBadge: EntityCardBadge? {
         let commentsCount = notification.isCommentNotification
             ? (notification.unreadCommentsCount > 0 ? notification.unreadCommentsCount : notification.size)
@@ -268,45 +275,19 @@ private struct NotificationRow: View {
             bodyText: notification.body.isEmpty ? nil : notification.body,
             subBody: nil,
             badge: commentBadge,
-            tint: tint,
             isVisited: viewModel.isVisited(notification),
+            chrome: .plate,
             onTap: openNotificationLink,
             trailing: { markAsReadButton }
         )
         .overlay(loadingAvatarOverlay)
-        .animation(.easeInOut(duration: 0.3), value: isMarkingAsRead)
-        .onChange(of: notification.isRead) { _ in
-            isMarkingAsRead = false
-        }
         .task(id: notification.senderId) {
             await loadAvatar()
         }
     }
 
-    @ViewBuilder
     private var markAsReadButton: some View {
-        Button(action: onMarkRead) {
-            HStack(spacing: 4) {
-                if isMarkingAsRead {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(.green)
-                        .scaleEffect(0.8)
-                } else {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: metrics.badge))
-                        .fontWeight(.semibold)
-                }
-            }
-            .foregroundColor(.green)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(Color.green.opacity(0.15))
-            .clipShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .disabled(isMarkingAsRead)
-        .accessibilityLabel(Text("notifications.markRead"))
+        NotificationReadButton(action: onMarkRead)
     }
 
     /// While the avatar is loading we want a small spinner — the overlay sits exactly
@@ -466,6 +447,58 @@ private struct NotificationRow: View {
         }
     }
     
+}
+
+private struct NotificationReadButton: View {
+    @Environment(\.popoverFontMetrics) private var metrics
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Text("notifications.readAction")
+                .font(.system(size: metrics.badge, weight: .medium))
+                .foregroundStyle(isHovered ? Color.white : Color.accentColor)
+                .padding(.horizontal, 8)
+                .frame(height: 22)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(isHovered ? Color.accentColor : Color.clear)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(isHovered ? 1 : 0.35), lineWidth: 0.5)
+                )
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
+        .onHover { isHovered = $0 }
+        .accessibilityLabel(Text("notifications.readAction"))
+        .help(Text("notifications.markRead"))
+    }
+}
+
+private struct NotificationMarkAllButton: View {
+    @Environment(\.popoverFontMetrics) private var metrics
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Text("notifications.markAllInGroup")
+                .font(.system(size: metrics.badge, weight: .medium))
+                .foregroundStyle(Color.accentColor)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .fill(isHovered ? Color.accentColor.opacity(0.12) : Color.clear)
+                )
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
+        .onHover { isHovered = $0 }
+    }
 }
 
 #if DEBUG

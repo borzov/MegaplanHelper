@@ -65,9 +65,15 @@ enum EntityCardAvatar {
     case icon(String)  // SF Symbol name
 }
 
-/// Shared card-row visual template used by both `NotificationRow` and `TaskRow`.
-/// Keeps padding, shadow, avatar rendering, gestures, and tint logic in one place
-/// so both lists look identical and styling tweaks land in a single file.
+enum EntityCardChrome {
+    /// Tinted fill and shadow. Tasks keep this look.
+    case raised
+    /// Separate paper plate: hairline, no shadow, actions under a divider.
+    case plate
+}
+
+/// Shared card content for notifications and tasks.
+/// `chrome` decides the frame: tasks stay raised, notifications use a plate.
 struct EntityCardRow<Trailing: View>: View {
     @Environment(\.popoverFontMetrics) private var metrics
     let avatar: EntityCardAvatar
@@ -81,6 +87,7 @@ struct EntityCardRow<Trailing: View>: View {
     let badge: EntityCardBadge?
     let tint: EntityCardTint
     let isVisited: Bool
+    let chrome: EntityCardChrome
     let onTap: () -> Void
     let trailing: Trailing
 
@@ -97,6 +104,7 @@ struct EntityCardRow<Trailing: View>: View {
          badge: EntityCardBadge? = nil,
          tint: EntityCardTint = .neutral,
          isVisited: Bool = false,
+         chrome: EntityCardChrome = .raised,
          onTap: @escaping () -> Void,
          @ViewBuilder trailing: () -> Trailing) {
         self.avatar = avatar
@@ -110,11 +118,100 @@ struct EntityCardRow<Trailing: View>: View {
         self.badge = badge
         self.tint = tint
         self.isVisited = isVisited
+        self.chrome = chrome
         self.onTap = onTap
         self.trailing = trailing()
     }
 
     var body: some View {
+        switch chrome {
+        case .raised:
+            raisedBody
+        case .plate:
+            plateBody
+        }
+    }
+
+    private var raisedBody: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            headerAndText
+
+            if badge != nil || hasTrailing {
+                HStack(spacing: 12) {
+                    if let badge {
+                        badgeView(badge)
+                    }
+                    Spacer()
+                    trailing
+                }
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(tint.background)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(tint.border, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
+        )
+        .contentShape(Rectangle())
+        .scaleEffect(isPressed ? 0.96 : 1.0)
+        .brightness(isPressed ? -0.05 : 0)
+        .opacity(isVisited ? 0.65 : 1.0)
+        .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isPressed)
+        .animation(.easeInOut(duration: 0.3), value: isVisited)
+        .gesture(pressGesture)
+    }
+
+    private var plateBody: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            headerAndText
+                .padding(.horizontal, 12)
+                .padding(.top, 10)
+                .padding(.bottom, showsPlateFooter ? 8 : 10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .brightness(isPressed ? -0.04 : 0)
+                .animation(.easeOut(duration: 0.12), value: isPressed)
+                .gesture(pressGesture)
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction { onTap() }
+
+            if showsPlateFooter {
+                Rectangle()
+                    .fill(Color(nsColor: .separatorColor))
+                    .frame(height: 0.5)
+                    .accessibilityHidden(true)
+
+                HStack(spacing: 8) {
+                    if let badge {
+                        plateComment(badge)
+                    }
+                    Spacer(minLength: 8)
+                    trailing
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
+        )
+        .opacity(isVisited ? 0.65 : 1.0)
+        .animation(.easeInOut(duration: 0.3), value: isVisited)
+    }
+
+    private var headerAndText: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 10) {
                 avatarView
@@ -152,42 +249,17 @@ struct EntityCardRow<Trailing: View>: View {
                         .foregroundColor(.secondary.opacity(0.85))
                 }
             }
-
-            if badge != nil || hasTrailing {
-                HStack(spacing: 12) {
-                    if let badge {
-                        badgeView(badge)
-                    }
-                    Spacer()
-                    trailing
-                }
-            }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(tint.background)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(tint.border, lineWidth: 1)
-                )
-                .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
-        )
-        .contentShape(Rectangle())
-        .scaleEffect(isPressed ? 0.96 : 1.0)
-        .brightness(isPressed ? -0.05 : 0)
-        .opacity(isVisited ? 0.65 : 1.0)
-        .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isPressed)
-        .animation(.easeInOut(duration: 0.3), value: isVisited)
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in if !isPressed { isPressed = true } }
-                .onEnded { _ in
-                    isPressed = false
-                    onTap()
-                }
-        )
+    }
+
+    /// Жест открытия только на тексте карточки. Нижняя полоса с кнопкой в этот жест не входит.
+    private var pressGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { _ in if !isPressed { isPressed = true } }
+            .onEnded { _ in
+                isPressed = false
+                onTap()
+            }
     }
 
     private var titleBodySpacing: CGFloat {
@@ -196,6 +268,23 @@ struct EntityCardRow<Trailing: View>: View {
 
     private var hasTrailing: Bool {
         Trailing.self != EmptyView.self
+    }
+
+    private var showsPlateFooter: Bool {
+        badge != nil || hasTrailing
+    }
+
+    private func plateComment(_ badge: EntityCardBadge) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: badge.systemName)
+                .font(.system(size: metrics.subBody))
+            Text(badge.text)
+                .font(.system(size: metrics.badge, weight: .medium))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+        }
+        .foregroundStyle(Color.accentColor)
+        .accessibilityLabel(badge.accessibilityLabel ?? badge.text)
     }
 
     @ViewBuilder
@@ -285,6 +374,7 @@ extension EntityCardRow where Trailing == EmptyView {
          badge: EntityCardBadge? = nil,
          tint: EntityCardTint = .neutral,
          isVisited: Bool = false,
+         chrome: EntityCardChrome = .raised,
          onTap: @escaping () -> Void) {
         self.init(
             avatar: avatar,
@@ -298,6 +388,7 @@ extension EntityCardRow where Trailing == EmptyView {
             badge: badge,
             tint: tint,
             isVisited: isVisited,
+            chrome: chrome,
             onTap: onTap,
             trailing: { EmptyView() }
         )

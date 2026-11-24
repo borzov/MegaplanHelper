@@ -98,6 +98,18 @@ struct HTMLCleaner {
         return applyRegex(mentionsRegex, to: htmlString, replacement: "$1")
     }
     
+    /// Мегаплан начинает имя задачи со слова «задача». В заголовке карточки оно лишнее.
+    static func strippingLeadingTaskLabel(_ title: String) -> String {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let folded = trimmed.lowercased()
+        let prefixes = ["задача:", "задача "]
+        guard let prefix = prefixes.first(where: { folded.hasPrefix($0) }) else {
+            return trimmed
+        }
+        let rest = trimmed.dropFirst(prefix.count).trimmingCharacters(in: .whitespacesAndNewlines)
+        return rest.isEmpty ? trimmed : String(rest)
+    }
+
     /// Полная очистка HTML с обработкой всех специальных случаев
     static func fullClean(_ htmlString: String) -> String {
         var cleaned = htmlString

@@ -91,6 +91,44 @@ final class WorkspaceSyncTests: XCTestCase {
         XCTAssertEqual(sync.unreadCount, before)
     }
 
+    func testStaleRefreshDoesNotRestoreNotificationMarkedRead() async {
+        // Лента уже содержит keep и bottom. bottom отмечаем прочитанным.
+        // Следующий refresh снова приносит bottom: сервер ещё не догнал DELETE.
+        // bottom не возвращается в список, счётчик не учитывает его второй раз.
+        let sync = makeSync()
+        URLProtocolMock.handler = { request in
+            if request.httpMethod == "DELETE" {
+                let response = HTTPURLResponse(url: request.url!, statusCode: 204, httpVersion: nil, headerFields: nil)!
+                return (response, Data())
+            }
+            if request.url?.path.contains("counter") == true {
+                let body = Data("{\"data\":{\"count\":2}}".utf8)
+                let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+                return (response, body)
+            }
+            let body = Data("""
+            {"data":[{"id":"keep","content":"a"},{"id":"bottom","content":"b"}]}
+            """.utf8)
+            let url = URL(string: "https://demo.megaplan.ru/api/v3/notification")!
+            let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, body)
+        }
+
+        await sync.refresh()
+        guard let bottom = sync.notifications.first(where: { $0.id == "bottom" }) else {
+            XCTFail("Expected bottom notification before mark-read")
+            return
+        }
+
+        let error = await sync.markNotificationAsRead(bottom)
+        XCTAssertNil(error)
+        XCTAssertEqual(Set(sync.notifications.map(\.id)), Set(["keep"]))
+
+        await sync.refresh()
+        XCTAssertEqual(Set(sync.notifications.map(\.id)), Set(["keep"]))
+        XCTAssertEqual(sync.unreadCount, 1)
+    }
+
     func testRetryThenSuccess() async {
         // два ответа 500, третий — конверт с одним уведомлением
         // sync.notifications.count == 1

@@ -7,6 +7,8 @@
 "notifications.empty" = "No new notifications";
 "notifications.open" = "Open";
 "notifications.markRead" = "Mark as read";
+"notifications.readAction" = "Mark read";
+"notifications.markAllInGroup" = "Mark all read";
 "notifications.untitled" = "Notification";
 "notifications.search" = "Search";
 "notifications.search.placeholder" = "Search notifications...";

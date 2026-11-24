@@ -7,6 +7,15 @@
 
 ## [Не выпущено]
 
+## [2.2] - 2026-11-24
+
+### Изменено
+- Каждое уведомление — отдельная карточка: внизу постоянная кнопка «Прочитано», у заголовка дня — «Прочитать все» только для этого дня
+
+### Исправлено
+- После отметки «прочитано» карточка исчезает и не возвращается в список при обновлении
+- В начале названия задачи больше нет слова «задача»
+
 ## [2.1] - 2026-11-04
 
 ### Изменено
@@ -195,7 +204,8 @@
 - Безопасное хранение учётных данных в системе
 - Поддержка macOS 13.0+
 
-[Не выпущено]: https://github.com/borzov/MegaplanHelper/compare/v2.1...HEAD
+[Не выпущено]: https://github.com/borzov/MegaplanHelper/compare/v2.2...HEAD
+[2.2]: https://github.com/borzov/MegaplanHelper/compare/v2.1...v2.2
 [2.1]: https://github.com/borzov/MegaplanHelper/compare/v2.0...v2.1
 [2.0]: https://github.com/borzov/MegaplanHelper/compare/v1.6...v2.0
 [1.6]: https://github.com/borzov/MegaplanHelper/compare/v1.5...v1.6

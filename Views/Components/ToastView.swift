@@ -4,7 +4,6 @@ struct ToastView: View {
     @Environment(\.popoverFontMetrics) private var metrics
     let message: String
     let icon: String
-    @Binding var isShowing: Bool
 
     var body: some View {
         HStack(spacing: 10) {
@@ -23,17 +22,7 @@ struct ToastView: View {
                 .fill(Color.green)
                 .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
         )
-        .opacity(isShowing ? 1 : 0)
-        .scaleEffect(isShowing ? 1 : 0.8)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isShowing)
-        .onAppear {
-            // Auto-hide after 2 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                withAnimation {
-                    isShowing = false
-                }
-            }
-        }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -45,18 +34,13 @@ struct ToastModifier: ViewModifier {
     let icon: String
 
     func body(content: Content) -> some View {
-        ZStack {
-            content
-
-            VStack {
-                Spacer()
+        content
+            .safeAreaInset(edge: .bottom, spacing: 8) {
                 if isShowing {
-                    ToastView(message: message, icon: icon, isShowing: $isShowing)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    ToastView(message: message, icon: icon)
+                        .padding(.bottom, 8)
                 }
-                Spacer().frame(height: 20)
             }
-        }
     }
 }
 
@@ -80,6 +64,12 @@ extension View {
             }
             .frame(width: 400, height: 600)
             .toast(isShowing: $showToast, message: "Marked as read")
+            .task(id: showToast) {
+                guard showToast else { return }
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                guard !Task.isCancelled else { return }
+                showToast = false
+            }
         }
     }
 
